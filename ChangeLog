@@ -1,0 +1,106 @@
+*** 1.3 ***
+
+--- Adds:
+	* Improved timebans system
+	* Added OPER GLINEALL command
+	* Added cflags on NICK INFO (for own nick if user, all if oper)
+	* Added CHAN BANLIST and CHAN CLEARBANS
+	* Added topic saving and enforcing support
+	* Added fakeusers list
+	* Added OPER GLINECHAN command
+	* Added fakeusers in OPER STATS users count
+	* Added chanflags support
+	* New MySQL column in child_chan_access (uflags int not null)
+	* Added usermask and timestamp for TOPIC raw in chan_topic()
+
+--- Bugfixes/Changes
+	* match_mask() function is now case insensitive
+	* Fixed sync_cflag() function (cflag->suspended issue)
+	* Changed OPER SUSPEND command on user suspension, suspended user is now de-authed
+	* Fixed authing problem after services reconnection
+	* Fixed acl_resync() function (cflag->suspended issue)
+	* Removed !tblist
+	* !tb now accepts -1 as duration (permanent ban)
+	* Fixed CHAN RESYNC, SUSPEND and UNSUSPEND args processing issue
+	* Fixed m_eos() bug
+	* Fixed duplicate fakeuser bug
+	* Fixed m_stopic() issue, new topics were not saved
+	* Fixed pidfile deleted after services restart
+	* Fixed automatic channel deletion issue, checkexpired() now checks for members having an access
+	* Removed spamscan.c and connect4.c from source tree
+	* Fixed write_pid() issue, we're now writing the pid after daemonize()
+	* Fixed OPER FAKENICK command, pointer reinserted in hashtable
+	* Fixed wrong args number for NoticeToUser() in chan_kick()
+	* Fixed !tb issue (users were able to tb higher-level users)
+	* Fixed memleak in ConnectToServer()
+	* Fixed output buffering issue in flush_sendq()
+	* Fixed chlev_nostatus handling in m_join()
+	* Fixed channel ownership transfer in userdrop()
+	* bot_topic() restricted to owner only until m_chan and m_bot merge
+	* Fixed superadmin handling
+	* Fixed CHAN SET FOUNDER issue, former founder was duplicated
+
+*** 1.2 ***
+
+--- Adds:
+	* Added superadmin mode, which enable services root to get temporary founder status for every registered channel
+	* Added email-on-registration system
+	* Added timebans (!tb nick/mask time)
+	* Added co-owner channel access
+	* Added channel access list resync command
+	* Added SIGUSR2 handling (reconnect to server)
+	* Added timestamps for nick and channel registration
+	* Added channel access suspend/unsuspend commands
+	* Added server-wide global notice command
+	* Added MASS channel option to control mass-effect commands
+	* Added sync_user() function
+	* Added sync_cflag() function
+
+--- Bugfixes/Changes:
+	* Fixed bug on killuser() define, brackets added
+	* Corrected some typos
+	* Fixed bug with CHAN SET FOUNDER
+	* Fixed format string bug in OPER RAW and in RAW partyline command
+	* Fixed x86_64 compilation error (added -fPIC to modules CFLAGS)
+	* Fixed wrong automodes for co-owner on identify
+	* Fixed protectops channel option, auto-deop now allowed
+	* Fixed multiple timebans problem (now duration and set time are updated)
+	* Changed !kick !kb !rkick !rkb and CHAN KICK commands. Users are now unable to kick someone with a higher access level.
+	* Cleared some help commands ambiguities.
+	* Changed SpamScan "kb" action to a 5-min timeban
+	* Removed NICK RECOVER command
+	* Fixed spelling and grammar
+	* STRICTOP channel option now effective on halfops
+	* Improved acl_resync() function
+
+*** 1.1 ***
+
+--- Adds:
+	* Added clones list to optimize howmanyclones() function (160% faster !)
+	* Added output buffering system (checking for POLLOUT on main socket, non blocking)
+	* Added data filtering support
+	* Added __attribute__((unused)) to some params in order to avoid boring warnings
+	* Added !rkick and !rkb commands (C-regexp-style)
+	* Added help for nick requestpassword command, what was somehow forgetten
+	* Added cloak system (nickname.users.geeknode.org)
+	* Added "auto" param to CHAN ACCESS command. Set auto voice/op/default/none
+
+--- Bugfixes:
+	* Fixed bug on too long ipv6 RemoteServer
+	* Fixed bug with DeleteUserFromWchans function (wchan was not removed if empty)
+	* Fixed 2 bugs on reconnect-on-disconnect (temporary irc data was not erased before relinking, fakeusers were loaded twice)
+	* Fixed bug on NICK SET PASSWORD command
+	* Fixed bug on commands system (/cs foo did the same thing as /cs set foo, what led to corrupted pointers)
+	* Corrected several typos
+	* Fixed bug on NICK UNLINK command (corrupted pointer)
+	* Fixed horrible critical bug on nick changing, what caused a possible removal of a nick pointer from the hashtable
+	* Fixed nick expire bug
+
+--- Changes:
+	* Changed data storage structures to hashtable + double linked list
+	* Optimized several functions
+	* MySQL chan_access database modified, added one column "automode" (int not null default 1)
+
+--- Removes:
+	* Removed -Wno-unused flag
+	* Removed fix_fs function since va_list arg was useless in KickUser function

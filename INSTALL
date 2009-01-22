@@ -1,0 +1,12 @@
+To compile, type :
+./configure
+make
+
+Useful configure options :
+ --enable-gnutls : compile with gnutls support used for secure connections
+ --enable-filter : enable data filtering (see doc/filter.conf)
+
+Copy ./doc/example.conf to ./child.conf, and edit it
+If you compiled with filter support, you can copy ./doc/filter.conf to ./filter.conf and edit it
+Type ./child -c to create mysql tables.
+Then, you can start child by typing ./child
