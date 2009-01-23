@@ -1,5 +1,5 @@
 AC_PREREQ(2.59)
-AC_INIT([child], [1.3], [David Lebrun (target0@geeknode.org)])
+AC_INIT([child], [1.4-svn], [David Lebrun (target0@geeknode.org)])
 AC_CONFIG_AUX_DIR([autotools])
 AC_CONFIG_MACRO_DIR([autotools])
 AM_INIT_AUTOMAKE
