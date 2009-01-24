@@ -1035,7 +1035,8 @@ int ChannelCanOverride (User *source, User *target, Chan *chptr)
     if ((cflag1 = find_cflag(source->nick, chptr->channelname)) == NULL)
         return ChannelCanOverride(get_link_master(source), target, chptr);
 
-    cflag2 = find_cflag(target->nick, chptr->channelname);
+    if ((cflag2 = find_cflag(target->nick, chptr->channelname)) == NULL)
+        return 1;
 
     if (cflag1->suspended == 1)
         return 0;
