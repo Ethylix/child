@@ -47,6 +47,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <regex.h>
 #include <sys/wait.h>
 #include <setjmp.h>
+#include <sys/resource.h>
 #ifdef USE_GNUTLS
 #include <gnutls/gnutls.h>
 #endif

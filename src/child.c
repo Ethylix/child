@@ -208,6 +208,17 @@ int main(int argc, char **argv)
     sigaction(SIGCHLD,&sig,&old);
     sigaction(SIGPIPE,&sig,&old);
 
+    struct rlimit rlim;
+    if ((getrlimit(RLIMIT_CORE, &rlim)) == -1) {
+        perror("getrlimit");
+        return -1;
+    }
+    rlim.rlim_cur = RLIM_INFINITY;
+    if ((setrlimit(RLIMIT_CORE, &rlim)) == -1) {
+        perror("setrlimit");
+        return -1;
+    }
+
     /* Setting default values */
 
     strcpy(me.nick,"C");
