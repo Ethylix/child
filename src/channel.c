@@ -963,6 +963,9 @@ int ChannelCanReadACL (User *uptr, Chan *chptr)
     if (!uptr || !chptr)
         return 0;
 
+    if (IsAuthed(uptr) && uptr->level >= me.level_oper)
+        return 1;
+
     if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
         return ChannelCanReadACL(get_link_master(uptr), chptr);
 

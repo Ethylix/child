@@ -5,6 +5,7 @@
 
 --- Bugfixes/Changes
 	* Fixed host cloaking issue, nptr->hiddenhost was not updated
+	* Fixed oper permissions for CHAN ACCESS
 
 *** 1.3 ***
 
