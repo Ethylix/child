@@ -10,3 +10,4 @@
 - ajouter un scheduler pour l'execution en "cron" de fonctions
 - possibilite d'ajouter/retirer des sockets a poll dans l'array pollfd
 - backup mode (pas de new reg/drop/changes/etc, only r-o)
+- optimiser acl_resync()

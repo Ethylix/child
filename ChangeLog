@@ -4,6 +4,7 @@
 	* Added setrlimit() for RLIMIT_CORE in order to avoid setting this *boring* ulimit -c unlimited on Linux
 
 --- Bugfixes/Changes
+	* Fixed host cloaking issue, nptr->hiddenhost was not updated
 
 *** 1.3 ***
 
