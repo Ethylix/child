@@ -6,6 +6,8 @@
 --- Bugfixes/Changes
 	* Fixed host cloaking issue, nptr->hiddenhost was not updated
 	* Fixed oper permissions for CHAN ACCESS
+	* Fixed linked nicks handling in m_join() (using find_cflag_r())
+	* Fixed argument for find_user() in sync_cflag()
 
 *** 1.3 ***
 

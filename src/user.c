@@ -451,7 +451,7 @@ void sync_cflag (Cflag *cflag, Nick *nptr)
     Member *member;
     char *bot;
 
-    if ((uptr = find_user(cflag->nick)) == NULL)
+    if ((uptr = find_user(nptr->nick)) == NULL)
         return;
 
     if ((chptr = find_channel(cflag->channel)) == NULL)

@@ -54,6 +54,20 @@ Cflag *find_cflag (char *nick, char *name)
     return NULL;
 }
 
+Cflag *find_cflag_r (char *nick, char *chname)
+{
+    Cflag *cflag;
+    Link *l;
+
+    if ((cflag = find_cflag(nick, chname)) == NULL) {
+        if ((l = find_link(nick)) == NULL)
+            return NULL;
+        return find_cflag_r(l->master, chname);
+    }
+
+    return cflag;
+}
+
 Limit *find_limit (char *channel)
 {
     Limit *tmp;

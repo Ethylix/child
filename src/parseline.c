@@ -181,7 +181,7 @@ void m_join (char *sender, char *tail)
         }
 
         int hasaccess=0, flagged=0;
-        member = find_cflag(nptr->nick, str_ptr);
+        member = find_cflag_r(nptr->nick, str_ptr);
         if (member) {
         if (uptr && uptr->authed == 1 && !HasOption(chptr, COPT_NOAUTO)) {
             if (HasOption(chptr, COPT_AXXFLAGS))

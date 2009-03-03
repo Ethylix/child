@@ -300,5 +300,6 @@ int ChannelCanTopic (User *, Chan *);
 int ChannelCanOverride (User *, User *, Chan *);
 int can_modify_uflag (User *, Chan *, int);
 User *get_coowner (Chan *);
+Cflag *find_cflag_r (char *, char *);
 
 #endif
