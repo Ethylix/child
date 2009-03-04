@@ -288,7 +288,7 @@ void m_join (char *sender, char *tail)
         LIST_FOREACH(tb_list, tb, HASH(str_ptr)) {
             if (!Strcmp(tb->channel, str_ptr) && (match_mask(tb->mask, mask) || match_mask(tb->mask, mask2))) {
                 SendRaw(":%s MODE %s +b *!*@%s", bot, str_ptr, nptr->hiddenhost);
-                KickUser(bot, nptr->nick, str_ptr, tb->reason);
+                KickUser(bot, nptr->nick, str_ptr, "%s", tb->reason);
                 break;
             }
         }

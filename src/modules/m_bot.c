@@ -421,7 +421,7 @@ void bot_kick (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         if (!all || *all == '\0')
             KickUser(bot,arg2,wchan->chname,"Requested");
         else
-            KickUser(bot,arg2,wchan->chname,all);
+            KickUser(bot,arg2,wchan->chname,"%s", all);
     }
 }
 
@@ -556,7 +556,7 @@ void bot_kb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         if (!all || *all == '\0')
             KickUser(bot,arg2,wchan->chname,"Requested");
         else
-            KickUser(bot,arg2,wchan->chname,all);
+            KickUser(bot,arg2,wchan->chname,"%s", all);
     }
 }
 
@@ -813,7 +813,7 @@ void bot_tb (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan __unused
                     return;
             }
         }
-        KickUser(whatbot(wchan->chname), nptr2->nick, wchan->chname, reason);
+        KickUser(whatbot(wchan->chname), nptr2->nick, wchan->chname, "%s", reason);
     } else {
         for (member = member_list.table[HASH(wchan->chname)]; member; member = next) {
             next = member->next;
@@ -833,7 +833,7 @@ void bot_tb (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan __unused
             }
 
             if (match_mask(tb->mask, blah) || match_mask(tb->mask, blah2))
-                KickUser(whatbot(wchan->chname), nptr2->nick, wchan->chname, reason);
+                KickUser(whatbot(wchan->chname), nptr2->nick, wchan->chname, "%s", reason);
         }
     }
 
