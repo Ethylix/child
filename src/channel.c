@@ -356,16 +356,20 @@ void DeleteMember (Member *member)
     free(member);
 }
 
-void KickUser (char *who, char *nick, char *chan, char *reason)
+void KickUser (char *who, char *nick, char *chan, char *reason, ...)
 {
     Nick *nptr;
+    char tmp[1024];
+    va_list val;
+    bzero(tmp, 1024);
+    ircsprintf(tmp, 1023, reason, val);
 
     nptr = find_nick(nick);
     if (!nptr) return;
 
     if (IsNokick(nptr)) return;
 
-    SendRaw(":%s KICK %s %s :%s",who,chan,nick,reason);
+    SendRaw(":%s KICK %s %s :%s",who,chan,nick,tmp);
 
     Wchan *wchan = find_wchan(chan);
     if (wchan)

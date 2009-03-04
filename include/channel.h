@@ -254,7 +254,7 @@ Cflag *AddMaskToChannel (char *, Chan *, int);
 void DeleteMaskFromChannel (char *, Chan *);
 Member *AddUserToWchan(Nick *, Wchan *);
 void DeleteUserFromWchan (Nick *, Wchan *);
-void KickUser(char *, char *, char *, char *);
+void KickUser(char *, char *, char *, char *, ...);
 void JoinChannel(char *, char *);
 Member *find_member (char *, char *);
 void SetStatus (Nick *, char *, long int, int, char *);

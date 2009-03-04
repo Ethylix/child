@@ -8,6 +8,7 @@
 	* Fixed oper permissions for CHAN ACCESS
 	* Fixed linked nicks handling in m_join() (using find_cflag_r())
 	* Fixed argument for find_user() in sync_cflag()
+	* Changed CHAN KICK, added kicker's nick in the reason
 
 *** 1.3 ***
 

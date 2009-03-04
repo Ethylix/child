@@ -1312,7 +1312,7 @@ void chan_kick (Nick *nptr, User *uptr, Chan *chptr, char *all)
 
     bot = whatbot(arg3);
     if (!arg4 || *arg4 == '\0') {
-        KickUser(bot,nptr->nick,chptr->channelname,"Requested");
+        KickUser(bot,nptr->nick,chptr->channelname,"(%s) Requested", nptr->nick);
     } else {
         if (!Strcmp(arg4,bot)) {
             KickUser(bot,nptr->nick,chptr->channelname,"Don't touch !");
@@ -1328,7 +1328,7 @@ void chan_kick (Nick *nptr, User *uptr, Chan *chptr, char *all)
                     blah = find_nick(member->nick);
                     if (!blah) return;
                     if (!IsOper(blah))
-                        KickUser(bot,member->nick,chptr->channelname,"Kicking all users");
+                        KickUser(bot,member->nick,chptr->channelname,"(%s) Kicking all users", nptr->nick);
                 }
             }
             return;
@@ -1350,9 +1350,9 @@ void chan_kick (Nick *nptr, User *uptr, Chan *chptr, char *all)
         }
 
         if (!all || *all == '\0')
-            KickUser(bot,arg4,chptr->channelname,"Requested");
+            KickUser(bot,arg4,chptr->channelname,"(%s) Requested", nptr->nick);
         else
-            KickUser(bot,arg4,chptr->channelname,all);
+            KickUser(bot,arg4,chptr->channelname,"(%s) %s", nptr->nick, all);
     }
 }
 
