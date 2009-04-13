@@ -953,14 +953,15 @@ void p_setchan (Eclient *eclient, User *user, char *command, char *tail)
     param = SeperateWord(name);
     char blah[1024];
     bzero(blah,1024);
-    strncpy(blah,param,1024);
     SeperateWord(param);
     
     if (!chan || *chan == '\0' || !name || *name == '\0' || !param || *param == '\0') {
         send_to(eclient,"Syntax: setchan channel varname param");
         return;
-    }   
-    
+    }
+
+    strncpy(blah,param,1024);
+
     Chan *chptr;
     chptr = find_channel(chan);
     if (!chptr) {
