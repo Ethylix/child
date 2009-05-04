@@ -11,6 +11,7 @@
 	* Changed KickUser(), added variable argument for reason
 	* Changed CHAN KICK, added kicker's nick in the reason
 	* Fixed NULL pointer dereference in p_setchan()
+	* Fixed pl_command strcmp, replaced hardcoded value by sizeof()
 
 *** 1.3 ***
 

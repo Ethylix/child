@@ -130,7 +130,7 @@ void ParseEclient (Eclient *eclient)
     unsigned int i;
     void (*func)();
     if (*command == '.') {
-        for (i=0;i<(sizeof(pl_commands)/4)-1;i+=2) {
+        for (i=0;i<(sizeof(pl_commands)/(sizeof(char *)))-1;i+=2) {
             if (!Strcmp(command,pl_commands[i])) {
                 func = pl_commands[i+1];
                 func(eclient,user,command,tail);
