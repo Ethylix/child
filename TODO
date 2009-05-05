@@ -12,3 +12,4 @@
 - backup mode (pas de new reg/drop/changes/etc, only r-o)
 - optimiser acl_resync()
 - strictop: deny opping users with CHAN OP or !op
+- add unbanme command (remove internal and channel ban)
