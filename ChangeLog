@@ -2,6 +2,7 @@
 
 --- Adds:
 	* Added setrlimit() for RLIMIT_CORE in order to avoid setting this *boring* ulimit -c unlimited on Linux
+	* Added OPER REGEXPCHECK command
 
 --- Bugfixes/Changes
 	* Fixed host cloaking issue, nptr->hiddenhost was not updated

@@ -67,6 +67,7 @@ void oper_setfilter (Nick *, User *, char *);
 void oper_superadmin (Nick *, User *, char *);
 void oper_fakelist (Nick *);
 void oper_glinechan (Nick *, User *, char *);
+void oper_regexpcheck (Nick *, User *, char *);
 
 void child_init(Module *module)
 {
@@ -90,6 +91,7 @@ void child_init(Module *module)
     addOperCommand("ruleslist",oper_ruleslist,me.level_root);
 #endif
     addOperCommand("restart",oper_restart,me.level_root);
+    addOperCommand("regexpcheck",oper_regexpcheck,me.level_oper);
 #ifdef USE_FILTER
     addOperCommand("reloadrules",oper_reloadrules,me.level_root);
 #endif
@@ -171,6 +173,7 @@ void child_cleanup()
     delOperCommand("sglobal");
     delOperCommand("fakelist");
     delOperCommand("glinechan");
+    delOperCommand("regexpcheck");
 }
 
 void do_oper (Nick *nptr, User *uptr, char *all)
@@ -328,6 +331,35 @@ void oper_killall (Nick *nptr, User *uptr __unused, char *all)
     }
 
     NoticeToUser(nptr,"Done.");
+}
+
+void oper_regexpcheck (Nick *nptr, User *uptr __unused, char *all)
+{
+    Nick *nptr2;
+    unsigned int i = 0;
+
+    SeperateWord(all);
+
+    if (!all || *all == '\0') {
+        NoticeToUser(nptr, "Syntax: \2regexpcheck \037mask\037\2");
+        return;
+    }
+
+    if (!IsMask(all)) {
+        NoticeToUser(nptr, "Error: malformed mask");
+        return;
+    }
+
+    char mask[128];
+    NoticeToUser(nptr, "Affected users :");
+    LIST_FOREACH_ALL(nick_list, nptr2) {
+        snprintf(mask, 128, "%s!%s@%s", nptr2->nick, nptr2->ident, nptr2->host);
+        if (match_mask(all, mask)) {
+            NoticeToUser(nptr, "\2%s\2\t\t(%s@%s)", nptr2->nick, nptr2->ident, nptr2->host);
+            i++;
+        }
+    }
+    NoticeToUser(nptr, "Total affected users: \2%d\2.", i);
 }
 
 void oper_glineall (Nick *nptr, User *uptr __unused, char *all)

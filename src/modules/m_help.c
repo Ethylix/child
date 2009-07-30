@@ -133,6 +133,7 @@ void help_oper_superadmin (Nick *);
 void help_oper_sglobal (Nick *);
 void help_oper_fakelist (Nick *);
 void help_oper_glinechan (Nick *);
+void help_oper_regexpcheck (Nick *);
 
 void child_init(Module *module)
 {
@@ -257,6 +258,7 @@ void child_init(Module *module)
     addHelpOperCommand("ruleslist",help_oper_ruleslist,"List filter rules",me.level_root);
 #endif
     addHelpOperCommand("restart",help_oper_restart,"Restart services",me.level_root);
+    addHelpOperCommand("regexpcheck",help_oper_regexpcheck,"Check users affected by a regexp",me.level_oper);
 #ifdef USE_FILTER
     addHelpOperCommand("reloadrules",help_oper_reloadrules,"Reload filter rules",me.level_root);
 #endif
@@ -429,6 +431,7 @@ void child_cleanup()
     delHelpOperCommand("superadmin");
     delHelpOperCommand("sglobal");
     delHelpOperCommand("glinechan");
+    delHelpOperCommand("regexpcheck");
 }
 
 void do_help (Nick *nptr, User *uptr, char *all)
@@ -1418,4 +1421,10 @@ void help_oper_superadmin (Nick *nptr)
 {
     NoticeToUser(nptr, "Syntax: \2superadmin [\037on\037|\037off\037]\2");
     NoticeToUser(nptr, "Once superadmin mode is enabled, you are recognized as the founder of every registered channel. Use with caution.");
+}
+
+void help_oper_regexpcheck (Nick *nptr)
+{
+    NoticeToUser(nptr, "Syntax: \2regexpcheck \037nick!ident@host\037\2");
+    NoticeToUser(nptr, "Check users affected by a given regular expression. Very useful to avoid spamfilter fails.");
 }
