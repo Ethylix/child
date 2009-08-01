@@ -13,6 +13,7 @@
 	* Changed CHAN KICK, added kicker's nick in the reason
 	* Fixed NULL pointer dereference in p_setchan()
 	* Fixed pl_command strcmp, replaced hardcoded value by sizeof()
+	* Fixed format string vuln in sendmail() function
 
 *** 1.3 ***
 

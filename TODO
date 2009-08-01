@@ -14,4 +14,3 @@
 - strictop: deny opping users with CHAN OP or !op
 - add unbanme command (remove internal and channel ban)
 - add !topicappend
-- add !regexpcheck, returns users affected

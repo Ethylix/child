@@ -385,7 +385,7 @@ int sendmail(char *to, char *mail)
         if ((fp = popen(cmd,"w")) == NULL)
             return 0;
 
-        fprintf(fp,mail);
+        fprintf(fp,"%s",mail);
         pclose(fp);
         exit(0);
     } else if (pid < 0)
