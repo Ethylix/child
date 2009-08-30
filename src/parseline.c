@@ -772,6 +772,8 @@ void m_nick (char *sender, char *tail)
     if (!nptr)
         return;
 
+    DeleteGuest(nptr->nick);
+
     strncpy(nptr->nick,newnick,NICKLEN - 1);
     nptr->nick[NICKLEN - 1] = '\0';
     LIST_REMOVE(nick_list, nptr, HASH(sender));

@@ -14,6 +14,7 @@
 	* Fixed NULL pointer dereference in p_setchan()
 	* Fixed pl_command strcmp, replaced hardcoded value by sizeof()
 	* Fixed format string vuln in sendmail() function
+	* Fixed race condition in m_nick(), guest was not removed
 
 *** 1.3 ***
 
