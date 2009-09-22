@@ -355,7 +355,7 @@ void oper_regexpcheck (Nick *nptr, User *uptr __unused, char *all)
     LIST_FOREACH_ALL(nick_list, nptr2) {
         snprintf(mask, 128, "%s!%s@%s", nptr2->nick, nptr2->ident, nptr2->host);
         if (match_mask(all, mask)) {
-            NoticeToUser(nptr, "\2%s\2\t\t(%s@%s)", nptr2->nick, nptr2->ident, nptr2->host);
+            NoticeToUser(nptr, "\2%s\2      (%s@%s)", nptr2->nick, nptr2->ident, nptr2->host);
             i++;
         }
     }

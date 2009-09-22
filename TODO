@@ -14,3 +14,5 @@
 - strictop: deny opping users with CHAN OP or !op
 - add unbanme command (remove internal and channel ban)
 - add !topicappend
+- add ban type for !kb (*!*@host, *!*ident@*hostpart, etc)
+- add IsSuperAdmin(uptr) command, and add checks for ChannelCanWriteACL(), ChannelCanOverride(), can_modify_uflag() in channel.c
