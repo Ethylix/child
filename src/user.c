@@ -533,3 +533,19 @@ User *get_link_master (User *uptr)
         return NULL;
     return find_user(l->master);
 }
+
+int IsSuperAdmin (User *uptr)
+{
+    Nick *nptr;
+
+    if ((nptr = find_nick(uptr->nick)) == NULL)
+        return 0;
+
+    if (!IsAuthed(uptr))
+        return 0;
+
+    if (HasUmode(nptr, UMODE_SUPERADMIN))
+        return 1;
+
+    return 0;
+}

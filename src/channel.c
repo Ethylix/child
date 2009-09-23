@@ -829,6 +829,9 @@ int ChannelCanProtect (User *uptr, Chan *chptr)
     if (!uptr || !chptr)
         return 0;
 
+    if (IsSuperAdmin(uptr))
+        return 1;
+
     if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
         return ChannelCanProtect(get_link_master(uptr), chptr);
 
@@ -847,6 +850,9 @@ int ChannelCanOp (User *uptr, Chan *chptr)
 
     if (!uptr || !chptr)
         return 0;
+
+    if (IsSuperAdmin(uptr))
+        return 1;
 
     if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
         return ChannelCanOp(get_link_master(uptr), chptr);
@@ -867,6 +873,9 @@ int ChannelCanHalfop (User *uptr, Chan *chptr)
     if (!uptr || !chptr)
         return 0;
 
+    if (IsSuperAdmin(uptr))
+        return 1;
+
     if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
         return ChannelCanHalfop(get_link_master(uptr), chptr);
 
@@ -885,6 +894,9 @@ int ChannelCanVoice (User *uptr, Chan *chptr)
 
     if (!uptr || !chptr)
         return 0;
+
+    if (IsSuperAdmin(uptr))
+        return 1;
 
     if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
         return ChannelCanVoice(get_link_master(uptr), chptr);
@@ -905,6 +917,9 @@ int ChannelCanInvite (User *uptr, Chan *chptr)
     if (!uptr || !chptr)
         return 0;
 
+    if (IsSuperAdmin(uptr))
+        return 1;
+
     if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
         return ChannelCanInvite(get_link_master(uptr), chptr);
 
@@ -923,6 +938,9 @@ int ChannelCanSet (User *uptr, Chan *chptr)
 
     if (!uptr || !chptr)
         return 0;
+
+    if (IsSuperAdmin(uptr))
+        return 1;
 
     if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
         return ChannelCanSet(get_link_master(uptr), chptr);
@@ -943,6 +961,9 @@ int ChannelCanTopic (User *uptr, Chan *chptr)
     if (!uptr || !chptr)
         return 0;
 
+    if (IsSuperAdmin(uptr))
+        return 1;
+
     if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
         return ChannelCanTopic(get_link_master(uptr), chptr);
 
@@ -962,6 +983,9 @@ int ChannelCanACL (User *uptr, Chan *chptr)
     if (!uptr || !chptr)
         return 0;
 
+    if (IsSuperAdmin(uptr))
+        return 1;
+
     if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
         return ChannelCanACL(get_link_master(uptr), chptr);
 
@@ -980,6 +1004,9 @@ int ChannelCanReadACL (User *uptr, Chan *chptr)
 
     if (!uptr || !chptr)
         return 0;
+
+    if (IsSuperAdmin(uptr))
+        return 1;
 
     if (IsAuthed(uptr) && uptr->level >= me.level_oper)
         return 1;
@@ -1006,6 +1033,9 @@ int ChannelCanWriteACL (User *source, User *target, Chan *chptr)
 
     if (!source || !target || !chptr)
         return 0;
+
+    if (IsSuperAdmin(source))
+        return 1;
 
     if ((cflag1 = find_cflag(source->nick, chptr->channelname)) == NULL)
         return ChannelCanWriteACL(get_link_master(source), target, chptr);
@@ -1049,6 +1079,9 @@ int ChannelCanOverride (User *source, User *target, Chan *chptr)
 
     if (!source || !target || !chptr)
         return 0;
+
+    if (IsSuperAdmin(source))
+        return 1;
 
     if (!IsAuthed(target))
         return 1;
@@ -1115,6 +1148,10 @@ int can_modify_uflag (User *uptr, Chan *chptr, int uflag)
      */
 
     Cflag *cflag;
+
+    if (IsSuperAdmin(uptr))
+        return 2;
+
     if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
         return 0;
 

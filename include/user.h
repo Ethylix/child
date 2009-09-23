@@ -253,5 +253,6 @@ Fake *AddFake (char *, char *, char *);
 Fake *find_fake (char *);
 void DeleteFake (Fake *);
 User *get_link_master (User *);
+int IsSuperAdmin (User *);
 
 #endif
