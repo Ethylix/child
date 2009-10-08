@@ -1,0 +1,40 @@
+alias cs {
+         format "" {
+                 target "C";
+                 type services;
+                 parameters "CHAN %1-";
+         };
+         type command;
+};
+alias ns {
+         format "" {
+                 target "C";
+                 type services;
+                 parameters "NICK %1-";
+         };
+         type command;
+};
+alias os {
+         format "" {
+                 target "C";
+                 type services;
+                 parameters "OPER %1-";
+         };
+         type command;
+};
+alias hs {
+         format "" {
+                 target "C";
+                 type services;
+                 parameters "HOST %1-";
+         };
+         type command;
+};
+alias "identify" {
+         format "^[^#]" {
+                 nick "C";
+                 type services;
+                 parameters "NICK IDENTIFY %1-";
+         };
+         type command;
+};

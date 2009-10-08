@@ -1,0 +1,17 @@
+- enforcer (1 minute, enforcer@geeknode.org, enforcertable)
+- upall/downall
+- bug /os userlist (output buffering) (bug unrealircd ?)
+- reecrire do_bot(), faire une correspondance !CMD -> CHAN CMD
+- add kick-revenge feature to PROTECTOPS channel option
+- multilinguas support
+- try to switch to sha1 passwords (regenerating all passwords ?)
+- improve linked nicks system (sync_cflag(), m_join(), etc)
+- debug gnutls implementation
+- ajouter un scheduler pour l'execution en "cron" de fonctions
+- possibilite d'ajouter/retirer des sockets a poll dans l'array pollfd
+- backup mode (pas de new reg/drop/changes/etc, only r-o)
+- optimiser acl_resync()
+- strictop: deny opping users with CHAN OP or !op
+- add unbanme command (remove internal and channel ban)
+- add !topicappend
+- add ban type for !kb (*!*@host, *!*ident@*hostpart, etc)
