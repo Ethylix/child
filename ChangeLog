@@ -1,3 +1,7 @@
+*** 1.4.1 ***
+--- Bugfixes
+	* Fixed buffer overflow in write_pid() function
+
 *** 1.4 ***
 
 --- Adds:

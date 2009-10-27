@@ -120,7 +120,7 @@ void mylog (char *file, char *msg, ...)
 static void write_pid()
 {
     FILE *fp;
-    char pid[6];
+    char pid[16];
     sprintf(pid,"%d\n",getpid());
     fp = fopen("child.pid","w");
     if (!fp) return;
