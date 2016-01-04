@@ -41,6 +41,7 @@ void loadconf(int what)
     while(!feof(config_file)) {
         if (!fgets(line,1023,config_file)) break;
         if (sscanf(line,"ServerName \"%[^\"]\"",me.name)) { if (vv) printf("\tname = '%s'\n",me.name); continue; }
+        if (sscanf(line,"ServerID %i",&me.sid)) { if (vv) printf("\tsid = '%i'\n",me.sid); continue; }
         if (sscanf(line,"BotNick \"%[^\"]\"",me.nick)) { if (vv) printf("\tnick = '%s'\n",me.nick); continue; }
         if (sscanf(line,"BotIdent \"%[^\"]\"",me.ident)) { if (vv) printf("\tident = '%s'\n",me.ident); continue; }
         if (sscanf(line,"BotHost \"%[^\"]\"",me.host)) { if (vv) printf("\thost = '%s'\n",me.host); continue; }
