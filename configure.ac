@@ -69,7 +69,12 @@ AC_CHECK_LIB([ssl], [OpenSSL_add_all_digests], [have_libssl=yes], [have_libssl=n
 if (test x"$have_libssl" = x"yes"); then
 	LIBS="$LIBS -lssl"
 else
-	AC_MSG_ERROR([can't find ssl library])
+	AC_CHECK_LIB([crypto], [OpenSSL_add_all_digests], [have_libcrypto=yes], [have_libcrypto=no])
+	if (test x"$have_libcrypto" = x"yes"); then
+		LIBS="$LIBS -lcrypto"
+	else
+		AC_MSG_ERROR([can't find ssl library])
+	fi
 fi
 
 if (test x"$use_gnutls" = x"yes"); then
