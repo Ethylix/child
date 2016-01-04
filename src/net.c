@@ -299,7 +299,7 @@ void flush_sendq()
     if (outdata.writebytes == 0)
         return;
 
-    len = strlen(outdata.outbuf);
+    len = outdata.writebytes;
 
 #ifdef USE_GNUTLS
     if (me.ssl)
@@ -308,6 +308,7 @@ void flush_sendq()
 #endif
     bytes = send(sock, outdata.outbuf, len, 0);
 
+    memmove(outdata.outbuf, outdata.outbuf + bytes, len - bytes);
     outdata.outbuf[len-bytes] = 0;
     outdata.writebytes = len - bytes;
 }
