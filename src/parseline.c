@@ -34,6 +34,7 @@ int ParseLine(void)
                     "QUIT", m_quit,
                     "KILL", m_kill,
                     "MODE", m_mode,
+                    "UMODE2", m_umode,
                     "PART", m_part,
                     "SETHOST",  m_sethost,
                     "SETIDENT", m_setident,
@@ -41,10 +42,10 @@ int ParseLine(void)
                     "CHGIDENT", m_chgident,
                     "PRIVMSG",  m_privmsg,
                     "TOPIC", m_topic,
+                    "UID", m_register_user,
                 };
     void  *senders[] =
                 {
-                    "NICK", m_register_user,
                     "PING", m_ping,
                     "PROTOCTL", m_protoctl,
                     "TOPIC", m_stopic,
@@ -70,7 +71,7 @@ int ParseLine(void)
     parv[1] = command;
     parv[2] = tail;
 
-    if (vv) printf("%s %s %s\n",sender,command,tail);
+    if (vv) printf("Sender: %s Command: %s Tail: %s\n",sender,command,tail);
 
     if (!command || *command == '\0')
         return 0;
@@ -155,13 +156,13 @@ void m_join (char *sender, char *tail)
     if (!nptr)
         return;
 
-    uptr = find_user(sender);
+    uptr = find_user(nptr->nick);
 
     char chans_copied[1024];
     bzero(chans_copied,1024);
     strncpy(chans_copied,chanjoined,1024);
     char *str_ptr;
-    str_ptr = strtok(chans_copied,",");
+    str_ptr = strtok(strtok(chans_copied,","),":");
     Wchan *wchan;
     while (str_ptr) {
         wchan = find_wchan(str_ptr);
@@ -347,6 +348,7 @@ void m_kill (char *sender, char *tail)
         return;
 
     nptr = find_nick(nick);
+    nick = nptr->nick;
 
     if (!nptr) {
         if (!Strcmp(nick, me.nick)) {
@@ -382,6 +384,52 @@ void m_kill (char *sender, char *tail)
     userquit(nick);
 }
 
+void m_umode (char *sender, char *tail)
+{
+    char *nick;
+    char *umode;
+    Nick *nptr = NULL;
+    User *uptr = NULL;
+    char *parv[1];
+
+    nick =  strtok(sender,":");
+    umode = tail;
+    SeperateWord(umode);
+
+    if (!nick || !umode || *nick == '\0' || *umode == '\0')
+	return;
+
+    nptr = find_nick(nick);
+    if (!nptr)
+	return;
+
+    uptr = find_user(nptr->nick);
+    if (umode[0] == '+') {
+        if (IsCharInString('o',umode)) {
+            SetOper(nptr);
+            globops("\2%s\2 is now an IRC Operator",nptr->nick);
+        }
+        if (IsCharInString('a',umode)) SetSAdmin(nptr);
+        if (IsCharInString('A',umode)) SetAdmin(nptr);
+        if (IsCharInString('N',umode)) SetNAdmin(nptr);
+        if (IsCharInString('B',umode)) SetBot(nptr);
+        if (IsCharInString('S',umode)) SetService(nptr);
+        if (IsCharInString('q',umode)) SetNokick(nptr);
+    } else if (umode[0] == '-') {
+        if (IsCharInString('o',umode)) ClearOper(nptr);
+        if (IsCharInString('a',umode)) ClearSAdmin(nptr);
+        if (IsCharInString('A',umode)) ClearAdmin(nptr);
+        if (IsCharInString('N',umode)) ClearNAdmin(nptr);
+        if (IsCharInString('B',umode)) ClearBot(nptr);
+        if (IsCharInString('S',umode)) ClearService(nptr);
+        if (IsCharInString('q',umode)) ClearNokick(nptr);
+        if (IsCharInString('x',umode)) strncpy(nptr->hiddenhost,nptr->host,HOSTLEN);
+    }
+
+    parv[0] = umode;
+    RunHooks(HOOK_UMODE,nptr,uptr,NULL,parv);
+}
+
 void m_mode (char *sender, char *tail)
 {
     char *nick,*chan;
@@ -395,6 +443,12 @@ void m_mode (char *sender, char *tail)
     Chan *channel;
     int i=0;
 
+    /* This basically checks if the MODE command is applied to a user.
+     * In Unreal4, this is done via the UMODE2 command so it *should*
+     * be safe to remove this part of code. However, I'm not sure that
+     * a 3.2 leaf wouldn't still send a MODE command, so I'm leaving it there
+     * for the moment(?)... -fab
+     */
     if (strstr(tail,":")) {
         nick = tail;
         umode = SeperateWord(nick);
@@ -410,7 +464,7 @@ void m_mode (char *sender, char *tail)
         if (!nptr)
             return;
 
-        uptr = find_user(nick);
+        uptr = find_user(nptr->nick);
         umode++;
         if (umode[0] == '+') {
             if (IsCharInString('o',umode)) {
@@ -556,7 +610,7 @@ void m_mode (char *sender, char *tail)
                         if (!nptr2) { warg++; continue; }
                         member = find_member(wchan->chname,args[warg]);
                         if (!member) { warg++; continue; }
-                        uptr = find_user(args[warg]);
+                        uptr = find_user(nptr2->nick);
                         if (GetFlag(uptr,channel) == me.chlev_nostatus && IsAuthed(uptr)) {
                             int w = 0;
                             switch (*modes) {
@@ -660,7 +714,7 @@ void m_mode (char *sender, char *tail)
                     if (*modes == 'q' || *modes == 'a' || *modes == 'o' || *modes == 'h' || *modes == 'v') {
                         nptr2 = find_nick(args[warg]);
                         member = find_member(wchan->chname,args[warg]);
-                        uptr = find_user(args[warg]);
+                        uptr = find_user(nptr2->nick);
                     }
 
                     switch(*modes) {
@@ -679,13 +733,13 @@ void m_mode (char *sender, char *tail)
                             break;
                         case 'a':
                             if (!Strcmp(args[warg],me.nick)) {
-                                SendRaw("MODE %s +a %s",chan,bot);
+                                SendRaw(":%s MODE %s +a %s",bot,chan,bot);
                                 warg++;
                                 break;
                             }
                             if ((chanbot = find_chanbot(chan)) != NULL) {
                                 if (!Strcmp(args[warg],chanbot->bot)) {
-                                    SendRaw("MODE %s +a %s",chan,chanbot->bot);
+                                    SendRaw(":%s MODE %s +a %s",chanbot->bot,chan,chanbot->bot);
                                     warg++;
                                     break;
                                 }
@@ -704,13 +758,13 @@ void m_mode (char *sender, char *tail)
                             break;
                         case 'o':
                             if (!Strcmp(args[warg],me.nick)) {
-                                SendRaw("MODE %s +o %s",chan,bot);
+                                SendRaw(":%s MODE %s +o %s",bot,chan,bot);
                                 warg++;
                                 break;
                             }
                             if ((chanbot = find_chanbot(chan)) != NULL) {
                                 if (!Strcmp(args[warg],chanbot->bot)) {
-                                    SendRaw("MODE %s +o %s",chan,chanbot->bot);
+                                    SendRaw(":%s MODE %s +o %s",chanbot->bot,chan,chanbot->bot);
                                     warg++;
                                     break;
                                 }
@@ -759,6 +813,7 @@ void m_mode (char *sender, char *tail)
 void m_nick (char *sender, char *tail)
 {
     char *newnick;
+    char oldnick[NICKLEN];
     Nick *nptr;
     User *uptr,*uptr2 = NULL;
     char *parv[1];
@@ -769,6 +824,10 @@ void m_nick (char *sender, char *tail)
     SeperateWord(newnick);
 
     nptr = find_nick(sender);
+
+    strncpy(oldnick,nptr->nick,NICKLEN - 1);
+    oldnick[NICKLEN - 1] = '\0';
+
     if (!nptr)
         return;
 
@@ -777,21 +836,21 @@ void m_nick (char *sender, char *tail)
     strncpy(nptr->nick,newnick,NICKLEN - 1);
     nptr->nick[NICKLEN - 1] = '\0';
     LIST_REMOVE(nick_list, nptr, HASH(sender));
-    LIST_INSERT_HEAD(nick_list, nptr, HASH(newnick));
+    LIST_INSERT_HEAD(nick_list, nptr, HASH(sender));
 
-    uptr = find_user(sender);
+    uptr = find_user(oldnick);
 
     Member *member;
     LIST_FOREACH_ALL(member_list, member) {
-        if (!Strcmp(member->nick,sender))
+        if (!Strcmp(member->nick,oldnick))
             strncpy(member->nick,newnick,NICKLEN - 1);
     }
 
-    if (!Strcmp(newnick,sender)) return;
+    if (!Strcmp(newnick,oldnick)) return;
 
     uptr2 = find_user(newnick);
     if (uptr2) {
-        if (uptr && (find_link2(sender,newnick) || find_link2(newnick,sender)) && uptr->authed == 1) {
+        if (uptr && (find_link2(oldnick,newnick) || find_link2(newnick,oldnick)) && uptr->authed == 1) {
             uptr->authed = 0;
             uptr->lastseen = time(NULL);
             uptr2->authed = 1;
@@ -810,8 +869,8 @@ void m_nick (char *sender, char *tail)
         uptr->lastseen = time(NULL);
     }
 
-    nptr = find_nick(newnick);
-    parv[0] = sender;
+    nptr = find_nick(sender);
+    parv[0] = oldnick;
 
     RunHooks(HOOK_NICKCHANGE,nptr,uptr2,NULL,parv);
 }
@@ -911,7 +970,7 @@ void m_privmsg (char *sender, char *tail)
         wchan = find_wchan(target);
     }
 
-    uptr = find_user(sender);
+    uptr = find_user(nptr->nick);
 
     args[0] = target;
     char parv_tab[1024];
@@ -973,12 +1032,12 @@ void m_quit (char *sender)
     if (!nptr)
         return;
 
-    uptr = find_user(sender);
+    uptr = find_user(nptr->nick);
 
     if (RunHooks(HOOK_QUIT,nptr,uptr,NULL,NULL) == MOD_STOP)
         return;
 
-    userquit(sender);
+    userquit(nptr->nick);
 }
 
 void m_register_user (char *command, char *tail)
@@ -987,26 +1046,26 @@ void m_register_user (char *command, char *tail)
     char *umode;
     char *ident;
     char *host;
-    char *server;
+    char *uid;
     char *hiddenhost;
     char *nickip;
     long int modes=0;
     Nick *nptr;
 
-    nick = command;
-    ident = tail;
+    nick = tail;
+    ident = SeperateWord(nick);
     ident = SeperateWord(ident);
     ident = SeperateWord(ident);
     host = SeperateWord(ident);
-    server = SeperateWord(host);
-    umode = SeperateWord(server);
+    uid = SeperateWord(host);
+    umode = SeperateWord(uid);
     umode = SeperateWord(umode);
     hiddenhost = SeperateWord(umode);
     nickip = SeperateWord(hiddenhost);
     SeperateWord(nickip);
 
     if (!nick || !ident || !host || !umode || *nick == '\0' || *ident == '\0' || *host == '\0'
-        || *umode == '\0' || !server || *server == '\0'|| !hiddenhost || *hiddenhost == '\0'
+        || *umode == '\0' || !uid || *uid == '\0'|| !hiddenhost || *hiddenhost == '\0'
         || !nickip || *nickip == '\0') {
         return;
     }
@@ -1046,7 +1105,7 @@ void m_register_user (char *command, char *tail)
     if (IsCharInString('q',umode)) modes |= UMODE_NOKICK;
     if (IsCharInString('z',umode)) modes |= UMODE_SSL;
 
-    nptr = AddNick(nick,ident,host,server,hiddenhost,modes,clientip);
+    nptr = AddNick(nick,ident,host,uid,hiddenhost,modes,clientip);
 
     User *uptr;
     uptr = find_user(nptr->nick);

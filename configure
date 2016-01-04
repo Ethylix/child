@@ -2469,7 +2469,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE='child'
- VERSION='1.4-svn'
+ VERSION='1.4-unreal4'
 
 
 cat >>confdefs.h <<_ACEOF

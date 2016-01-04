@@ -166,6 +166,7 @@ void m_eos ();
 void m_join (char *, char *);
 void m_kick (char *, char *);
 void m_kill (char *, char *);
+void m_umode (char *, char *);
 void m_mode (char *, char *);
 void m_nick (char *, char *);
 void m_part (char *, char *);

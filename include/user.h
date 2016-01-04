@@ -150,7 +150,7 @@ typedef struct nick {
     char nick[NICKLEN + 1]; /* hash key */
     char ident[NICKLEN + 1];
     char host[HOSTLEN + 1];
-    char server[HOSTLEN + 1];
+    char uid[HOSTLEN + 1];
     char hiddenhost[HOSTLEN + 1];
     char reshost[HOSTLEN + 1];
     long int umodes;

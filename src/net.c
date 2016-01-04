@@ -278,8 +278,9 @@ int ConnectToServer()
 
 inline void SendInitToServer()
 {
-    SendRaw("PROTOCTL NICKv2 VHP NICKIP");
+    SendRaw("PROTOCTL NICKv2 VHP NICKIP ESVID");
     SendRaw("PASS :%s",me.linkpass);
+    SendRaw("PROTOCTL EAUTH=%s SID=123",me.name);
     SendRaw("SERVER %s 1 :Child IRC Services",me.name);
     SendRaw("SQLINE %s :Reserved for services",me.nick);
     fakeuser(me.nick,me.ident,me.host,MY_UMODES);
