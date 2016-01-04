@@ -263,7 +263,7 @@ int check_nick(Nick *nptr)
     char *nick = nptr->nick;
     if (!nick || *nick == '\0') return MOD_CONTINUE;
 
-    if (!Strcmp(nptr->server,"research.geeknode.org")) return MOD_CONTINUE;
+    /*if (!Strcmp(nptr->server,"research.geeknode.org")) return MOD_CONTINUE;*/
 
     if (seclev == 4) {
         killuser(nick,"We are undergoing a clones attack. New connections are currently denied, please try again later.",me.nick);

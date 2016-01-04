@@ -35,9 +35,11 @@ User *find_user(char *name)
 Nick *find_nick(char *name)
 {
     Nick *tmp;
-    LIST_FOREACH(nick_list, tmp, HASH(name)) {
-        if (!Strcmp(tmp->nick,name))
+
+    LIST_FOREACH_ALL(nick_list, tmp) {
+        if (!Strcmp(tmp->nick,name) || !Strcmp(tmp->uid,name)) {
             return tmp;
+	}
     }
 
     return NULL;
@@ -109,7 +111,7 @@ User *AddUser (char *nick, int level)
     return new_user;
 }
 
-Nick *AddNick(char *nick, char *ident, char *host, char *server, char *hiddenhost, long int umodes, char *reshost)
+Nick *AddNick(char *nick, char *ident, char *host, char *uid, char *hiddenhost, long int umodes, char *reshost)
 {
     Nick *new_nick;
 
@@ -118,7 +120,7 @@ Nick *AddNick(char *nick, char *ident, char *host, char *server, char *hiddenhos
     strncpy(new_nick->nick,nick,NICKLEN);
     strncpy(new_nick->ident,ident,NICKLEN);
     strncpy(new_nick->host,host,HOSTLEN);
-    strncpy(new_nick->server,server,HOSTLEN);
+    strncpy(new_nick->uid,uid,HOSTLEN);
     strncpy(new_nick->hiddenhost,hiddenhost,HOSTLEN);
     strncpy(new_nick->reshost,reshost,HOSTLEN);
     new_nick->umodes = umodes;
@@ -139,7 +141,7 @@ Nick *AddNick(char *nick, char *ident, char *host, char *server, char *hiddenhos
         LIST_INSERT_HEAD(clones_list, clone, HASH(reshost));
     }
 
-    LIST_INSERT_HEAD(nick_list, new_nick, HASH(nick));
+    LIST_INSERT_HEAD(nick_list, new_nick, HASH(uid));
 
     return new_nick;
 }
@@ -197,7 +199,7 @@ inline void DeleteAccount (User *user)
 void DeleteWildNick (Nick *nptr)
 {
     Clone *clone;
-    LIST_REMOVE(nick_list, nptr, HASH(nptr->nick));
+    LIST_REMOVE(nick_list, nptr, HASH(nptr->uid));
     if ((clone = find_clone(nptr->reshost)) != NULL) {
         clone->count--;
         if (clone->count == 0) {

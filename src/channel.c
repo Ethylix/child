@@ -386,7 +386,7 @@ void JoinChannel (char *who, char *name)
         return;
 
     SendRaw(":%s JOIN %s",who,name);
-    SendRaw("MODE %s +ao %s %s",name,who,who);
+    SendRaw(":%s MODE %s +ao %s %s",who,name,who,who);
 }
 
 Member *find_member (char *chname, char *name)
