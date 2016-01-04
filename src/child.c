@@ -425,11 +425,11 @@ int main(int argc, char **argv)
 
     while(1) {
         if (outdata.writebytes > 0) {
-            retval = poll(&pfdout,1,1000);
+            retval = poll(&pfdout,1,1);
             if (retval > 0 && (pfdout.revents & POLLOUT))
                 flush_sendq();
         }
-        retval = poll(ufds,nbfd,1000);
+        retval = poll(ufds,nbfd,1);
         if (retval > 0) {
             for (i=0;i<nbfd;i++) {
                 if (ufds[i].revents & (POLLIN | POLLPRI)) {
