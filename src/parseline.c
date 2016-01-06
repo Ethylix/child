@@ -162,7 +162,7 @@ void m_join (char *sender, char *tail)
     bzero(chans_copied,1024);
     strncpy(chans_copied,chanjoined,1024);
     char *str_ptr;
-    str_ptr = strtok(strtok(chans_copied,","),":");
+    str_ptr = strtok(chans_copied,",");
     Wchan *wchan;
     while (str_ptr) {
         wchan = find_wchan(str_ptr);
