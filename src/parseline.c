@@ -71,7 +71,7 @@ int ParseLine(void)
     parv[1] = command;
     parv[2] = tail;
 
-    if (vv) printf("Sender: %s Command: %s Tail: %s\n",sender,command,tail);
+    if (vv) printf("%s %s %s\n",sender,command,tail);
 
     if (!command || *command == '\0')
         return 0;
