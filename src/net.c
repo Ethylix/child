@@ -280,7 +280,7 @@ inline void SendInitToServer()
 {
     SendRaw("PROTOCTL NICKv2 VHP NICKIP ESVID");
     SendRaw("PASS :%s",me.linkpass);
-    SendRaw("PROTOCTL EAUTH=%s SID=%d",me.name,me.sid);
+    SendRaw("PROTOCTL EAUTH=%s SID=%s",me.name,me.sid);
     SendRaw("SERVER %s 1 :Child IRC Services",me.name);
     SendRaw("SQLINE %s :Reserved for services",me.nick);
     fakeuser(me.nick,me.ident,me.host,MY_UMODES);

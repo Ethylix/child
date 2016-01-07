@@ -104,7 +104,7 @@ struct {
     char host[32]; 
     char server[40];
     int port;
-    int sid;
+    char sid[8];
     char linkpass[50];
     int maxclones;
     char bindip[40];
