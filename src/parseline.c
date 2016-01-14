@@ -27,7 +27,6 @@ int ParseLine(void)
 {
     void *commands[] =
                 {
-                    "EOS",  m_eos,
                     "NICK", m_nick,
                     "KICK", m_kick,
                     "JOIN", m_join,
@@ -49,6 +48,7 @@ int ParseLine(void)
                     "PING", m_ping,
                     "PROTOCTL", m_protoctl,
                     "TOPIC", m_stopic,
+                    "NETINFO", m_eos,
                 };
 
     char *sender, *command, *tail;
