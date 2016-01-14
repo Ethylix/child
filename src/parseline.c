@@ -1061,6 +1061,7 @@ void m_register_user (char *command, char *tail)
     umode = SeperateWord(uid);
     umode = SeperateWord(umode);
     hiddenhost = SeperateWord(umode);
+    hiddenhost = SeperateWord(hiddenhost);
     nickip = SeperateWord(hiddenhost);
     SeperateWord(nickip);
 
