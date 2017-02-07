@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #define TIMEOUT_DFLT 60
 
-#define BOTSERV_UMODES "Sq"
+#define BOTSERV_UMODES "oSq"
 #define MY_UMODES "oSq"
 
 #define UMODE_o 0x0001
