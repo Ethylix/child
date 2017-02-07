@@ -153,6 +153,9 @@ void m_join (char *sender, char *tail)
     if (!chanjoined || *chanjoined == '\0')
         return;
 
+    if (*chanjoined == ':')
+        chanjoined++;
+
     nptr = find_nick(sender);
     if (!nptr)
         return;
