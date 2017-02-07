@@ -41,7 +41,7 @@ int ParseLine(void)
                     "CHGIDENT", m_chgident,
                     "PRIVMSG",  m_privmsg,
                     "TOPIC", m_topic,
-                    "UID", m_register_user,
+                    "UID", m_register_user_v4,
                 };
     void  *senders[] =
                 {
@@ -49,6 +49,7 @@ int ParseLine(void)
                     "PROTOCTL", m_protoctl,
                     "TOPIC", m_stopic,
                     "NETINFO", m_eos,
+		    "NICK", m_register_user_v3,
                 };
 
     char *sender, *command, *tail;
@@ -1040,7 +1041,93 @@ void m_quit (char *sender)
     userquit(nptr->nick);
 }
 
-void m_register_user (char *command, char *tail)
+void m_register_user_v3 (char *command, char *tail)
+{
+    char *nick;
+    char *umode;
+    char *ident;
+    char *host;
+    char *uid;
+    char *hiddenhost;
+    char *nickip;
+    long int modes=0;
+    Nick *nptr;
+
+    nick = command;
+    ident = tail;
+    ident = SeperateWord(ident);
+    ident = SeperateWord(ident);
+    host = SeperateWord(ident);
+    uid = SeperateWord(host);
+    umode = SeperateWord(uid);
+    umode = SeperateWord(umode);
+    hiddenhost = SeperateWord(umode);
+    nickip = SeperateWord(hiddenhost);
+    SeperateWord(nickip);
+
+    if (!nick || !ident || !host || !umode || *nick == '\0' || *ident == '\0' || *host == '\0'
+        || *umode == '\0' || !uid || *uid == '\0'|| !hiddenhost || *hiddenhost == '\0'
+        || !nickip || *nickip == '\0') {
+        return;
+    }
+
+    char clientip[HOSTLEN+1];
+    bzero(clientip,HOSTLEN);
+    if (*nickip == '*')
+        strncpy(clientip,host,HOSTLEN);
+    else
+        strncpy(clientip,decode_ip(nickip),HOSTLEN);
+
+    Trust *trust;
+    int clones;
+    trust = find_trust_strict(host);
+    if (!trust)
+        trust = find_trust(clientip);
+    clones = howmanyclones(clientip);
+    if (trust) {
+        if (clones >= trust->limit) {
+            _killuser(nick,"Max clones limit exceeded",me.nick);
+            return;
+        }
+    } else {
+        if (clones >= me.maxclones) {
+            _killuser(nick,"Max clones limit exceeded",me.nick);
+            return;
+        }
+    }
+
+    if (IsCharInString('o',umode)) modes |= UMODE_OPER;
+    if (IsCharInString('a',umode)) modes |= UMODE_SADMIN;
+    if (IsCharInString('A',umode)) modes |= UMODE_ADMIN;
+    if (IsCharInString('r',umode)) modes |= UMODE_REGISTERED;
+    if (IsCharInString('N',umode)) modes |= UMODE_NADMIN;
+    if (IsCharInString('B',umode)) modes |= UMODE_BOT;
+    if (IsCharInString('S',umode)) modes |= UMODE_SERVICE;
+    if (IsCharInString('q',umode)) modes |= UMODE_NOKICK;
+    if (IsCharInString('z',umode)) modes |= UMODE_SSL;
+
+    nptr = AddNick(nick,ident,host,uid,hiddenhost,modes,clientip);
+
+    User *uptr;
+    uptr = find_user(nptr->nick);
+    if (uptr) {
+        if (IsRegistered(nptr))
+            uptr->authed = 1;
+        else {
+            uptr->authed = 0;
+            if (!IsUserSuspended(uptr)) {
+                NoticeToUser(nptr,"This nick is registered. Please identify yourself or take another nick.");
+                if (uptr->options & UOPT_PROTECT)
+                    AddGuest(nptr->nick,uptr->timeout,time(NULL));
+            }
+        }
+    }
+
+    RunHooks(HOOK_NICKCREATE,nptr,uptr,NULL,NULL);
+    return;
+}
+
+void m_register_user_v4 (char *command, char *tail)
 {
     char *nick;
     char *umode;
