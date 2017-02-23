@@ -141,7 +141,7 @@ Nick *AddNick(char *nick, char *ident, char *host, char *uid, char *hiddenhost, 
         LIST_INSERT_HEAD(clones_list, clone, HASH(reshost));
     }
 
-    LIST_INSERT_HEAD(nick_list, new_nick, HASH(uid));
+    LIST_INSERT_HEAD(nick_list, new_nick, HASH(nick));
 
     return new_nick;
 }

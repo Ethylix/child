@@ -840,7 +840,7 @@ void m_nick (char *sender, char *tail)
     strncpy(nptr->nick,newnick,NICKLEN - 1);
     nptr->nick[NICKLEN - 1] = '\0';
     LIST_REMOVE(nick_list, nptr, HASH(sender));
-    LIST_INSERT_HEAD(nick_list, nptr, HASH(sender));
+    LIST_INSERT_HEAD(nick_list, nptr, HASH(newnick));
 
     uptr = find_user(oldnick);
 
