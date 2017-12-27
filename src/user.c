@@ -199,7 +199,7 @@ inline void DeleteAccount (User *user)
 void DeleteWildNick (Nick *nptr)
 {
     Clone *clone;
-    LIST_REMOVE(nick_list, nptr, HASH(nptr->uid));
+    LIST_REMOVE(nick_list, nptr, HASH(nptr->nick));
     if ((clone = find_clone(nptr->reshost)) != NULL) {
         clone->count--;
         if (clone->count == 0) {
