@@ -538,7 +538,7 @@ void savebotservdb()
     mysql_close(&mysql);
 }
 
-inline void savealldb()
+void savealldb()
 {
     if (verbose) printf("Saving DBs\n");
     saveuserdb();
@@ -550,7 +550,7 @@ inline void savealldb()
     if (verbose) printf("DBs saved\n");
 }
 
-inline void loadalldb()
+void loadalldb()
 {
     if (verbose) printf("Loading DBs\n");
     loaduserdb();

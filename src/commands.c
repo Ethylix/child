@@ -43,7 +43,7 @@ Command *__addCommand (char *name, int type, void (*func)(), char *desc, int sub
     return newcmd;
 }
 
-inline void delCommand (Command *cmd)
+void delCommand (Command *cmd)
 {
     LIST_REMOVE(command_list, cmd, HASH_INT(cmd->type+cmd->subtype));
     free(cmd);

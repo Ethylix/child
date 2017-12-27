@@ -73,7 +73,7 @@ Trust *AddTrust(char *host, int limit)
     return new_trust;
 }
 
-inline void DeleteTrust(Trust *trust)
+void DeleteTrust(Trust *trust)
 {
     LIST_REMOVE(trust_list, trust, HASH(trust->host));
     free(trust);

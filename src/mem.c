@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <child.h>
 #include <globals.h>
 
-inline void FreeAllMem()
+void FreeAllMem()
 {
     while (!LIST_EMPTY(user_list))
         DeleteAccount(LIST_HEAD(user_list));
@@ -56,7 +56,7 @@ inline void FreeAllMem()
         DeleteFake(LIST_HEAD(fake_list));
 }
 
-inline void cleanup_reconnect()
+void cleanup_reconnect()
 {
     while (!LIST_EMPTY(member_list))
         DeleteMember(LIST_HEAD(member_list));
@@ -110,7 +110,7 @@ long get_mem(int which)
     }
 }
 
-inline void InitMem()
+void InitMem()
 {
     LIST_INIT(user_list);
     LIST_INIT(nick_list);

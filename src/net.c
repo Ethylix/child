@@ -100,7 +100,7 @@ Eclient *AddEclient (int fd, struct sockaddr_storage sa, socklen_t salen)
     return new_eclient;
 }
 
-inline void DeleteEclient (Eclient *eclient)
+void DeleteEclient (Eclient *eclient)
 {
     LIST_REMOVE(eclient_list, eclient, HASH_INT(eclient->fd));
     free(eclient);
@@ -276,7 +276,7 @@ int ConnectToServer()
     return 1;
 }
 
-inline void SendInitToServer()
+void SendInitToServer()
 {
     SendRaw("PROTOCTL NICKv2 VHP NICKIP ESVID");
     SendRaw("PASS :%s",me.linkpass);
@@ -286,7 +286,7 @@ inline void SendInitToServer()
     fakeuser(me.nick,me.ident,me.host,MY_UMODES);
 }
 
-inline void DisconnectFromServer ()
+void DisconnectFromServer ()
 {
     SendRaw("SQUIT");
     operlog("Disconnect from server (SQUIT)");

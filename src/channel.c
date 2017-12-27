@@ -650,7 +650,7 @@ void joinallchans()
     }
 }
 
-inline void chandrop (Chan *chptr)
+void chandrop (Chan *chptr)
 {
     if (eos)
         PartChannel(chptr->channelname);
