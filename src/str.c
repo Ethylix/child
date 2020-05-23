@@ -56,7 +56,7 @@ char *StripBlanks(char *paddedstring)
     if (paddedstring == NULL)
         return NULL;
 
-    while (*paddedstring == ' ')
+    while (*paddedstring == ' ' || *paddedstring == '\t')
         paddedstring++;
 
      return paddedstring;
