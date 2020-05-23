@@ -324,7 +324,7 @@ void oper_killall (Nick *nptr, User *uptr __unused, char *all)
     char mask[128];
     for (nptr2 = LIST_HEAD(nick_list); nptr2; nptr2 = next) {
         next = LIST_LNEXT(nptr2);
-        sprintf(mask,"%s!%s@%s",nptr2->nick,nptr2->ident,nptr2->host);
+        snprintf(mask, 128, "%s!%s@%s",nptr2->nick,nptr2->ident,nptr2->host);
         if (match_mask(arg3,mask)) {
             killuser(nptr2->nick,"Clearing users",me.nick);
         }
@@ -381,7 +381,7 @@ void oper_glineall (Nick *nptr, User *uptr __unused, char *all)
     char mask[128];
     for (nptr2 = LIST_HEAD(nick_list); nptr2; nptr2 = next) {
         next = LIST_LNEXT(nptr2);
-        sprintf(mask,"%s!%s@%s",nptr2->nick,nptr2->ident,nptr2->host);
+        snprintf(mask, 128, "%s!%s@%s",nptr2->nick,nptr2->ident,nptr2->host);
         if (match_mask(arg3,mask)) {
             glineuser("*", nptr2->host, 86400, "Clearing users");
         }

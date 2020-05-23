@@ -26,7 +26,7 @@ char *md5_hash(char *msg)
     EVP_MD_CTX *mdctx;
     const EVP_MD *md;
     unsigned char md_value[EVP_MAX_MD_SIZE];
-    int md_len,i;
+    unsigned int md_len, i;
     char *buf = (char *)malloc(EVP_MAX_MD_SIZE*sizeof(char));
     bzero(buf,EVP_MAX_MD_SIZE);
 
@@ -40,13 +40,13 @@ char *md5_hash(char *msg)
     }
 
     mdctx = EVP_MD_CTX_new();
-    EVP_DigestInit_ex(mdctx,md,NULL);
-    EVP_DigestUpdate(mdctx,msg,strlen(msg));
-    EVP_DigestFinal_ex(mdctx,md_value,&md_len);
+    EVP_DigestInit_ex(mdctx, md, NULL);
+    EVP_DigestUpdate(mdctx, msg, strlen(msg));
+    EVP_DigestFinal_ex(mdctx, md_value, &md_len);
     EVP_MD_CTX_free(mdctx);
 
-    for (i=0;i<md_len;i++)
-        sprintf(buf+i+i,"%02x",md_value[i]);
+    for (i = 0; i < md_len; i++)
+        sprintf(buf+i+i, "%02x", md_value[i]);
 
     return buf;
 }

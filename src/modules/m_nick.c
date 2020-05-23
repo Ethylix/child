@@ -503,7 +503,7 @@ void nick_info (Nick *nptr, User *uptr, char *all)
     if (IsUserNoexpire(user) || user->level >= me.level_oper) strcat(opt,"Noexpire ");
     if (HasOption(user, UOPT_NOAUTO)) strcat(opt,"Noauto ");
     if (HasOption(user, UOPT_HIDEMAIL)) strcat(opt,"Hidemail ");
-    if (!opt || *opt == '\0') sprintf(opt,"None");
+    if (*opt == '\0') sprintf(opt,"None");
     NoticeToUser(nptr,"   Options:            %s",opt);
     if (HasOption(user, UOPT_PROTECT))
         NoticeToUser(nptr,"   Timeout:            %d",user->timeout);
@@ -784,12 +784,12 @@ void nick_requestpassword (Nick *nptr, User *uptr, char *all)
     strncpy(uptr->md5_pass,pass,32);
     free(pass);
 
-    char email[512];
-    bzero(email,512);
+    char email[1024];
+    bzero(email, 1024);
 
     operlog("%s (%s@%s) requested new password for %s\n",nptr->nick,nptr->ident,nptr->host,uptr->nick);
-    sprintf(email,"From: Child <%s>\r\nTo: %s <%s>\r\nSubject: Request of password\r\n\r\n%s (%s@%s) requested new password.\r\nYour user info:\r\n\tLogin: %s\r\n\tPassword: %s\r\n\r\nYou can auth with the following command: /msg %s nick identify %s\r\n",me.sendfrom,uptr->nick,uptr->email,nptr->nick,nptr->ident,nptr->host,uptr->nick,newpass,me.nick,newpass);
-    sendmail(uptr->email,email);
+    snprintf(email, 1023, "From: Child <%s>\r\nTo: %s <%s>\r\nSubject: Request of password\r\n\r\n%s (%s@%s) requested new password.\r\nYour user info:\r\n\tLogin: %s\r\n\tPassword: %s\r\n\r\nYou can auth with the following command: /msg %s nick identify %s\r\n", me.sendfrom, uptr->nick, uptr->email, nptr->nick, nptr->ident, nptr->host, uptr->nick, newpass, me.nick, newpass);
+    sendmail(uptr->email, email);
 
     NoticeToUser(nptr,"New password generated and sent to your email address");
 }

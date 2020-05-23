@@ -169,10 +169,9 @@ void init_srandom(void)
 #else
     /* this piece of code comes from srandomdev() source */
     struct timeval tv;
-    unsigned long junk; /* XXX left uninitialized on purpose */
 
     gettimeofday(&tv, NULL);
-    srandom(getpid() ^ tv.tv_sec ^ tv.tv_usec ^ junk);
+    srandom(getpid() ^ tv.tv_sec ^ tv.tv_usec);
 #endif
 }
 
