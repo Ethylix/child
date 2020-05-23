@@ -85,8 +85,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define TABLE(x) x *table[TABLESZ]
 
 long get_mem (int);
-inline void InitMem (void);
-inline void FreeAllMem (void);
-inline void cleanup_reconnect (void);
+void InitMem (void);
+void FreeAllMem (void);
+void cleanup_reconnect (void);
 
 #endif

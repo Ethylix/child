@@ -171,8 +171,8 @@ void savechandb (void);
 void savetrustdb (void);
 void savelinkdb (void);
 void savebotservdb (void);
-inline void savealldb (void);
-inline void loadalldb (void);
+void savealldb (void);
+void loadalldb (void);
 void loadanopedb (void);
 
 /* hash.c */

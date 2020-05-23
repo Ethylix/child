@@ -274,7 +274,7 @@ void joinallchans (void);
 void DeleteCflag (Cflag *);
 void DeleteMember (Member *);
 void DeleteLimit (Limit *);
-inline void chandrop (Chan *);
+void chandrop (Chan *);
 TB *AddTB (Chan *, char *, int, char *);
 void DeleteTB (TB *);
 void CheckTB (void);

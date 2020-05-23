@@ -44,8 +44,8 @@ struct {
 } outdata;
 
 int ConnectToServer (void);
-inline void SendInitToServer (void);
-inline void DisconnectFromServer (void);
+void SendInitToServer (void);
+void DisconnectFromServer (void);
 void SendRaw (char *, ...);
 int ReadChunk (void);
 int ReadPChunk (Eclient *);
