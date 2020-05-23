@@ -65,11 +65,16 @@ else
 	AC_MSG_ERROR([can't find mysqlclient library])
 fi
 
-AC_CHECK_LIB([ssl], [OpenSSL_add_all_digests], [have_libssl=yes], [have_libssl=no])
+have_libssl=no
+have_libcrypto=no
+AC_CHECK_LIB([ssl], [OpenSSL_add_all_digests], [have_libssl=yes])
+AC_CHECK_LIB([ssl], [OPENSSL_init_crypto], [have_libssl=yes])
+AC_CHECK_LIB([crypto], [OpenSSL_add_all_digests], [have_libcrypto=yes])
+AC_CHECK_LIB([crypto], [OPENSSL_init_crypto], [have_libcrypto=yes])
+
 if (test x"$have_libssl" = x"yes"); then
 	LIBS="$LIBS -lssl"
 else
-	AC_CHECK_LIB([crypto], [OpenSSL_add_all_digests], [have_libcrypto=yes], [have_libcrypto=no])
 	if (test x"$have_libcrypto" = x"yes"); then
 		LIBS="$LIBS -lcrypto"
 	else
