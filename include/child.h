@@ -130,11 +130,6 @@ struct {
     char pl_logfile[32];
     int enable_exec;
     int anonymous_global;
-    char mysql_anope_host[40];
-    char mysql_anope_db[32];
-    char mysql_anope_login[32];
-    char mysql_anope_passwd[32];
-    int anopemd5;
     char sendmail[128];
     char sendfrom[128];
     int maxmsgtime,maxmsgnb;
@@ -173,7 +168,6 @@ void savelinkdb (void);
 void savebotservdb (void);
 void savealldb (void);
 void loadalldb (void);
-void loadanopedb (void);
 
 /* hash.c */
 int hash (char *);
@@ -187,8 +181,6 @@ char *md5_hash (char *);
 /* mysql.c */
 int connect_to_db (void);
 int reconnect_to_db (void);
-int connect_to_anope_db (void);
-int reconnect_to_anope_db (void);
 
 /* parseline.c */
 int ParseLine (void);

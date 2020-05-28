@@ -28,21 +28,8 @@ int connect_to_db()
     return 1;
 }
 
-int connect_to_anope_db()
-{
-    mysql_init(&mysql2);
-    if (!mysql_real_connect(&mysql2,me.mysql_anope_host,me.mysql_anope_login,me.mysql_anope_passwd,me.mysql_anope_db,0,NULL,0)) return 0;
-    return 1;
-}
-
 int reconnect_to_db()
 {
     mysql_close(&mysql);
     return connect_to_db();
-}
-
-int reconnect_to_anope_db()
-{
-    mysql_close(&mysql2);
-    return connect_to_anope_db();
 }

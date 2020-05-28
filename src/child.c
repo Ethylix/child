@@ -91,7 +91,7 @@ static void sighandler (int signal)
 
 static void usage (char *progname)
 {
-    fprintf(stderr,"Usage: %s [-acdv]\n\t-a\tConvert anope db to child db\n\t-c\tCreate databases\n\t-d\tDo not daemonize\n\t-v\tBe verbose (use twice for more verbose)\n",progname);
+    fprintf(stderr,"Usage: %s [-cdv]\n\t-c\tCreate databases\n\t-d\tDo not daemonize\n\t-v\tBe verbose (use twice for more verbose)\n",progname);
     exit(-1);
 }
 
@@ -235,10 +235,6 @@ int main(int argc, char **argv)
     strcpy(me.sendmail,"/usr/sbin/sendmail -t");
     strcpy(me.sendfrom,"noreply@geeknode.org");
     strcpy(me.usercloak,".users.geeknode.org");
-    bzero(me.mysql_anope_host,32);
-    bzero(me.mysql_anope_db,32);
-    bzero(me.mysql_anope_login,32);
-    bzero(me.mysql_anope_passwd,32);
     bzero(me.bindip,32);
     me.port = 4400;
     me.maxclones = 5;
@@ -270,7 +266,6 @@ int main(int argc, char **argv)
     me.chlev_nostatus = -1;
     me.chlev_akick = -2;
     me.chlev_akb = -3;
-    me.anopemd5 = 0;
 #ifdef USE_FILTER
     me.filter = 0;
 #endif
@@ -278,13 +273,10 @@ int main(int argc, char **argv)
 
     /* -- */
 
-    int ladb=0,cdb=0;
+    int cdb=0;
 
     while ((op = getopt(argc,argv,"acdhv")) != EOF) {
         switch(op) {
-            case 'a':
-                ladb = 1;
-                break;
             case 'c':
                 cdb = 1;
                 break;
@@ -308,34 +300,6 @@ int main(int argc, char **argv)
     if (me.filter)
         loadrulefile();
 #endif
-
-    if (ladb) {
-        if (!connect_to_db()) {
-            printf("Cannot connect to db\n");
-            child_clean();
-        }
-
-        loadalldb();
-        mysql_close(&mysql);
-
-        if (!connect_to_anope_db()) {
-            printf("Cannot connect to anope db\n");
-            child_clean();
-        }
-
-        printf("Loading anope database... ");
-        fflush(stdout);
-
-        loadanopedb();
-        mysql_close(&mysql2);
-        printf("done.\n");
-        printf("Saving databases... ");
-        fflush(stdout);
-        savealldb();
-        printf("done.\n");
-        printf("Anope database converted\n");
-        child_clean();
-    }
 
     if (cdb) {
         if (!connect_to_db()) {

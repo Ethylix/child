@@ -93,10 +93,6 @@ void loadconf(int what)
         if (sscanf(line,"PartyLineLog \"%[^\"]\"",me.pl_logfile)) { if (vv) printf("\tpl_logfile = '%s'\n",me.pl_logfile); continue; }
         if (sscanf(line,"Exec %i",&me.enable_exec)) { if (vv) printf("\tenable_exec = '%i'\n",me.enable_exec); continue; }
         if (sscanf(line,"AnonGlobal %i",&me.anonymous_global)) { if (vv) printf("\tanonymous_global = '%i'\n",me.anonymous_global); continue; }
-        if (sscanf(line,"MysqlAnopeHost \"%[^\"]\"",me.mysql_anope_host)) { if (vv) printf("\tmysql_anope_host = '%s'\n",me.mysql_anope_host); continue; }
-        if (sscanf(line,"MysqlAnopeDB \"%[^\"]\"",me.mysql_anope_db)) { if (vv) printf("\tmysql_anope_db = '%s'\n",me.mysql_anope_db); continue; }
-        if (sscanf(line,"MysqlAnopeUser \"%[^\"]\"",me.mysql_anope_login)) { if (vv) printf("\tmysql_anope_login = '%s'\n",me.mysql_anope_login); continue; }
-        if (sscanf(line,"MysqlAnopePass \"%[^\"]\"",me.mysql_anope_passwd)) { if (vv) printf("\tmysql_anope_passwd = '%s'\n",me.mysql_anope_passwd); continue; }
         if (sscanf(line,"SendMailPath \"%[^\"]\"",me.sendmail)) { if (vv) printf("\tsendmail = '%s'\n",me.sendmail); continue; }
         if (sscanf(line,"SendFrom \"%[^\"]\"",me.sendfrom)) { if (vv) printf("\tsendfrom = '%s'\n",me.sendfrom); continue; }
         if (sscanf(line,"UserCloak \"%[^\"]\"",me.usercloak)) { if (vv) printf("\tusercloak = '%s'\n",me.usercloak); continue; }
@@ -112,7 +108,6 @@ void loadconf(int what)
         if (sscanf(line,"ChanLevNoStatus %i",&me.chlev_nostatus)) { if (vv) printf("\tchlev_nostatus = '%i'\n",me.chlev_nostatus); continue; }
         if (sscanf(line,"ChanLevAKick %i",&me.chlev_akick)) { if (vv) printf("\tchlev_akick = '%i'\n",me.chlev_akick); continue; }
         if (sscanf(line,"ChanLevAKickBan %i",&me.chlev_akb)) { if (vv) printf("\tchlev_akb = '%i'\n",me.chlev_akb); continue; }
-        if (sscanf(line,"AnopeMD5 %i",&me.anopemd5)) { if (vv) printf("\tanopemd5 = '%i'\n",me.anopemd5); continue; }
 #ifdef USE_FILTER
         if (sscanf(line,"EnableFilter %i",&me.filter)) { rule_list.enabled = me.filter; if (vv) printf("\tfilter = '%i'\n",me.filter); continue; }
 #endif
