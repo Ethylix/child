@@ -21,8 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _CHANNEL_H
 #define _CHANNEL_H
 
-#include <mem.h>
-#include <user.h>
+#include "mem.h"
+#include "user.h"
 
 #define OPERCHAN "#opers"
 
@@ -39,6 +39,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define CHFL_PROTECT 0x0008
 #define CHFL_OWNER   0x0010
 #define CHFL_ALL (CHFL_OP|CHFL_HALFOP|CHFL_VOICE|CHFL_PROTECT|CHFL_OWNER)
+
+#define SetOption(x, y) ((x)->options |= (y))
+#define ClearOption(x, y) ((x)->options &= ~(y))
+#define HasOption(x, y) ((x)->options & (y))
 
 #define SetChanFlag(x, y) ((x)->flags |= (y))
 #define ClearChanFlag(x, y) ((x)->flags &= ~(y))

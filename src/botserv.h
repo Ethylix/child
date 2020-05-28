@@ -22,9 +22,9 @@ USA.
 #ifndef _BOTSERV_H
 #define _BOTSERV_H
 
-#include <mem.h>
-#include <user.h>
-#include <channel.h>
+#include "channel.h"
+#include "mem.h"
+#include "user.h"
 
 typedef struct bot {
     char nick[NICKLEN+1]; /* hash key */

@@ -17,9 +17,33 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */      
 
-    
-#include <child.h>
-#include <globals.h>
+
+#include "botserv.h"
+#include "channel.h"
+#include "child.h"   
+#include "commands.h"
+#include "filter.h"
+#include "modules.h"
+#include "net.h"
+#include "string_utils.h"
+#include "trust.h"
+#include "user.h"
+
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+
+extern botlist bot_list;
+extern cflaglist cflag_list;
+extern chanbotlist chanbot_list;
+extern chanlist chan_list;
+extern commandlist command_list;
+extern memberlist member_list;
+extern nicklist nick_list;
+extern tblist tb_list;
+
+extern int eos;
+extern int vv;
 
 /* parseline v2, greetz to wildcat for the idea */
 
@@ -1130,7 +1154,7 @@ void m_register_user_v3 (char *command, char *tail)
     return;
 }
 
-void m_register_user_v4 (char *command, char *tail)
+void m_register_user_v4 (char *command __unused, char *tail)
 {
     char *nick;
     char *umode;
@@ -1270,9 +1294,8 @@ void m_stopic (char *command, char *tail)
 {
     Wchan *wchan;
     Chan *chptr;
-    char *chname, *setter, *ts, *topic;
+    char *chname, *ts, *topic;
     chname = command;
-    setter = tail;
     ts = SeperateWord(tail);
     if ((topic = strchr(ts, ':')) != NULL)
         topic++;

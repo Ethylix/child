@@ -22,6 +22,12 @@ USA.
 #ifndef _PARTYLINE_H
 #define _PARTYLINE_H
 
+#include "mem.h"
+#include "net.h"
+#include "user.h"
+
+#include <netdb.h>
+
 #define LogCommand() sendto_all_butone(eclient,"[%s] %s %s",eclient->nick,command,(tail) ? tail : "")
 
 #define CheckPAuth() if (eclient->authed != 1) \
@@ -49,6 +55,7 @@ typedef struct {
     Eclient *lhead;
 } eclientlist;
 
+int ReadPChunk (Eclient *);
 void ParseEclient (Eclient *);
 Eclient *find_eclient (int);
 Eclient *find_eclient_name (char *);

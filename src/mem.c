@@ -18,8 +18,43 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <child.h>
-#include <globals.h>
+#include "mem.h"
+
+#include "botserv.h"
+#include "channel.h"
+#include "commands.h"
+#include "filter.h"
+#include "modules.h"
+#include "partyline.h"
+#include "string_utils.h"
+#include "trust.h"
+#include "user.h"
+
+#include <stdio.h>
+#include <string.h>
+
+extern userlist user_list;
+extern nicklist nick_list;
+extern cloneslist clones_list;
+extern modulelist module_list;
+extern hooklist hook_list;
+extern trustlist trust_list;
+extern linklist link_list;
+extern eclientlist eclient_list;
+extern guestlist guest_list;
+extern chanlist chan_list;
+extern wchanlist wchan_list;
+extern cflaglist cflag_list;
+extern memberlist member_list;
+extern limitlist limit_list;
+extern botlist bot_list;
+extern chanbotlist chanbot_list;
+extern commandlist command_list;
+#ifdef USE_FILTER
+extern rulelist rule_list;
+#endif
+extern tblist tb_list;
+extern fakelist fake_list;
 
 void FreeAllMem()
 {
@@ -136,4 +171,27 @@ void InitMem()
     LIST_INIT(fake_list);
     memset(&indata, 0, sizeof(indata));
     memset(&outdata, 0, sizeof(outdata));
+}
+
+int hash(char *buffer)
+{
+    const char *ptr;
+    int tmp, val = 0;
+    char tltmp[1024];
+    memset(tltmp,0,1024);
+    ToLower(tltmp, buffer, 1023);
+    ptr = tltmp;
+
+    while (*ptr) {
+        val = (val << 4) + (*ptr);
+        if ((tmp = (val & 0xf0000000))) {
+            val = val ^ (tmp >> 24);
+            val = val ^ tmp;
+        }
+        ptr++;
+    }
+
+    if (val < 0) val *= -1;
+
+    return val % MAX_HASH;
 }

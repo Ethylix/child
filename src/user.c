@@ -18,8 +18,35 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <globals.h>
-#include <child.h>
+#include "user.h"
+
+#include "botserv.h"
+#include "channel.h"
+#include "child.h"
+#include "mem.h"
+#include "net.h"
+#include "string_utils.h"
+
+#include <regex.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <time.h>
+#include <unistd.h>
+
+extern botlist bot_list;
+extern cflaglist cflag_list;
+extern chanlist chan_list;
+extern cloneslist clones_list;
+extern fakelist fake_list;
+extern guestlist guest_list;
+extern linklist link_list;
+extern nicklist nick_list;
+extern userlist user_list;
+
+extern int eos;
 
 User *find_user(char *name)
 {

@@ -18,8 +18,36 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <child.h>
-#include <globals.h>
+#include "child.h"
+#include "config.h"
+#include "commands.h"
+#include "db.h"
+#include "filter.h"
+#include "modules.h"
+#include "net.h"
+#include "string_utils.h"
+#include "trust.h"
+#include "user.h"
+
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+extern chanlist chan_list;
+extern commandlist command_list;
+extern fakelist fake_list;
+extern memberlist member_list;
+extern modulelist module_list;
+extern nicklist nick_list;
+#ifdef USE_FILTER
+extern rulelist rule_list;
+#endif
+extern trustlist trust_list;
+extern userlist user_list;
+
+extern int raws;
+extern int emerg, emerg_req;
+extern int startuptime;
 
 void do_oper (Nick *, User *, char *);
 void do_help (Nick *, User *, char *);

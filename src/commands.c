@@ -19,8 +19,16 @@ USA.
 */
 
 
-#include <child.h>
-#include <globals.h>
+#include "commands.h"
+#include "child.h"
+#include "string_utils.h"
+
+#include "mem.h"
+
+#include <stdlib.h>
+#include <string.h>
+
+extern commandlist command_list;
 
 Command *__addCommand (char *name, int type, void (*func)(), char *desc, int subtype, int level)
 {

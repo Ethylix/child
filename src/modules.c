@@ -18,8 +18,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <child.h>
-#include <globals.h>
+#include "modules.h"
+
+#include "channel.h"
+#include "mem.h"
+#include "string_utils.h"
+#include "user.h"
+
+#include <dlfcn.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+extern hooklist hook_list;
+extern modulelist module_list;
 
 Module *find_module (char *name)
 {

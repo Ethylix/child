@@ -21,7 +21,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _USER_H
 #define _USER_H
 
-#include <child.h>
+#include "mem.h"
+
+#include <time.h>
 
 #define NICKLEN 35
 #define HOSTLEN 60
@@ -61,6 +63,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define UOPT_NOAUTO     0x0020
 #define UOPT_HIDEMAIL   0x0040
 #define UOPT_CLOAKED    0x0080
+
+#define SetOption(x, y) ((x)->options |= (y))
+#define ClearOption(x, y) ((x)->options &= ~(y))
+#define HasOption(x, y) ((x)->options & (y))
 
 #define SetUmode(x, y) ((x)->umodes |= (y))
 #define ClearUmode(x, y) ((x)->umodes &= ~(y))

@@ -18,8 +18,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <child.h>
-#include <globals.h>
+#include "botserv.h"
+#include "channel.h"
+#include "child.h"
+#include "commands.h"
+#include "modules.h"
+#include "net.h"
+#include "string_utils.h"
+
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+extern botlist bot_list;
+extern cflaglist cflag_list;
+extern chanbotlist chanbot_list;
+extern commandlist command_list;
+extern memberlist member_list;
+extern tblist tb_list;
+
+extern int emerg;
 
 void do_chan (Nick *, User *, char *);
 void do_help (Nick *, User *, char *);

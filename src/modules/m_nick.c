@@ -18,8 +18,25 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <child.h>
-#include <globals.h>
+#include "channel.h"
+#include "child.h"
+#include "commands.h"
+#include "mem.h"
+#include "net.h"
+#include "modules.h"
+#include "string_utils.h"
+#include "user.h"
+
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+extern cflaglist cflag_list;
+extern commandlist command_list;
+extern linklist link_list;
+extern userlist user_list;
+
+extern int emerg;
 
 void do_nick (Nick *, User *, char *);
 void do_help (Nick *, User *, char *);

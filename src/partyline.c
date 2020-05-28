@@ -19,8 +19,27 @@ USA.
 */  
 
     
-#include <child.h>
-#include <globals.h>
+#include "partyline.h"
+
+#include "channel.h"
+#include "child.h"
+#include "db.h"
+#include "mem.h"
+#include "modules.h"
+#include "string_utils.h"
+#include "user.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>
+
+extern eclientlist eclient_list;
+extern modulelist module_list;
+extern nicklist nick_list;
+
+extern int emerg, emerg_req;
 
 int ReadPChunk(Eclient *ecl)
 {

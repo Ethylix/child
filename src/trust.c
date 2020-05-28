@@ -18,9 +18,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <child.h>
-#include <globals.h>
-#include <trust.h>
+#include "trust.h"
+
+#include "mem.h"
+#include "net.h"
+#include "string_utils.h"
+
+#include <arpa/inet.h>
+#include <stdlib.h>
+#include <string.h>
+
+extern trustlist trust_list;
 
 Trust *find_trust_strict (char *host)
 {

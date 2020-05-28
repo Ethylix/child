@@ -18,8 +18,23 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <child.h>
-#include <globals.h>
+#include "botserv.h"
+#include "channel.h"
+#include "child.h"
+#include "commands.h"
+#include "mem.h"
+#include "modules.h"
+#include "net.h"
+#include "string_utils.h"
+#include "user.h"
+
+#include <regex.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+extern memberlist member_list;
+extern userlist user_list;
 
 void bot_god (Nick *, User *, Chan *, Wchan *);
 void bot_owner (Nick *, User *, Chan *, Wchan *);

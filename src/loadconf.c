@@ -18,8 +18,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <child.h>
-#include <globals.h>
+#include "config.h"
+#include "child.h"
+#include "commands.h"
+#include "filter.h"
+#include "modules.h"
+
+#include <stdio.h>
+#include <string.h>
+
+#ifdef USE_FILTER
+extern rulelist rule_list;
+#endif
+
+extern int verbose, vv;
 
 void loadconf(int what)
 {

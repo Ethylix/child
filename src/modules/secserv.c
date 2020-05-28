@@ -18,11 +18,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <child.h>
-#include <globals.h>
+#include "commands.h"
+#include "channel.h"
+#include "child.h"
+#include "modules.h"
+#include "net.h"
+#include "string_utils.h"
+#include "user.h"
+
+#include <stdlib.h>
 
 #define IsDigit(c) (c <= '9' && c >= '0')
 #define set_perm(a) perm = (a);
+
+extern chanlist chan_list;
+extern int emerg;
 
 char *modname = "secserv";
 char *logchan = "#stats";

@@ -301,25 +301,25 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 secserv_so_SOURCES = secserv.c
 secserv_so_LDFLAGS = -fPIC -shared
-secserv_so_CFLAGS = -I../../include -fPIC
+secserv_so_CFLAGS = -I.. -fPIC
 m_bot_so_SOURCES = m_bot.c
 m_bot_so_LDFLAGS = -fPIC -shared
-m_bot_so_CFLAGS = -I../../include -fPIC
+m_bot_so_CFLAGS = -I.. -fPIC
 m_chan_so_SOURCES = m_chan.c
 m_chan_so_LDFLAGS = -fPIC -shared
-m_chan_so_CFLAGS = -I../../include -fPIC
+m_chan_so_CFLAGS = -I.. -fPIC
 m_help_so_SOURCES = m_help.c
 m_help_so_LDFLAGS = -fPIC -shared
-m_help_so_CFLAGS = -I../../include -fPIC
+m_help_so_CFLAGS = -I.. -fPIC
 m_host_so_SOURCES = m_host.c
 m_host_so_LDFLAGS = -fPIC -shared
-m_host_so_CFLAGS = -I../../include -fPIC
+m_host_so_CFLAGS = -I.. -fPIC
 m_nick_so_SOURCES = m_nick.c
 m_nick_so_LDFLAGS = -fPIC -shared
-m_nick_so_CFLAGS = -I../../include -fPIC
+m_nick_so_CFLAGS = -I.. -fPIC
 m_oper_so_SOURCES = m_oper.c
 m_oper_so_LDFLAGS = -fPIC -shared
-m_oper_so_CFLAGS = -I../../include -fPIC
+m_oper_so_CFLAGS = -I.. -fPIC
 all: all-am
 
 .SUFFIXES:

@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define MEM_RSS 2
 
 #define TABLESZ 5003
+#define MAX_HASH TABLESZ
 
 #define LIST_EMPTY(x) ((x).size == 0)
 
@@ -88,5 +89,6 @@ long get_mem (int);
 void InitMem (void);
 void FreeAllMem (void);
 void cleanup_reconnect (void);
+int hash(char *buffer);
 
 #endif

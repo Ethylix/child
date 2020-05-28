@@ -18,8 +18,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <child.h>
-#include <globals.h>
+#include "child.h"
+#include "commands.h"
+#include "modules.h"
+#include "net.h"
+#include "string_utils.h"
+#include "user.h"
+
+#include <stdlib.h>
+#include <string.h>
+
+extern commandlist command_list;
+extern userlist user_list;
 
 void do_host (Nick *, User *, char *);
 void do_help (Nick *, User *, char *);

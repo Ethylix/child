@@ -19,8 +19,10 @@ USA.
 */
 
 
-#include <globals.h>
-#include <child.h>
+#include <arpa/inet.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* Code ripped from UnrealIRCD (www.unrealircd.com) */
 

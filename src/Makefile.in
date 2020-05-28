@@ -103,10 +103,9 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_child_OBJECTS = botserv.$(OBJEXT) base64.$(OBJEXT) \
 	channel.$(OBJEXT) child.$(OBJEXT) commands.$(OBJEXT) \
-	db.$(OBJEXT) filter.$(OBJEXT) hash.$(OBJEXT) \
-	loadconf.$(OBJEXT) md5.$(OBJEXT) mem.$(OBJEXT) \
-	modules.$(OBJEXT) mysql.$(OBJEXT) net.$(OBJEXT) \
-	partyline.$(OBJEXT) parseline.$(OBJEXT) str.$(OBJEXT) \
+	db.$(OBJEXT) filter.$(OBJEXT) loadconf.$(OBJEXT) md5.$(OBJEXT) \
+	mem.$(OBJEXT) modules.$(OBJEXT) net.$(OBJEXT) \
+	partyline.$(OBJEXT) parseline.$(OBJEXT) string_utils.$(OBJEXT) \
 	trust.$(OBJEXT) user.$(OBJEXT)
 child_OBJECTS = $(am_child_OBJECTS)
 child_LDADD = $(LDADD)
@@ -263,7 +262,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-child_SOURCES = botserv.c base64.c channel.c child.c commands.c db.c filter.c hash.c loadconf.c md5.c mem.c modules.c mysql.c net.c partyline.c parseline.c str.c trust.c user.c
+child_SOURCES = botserv.c base64.c channel.c child.c commands.c db.c filter.c loadconf.c md5.c mem.c modules.c net.c partyline.c parseline.c string_utils.c trust.c user.c
 all: all-am
 
 .SUFFIXES:
@@ -357,16 +356,14 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/commands.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/db.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filter.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/loadconf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/modules.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mysql.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/net.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parseline.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/partyline.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/string_utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trust.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/user.Po@am__quote@
 

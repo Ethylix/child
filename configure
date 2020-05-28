@@ -5084,7 +5084,7 @@ fi
 done
 
 
-CFLAGS="-g -Wall -W -pipe -export-dynamic -I../include $CFLAGS"
+CFLAGS="-g -Wall -W -pipe -export-dynamic $CFLAGS"
 
 ac_config_files="$ac_config_files Makefile src/Makefile src/modules/Makefile"
 

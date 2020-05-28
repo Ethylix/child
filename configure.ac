@@ -101,7 +101,7 @@ LIBS="$LIBS -export-dynamic"
 
 AC_CHECK_HEADERS([dlfcn.h mysql/mysql.h openssl/evp.h],,[AC_MSG_ERROR([Required headers not found])])
 
-CFLAGS="-g -Wall -W -pipe -export-dynamic -I../include $CFLAGS"
+CFLAGS="-g -Wall -W -pipe -export-dynamic $CFLAGS"
 
 AC_CONFIG_FILES([Makefile src/Makefile src/modules/Makefile])
 AC_OUTPUT

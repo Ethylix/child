@@ -18,8 +18,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
 USA.
 */
 
-#include <child.h>
-#include <globals.h>
+#include "filter.h"
+
+#include "config.h"
+#include "mem.h"
+#include "string_utils.h"
+#include "user.h"
+
+#include <regex.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+extern rulelist rule_list;
+
+extern int verbose, vv;
 
 #ifdef USE_FILTER
 

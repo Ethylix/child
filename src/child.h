@@ -21,8 +21,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _CHILD_H
 #define _CHILD_H
 
+
 #include <config.h>
 
+/*
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -71,20 +73,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <net.h>
 #include <partyline.h>
 #include <trust.h>
-#include <user.h>
+#include <user.h>*/
 
-#ifndef __unused
-#define __unused __attribute__((unused))
-#endif
-
-#define Strstr(x,y) strcasestr(x,y)
-#define ircsprintf(a,b,c,d) va_start(d,c); \
-                            vsnprintf(a,b,c,d); \
-                            va_end(d)
-
-#define SetOption(x, y) ((x)->options |= (y))
-#define ClearOption(x, y) ((x)->options &= ~(y))
-#define HasOption(x, y) ((x)->options & (y))
+#include "user.h"
 
 #define HASHMAX 65000
 #define CONF_LOAD   0
@@ -94,8 +85,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #define operlog(x, ...) mylog(me.logfile, x, ##__VA_ARGS__)
 #define pllog(x, ...) mylog(me.pl_logfile, x, ##__VA_ARGS__)
-
-#define match_regex(x, y) __match_regex(x, y, REG_EXTENDED|REG_NOSUB)
 
 struct {
     char nick[32];
@@ -155,45 +144,13 @@ void child_clean (void) __attribute__((noreturn));
 void init_srandom (void);
 void mylog (char *, char *, ...);
 
-/* db.c */
-void loaduserdb (void);
-void loadchandb (void);
-void loadtrustdb (void);
-void loadlinkdb (void);
-void loadbotservdb (void);
-void saveuserdb (void);
-void savechandb (void);
-void savetrustdb (void);
-void savelinkdb (void);
-void savebotservdb (void);
-void savealldb (void);
-void loadalldb (void);
-
-/* hash.c */
-int hash (char *);
-
 /* loadconf.c */
 void loadconf (int);
 
 /* md5.c */
 char *md5_hash (char *);
 
-/* mysql.c */
-int connect_to_db (void);
-int reconnect_to_db (void);
-
 /* parseline.c */
 int ParseLine (void);
-
-/* str.c */
-int IsCharInString (char, char *);
-char *SeperateWord (char *);
-char *StripBlanks (char *);
-int Strcmp (const char *, const char *);
-char *strtosql(char *, char *, int);
-int __match_regex (char *, char *, int);
-char *parse_range (char *, char *);
-char *gen_rand_string (char *, char *, int);
-void ToLower(char *, char *, unsigned int);
 
 #endif

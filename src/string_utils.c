@@ -18,8 +18,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <globals.h>
-#include <child.h>
+#include "string_utils.h"
+
+#include "child.h"
+
+#include <ctype.h>
+#include <regex.h>
+#include <stdlib.h>
+#include <string.h>
 
 int IsCharInString(char chr, char *string)
 {

@@ -18,8 +18,30 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <globals.h>
-#include <child.h>
+#include "channel.h"
+
+#include "botserv.h"
+#include "child.h"
+#include "mem.h"
+#include "net.h"
+#include "string_utils.h"
+
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+extern cflaglist cflag_list;
+extern chanlist chan_list;
+extern chanbotlist chanbot_list;
+extern limitlist limit_list;
+extern memberlist member_list;
+extern tblist tb_list;
+extern userlist user_list;
+extern wchanlist wchan_list;
+
+extern int eos;
 
 Chan *find_channel (char *name)
 {

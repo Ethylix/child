@@ -20,6 +20,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _FILTER_H
 #define _FILTER_H
 
+#include "user.h"
+
 #define DEFAULT_RULESFILE "filter.conf"
 
 #define RULE_DROP   0

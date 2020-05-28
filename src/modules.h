@@ -21,7 +21,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _MODULES_H
 #define _MODULES_H
 
-#include <child.h>
+#include "channel.h"
+#include "user.h"
+
+#ifndef __unused
+#define __unused __attribute__((unused))
+#endif
 
 #define HOOK_JOIN           0x0001
 /* nptr  : sender

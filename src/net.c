@@ -18,10 +18,36 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <child.h>
-#include <globals.h>
+#include "net.h"
 
-jmp_buf timeout_jump;
+#include "child.h"
+#include "filter.h"
+#include "mem.h"
+#include "partyline.h"
+#include "string_utils.h"
+
+#include <errno.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <poll.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <time.h>
+#include <unistd.h>
+
+extern eclientlist eclient_list;
+
+extern struct pollfd ufds[ECL_MAXSOCK];
+extern int vv;
+extern int sock, esock;
+extern int eos;
+
+static jmp_buf timeout_jump;
 
 void timeout()
 {

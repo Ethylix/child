@@ -17,13 +17,38 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include <child.h>
+
+#include "child.h"
+
+#include "botserv.h"
+#include "channel.h"
+#include "commands.h"
+#include "db.h"
+#include "filter.h"
+#include "modules.h"
+#include "partyline.h"
+#include "string_utils.h"
+#include "trust.h"
+#include "user.h"
+
+#include <fcntl.h>
+#include <mysql/mysql.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/poll.h>
+#include <sys/resource.h>
+#include <sys/time.h>
+#include <sys/wait.h>
+#include <time.h>
+#include <unistd.h>
 
 int sock,esock;
 int startuptime;
 int verbose, vv, raws, eos;
 int emerg, emerg_req;
-MYSQL mysql, mysql2;
+MYSQL mysql;
 
 userlist user_list;
 nicklist nick_list;

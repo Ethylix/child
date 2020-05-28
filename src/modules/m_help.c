@@ -18,10 +18,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <child.h>
-#include <globals.h>
+#include "child.h"
+#include "commands.h"
+#include "modules.h"
+#include "string_utils.h"
+
+#include <stdlib.h>
+#include <string.h>
+
+extern commandlist command_list;
+
+extern int raws;
 
 #define ACTUAL_CMDLEN 16
+
 
 void do_help (Nick *, User *, char *);
 void help_host (Nick *, User *, char *);

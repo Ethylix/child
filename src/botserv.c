@@ -19,8 +19,16 @@ USA.
 */
 
 
-#include <globals.h>
-#include <child.h>
+#include "botserv.h"
+
+#include "mem.h"
+#include "string_utils.h"
+
+#include <stdlib.h>
+#include <string.h>
+
+extern botlist bot_list;
+extern chanbotlist chanbot_list;
 
 /* addBot function. It adds a new bot to be used with botserv to the database. It doesn't create the fakeuser.
  * params:

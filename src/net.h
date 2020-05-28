@@ -24,8 +24,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define CHUNKSIZE   65536
 #define SENDQSIZE   65536 /* 64 KB should be really enough */
 
-#include <partyline.h>
-
 #define RECONNECT_DELAY 60
 #define MAX_RECO_ATTEMPTS 10
 #define CONNECT_TIMEOUT 5
@@ -48,7 +46,6 @@ void SendInitToServer (void);
 void DisconnectFromServer (void);
 void SendRaw (char *, ...);
 int ReadChunk (void);
-int ReadPChunk (Eclient *);
 int GetLineFromChunk (void);
 int GetLineFromPChunk (int);
 int Bind (void);

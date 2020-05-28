@@ -21,7 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _TRUST_H
 #define _TRUST_H
 
-#include <child.h>
+#include "mem.h"
+#include "user.h"
 
 typedef struct trust {
     char host[HOSTLEN + 1]; /* hash key */

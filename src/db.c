@@ -18,8 +18,31 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <child.h>
-#include <globals.h>
+#include "db.h"
+
+#include "botserv.h"
+#include "channel.h"
+#include "child.h"
+#include "modules.h"
+#include "string_utils.h"
+#include "trust.h"
+#include "user.h"
+
+#include <mysql/mysql.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+
+extern botlist bot_list;
+extern cflaglist cflag_list;
+extern chanbotlist chanbot_list;
+extern chanlist chan_list;
+extern linklist link_list;
+extern trustlist trust_list;
+extern userlist user_list;
+
+extern MYSQL mysql;
+extern int verbose, vv;
 
 void loaduserdb()
 {
@@ -445,4 +468,18 @@ void loadalldb()
     loadbotservdb();
     RunHooks(HOOK_LOADDB,NULL,NULL,NULL,NULL);
     if (verbose) printf("DBs loaded\n");
+}
+
+
+int connect_to_db()
+{
+    mysql_init(&mysql);
+    if (!mysql_real_connect(&mysql,me.mysql_host,me.mysql_login,me.mysql_passwd,me.mysql_db,0,NULL,0)) return 0;
+    return 1;
+}
+
+int reconnect_to_db()
+{
+    mysql_close(&mysql);
+    return connect_to_db();
 }

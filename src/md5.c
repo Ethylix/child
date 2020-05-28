@@ -18,8 +18,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#include <child.h>
-#include <globals.h>
+#include <openssl/evp.h>
+#include <stdio.h>
+#include <string.h>
 
 char *md5_hash(char *msg)
 {
