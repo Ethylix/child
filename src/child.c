@@ -116,7 +116,7 @@ static void sighandler (int signal)
 
 static void usage (char *progname)
 {
-    fprintf(stderr,"Usage: %s [-cdv]\n\t-c\tCreate databases\n\t-d\tDo not daemonize\n\t-v\tBe verbose (use twice for more verbose)\n",progname);
+    fprintf(stderr,"Usage: %s [-dv]\n\t-d\tDo not daemonize\n\t-v\tBe verbose (use twice for more verbose)\n",progname);
     exit(-1);
 }
 
@@ -298,13 +298,8 @@ int main(int argc, char **argv)
 
     /* -- */
 
-    int cdb=0;
-
-    while ((op = getopt(argc,argv,"acdhv")) != EOF) {
+    while ((op = getopt(argc,argv,"dhv")) != EOF) {
         switch(op) {
-            case 'c':
-                cdb = 1;
-                break;
             case 'd':
                 daemonize = 0;
                 break;
@@ -325,43 +320,6 @@ int main(int argc, char **argv)
     if (me.filter)
         loadrulefile();
 #endif
-
-    if (cdb) {
-        if (!connect_to_db()) {
-            printf("Cannot connect to db\n");
-            child_clean();
-        }
-
-        printf("Creating databases ... ");
-        fflush(stdout);
-        char tmp[512];
-        sprintf(tmp,"CREATE TABLE IF NOT EXISTS `child_chans` (chname varchar(50) not null, founder varchar(50) not null, entrymsg blob not null, options int not null, mlock varchar(32) not null, autolimit int not null, lastseen int not null, regtime int not null, topic blob not null)");
-        mysql_query(&mysql,tmp);
-
-        sprintf(tmp,"CREATE TABLE IF NOT EXISTS `child_chan_access` (chname varchar(50) not null, username varchar(255) not null, level int not null, automode int not null default 1, suspended int not null, uflags int not null)");
-        mysql_query(&mysql,tmp);
-
-        sprintf(tmp,"CREATE TABLE IF NOT EXISTS `child_trusts` (hostname varchar(255) not null, clones int not null)");
-        mysql_query(&mysql,tmp);
-
-        sprintf(tmp,"CREATE TABLE IF NOT EXISTS `child_users` (username varchar(50) not null, authlevel int not null, seen int not null, vhost varchar(200) not null, md5_pass varchar(32) not null, options int not null, timeout int not null, email varchar(100) not null, regtime int not null)");
-        mysql_query(&mysql,tmp);
-
-        sprintf(tmp,"CREATE TABLE IF NOT EXISTS `child_links` (master varchar(50) not null, slave varchar(50) not null)");
-        mysql_query(&mysql,tmp);
-
-        sprintf(tmp,"CREATE TABLE IF NOT EXISTS `child_botserv_bots` (name varchar(50) not null, ident varchar(50) not null, host varchar(50) not null)");
-        mysql_query(&mysql,tmp);
-
-        sprintf(tmp,"CREATE TABLE IF NOT EXISTS `child_botserv_chans` (chan varchar(50) not null, bot varchar(50) not null)");
-        mysql_query(&mysql,tmp);
-
-        RunHooks(HOOK_CREATEDB,NULL,NULL,NULL,NULL);
-
-        printf(" done.\n");
-        mysql_close(&mysql);
-        child_clean();
-    }
 
     if (me.listen_port) {
         if (!Bind()) {
