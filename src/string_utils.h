@@ -17,21 +17,27 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "child.h"
+#ifndef _STRING_UTILS_H
+#define _STRING_UTILS_H
 
-#include <mysql/mysql.h>
+#include <stdarg.h>
+#include <stdio.h>
 
-extern MYSQL mysql;
+#define Strstr(x,y) strcasestr(x,y)
+#define ircsprintf(a,b,c,d) va_start(d,c); \
+                            vsnprintf(a,b,c,d); \
+                            va_end(d)
 
-int connect_to_db()
-{
-    mysql_init(&mysql);
-    if (!mysql_real_connect(&mysql,me.mysql_host,me.mysql_login,me.mysql_passwd,me.mysql_db,0,NULL,0)) return 0;
-    return 1;
-}
+#define match_regex(x, y) __match_regex(x, y, REG_EXTENDED|REG_NOSUB)
 
-int reconnect_to_db()
-{
-    mysql_close(&mysql);
-    return connect_to_db();
-}
+int IsCharInString (char, char *);
+char *SeperateWord (char *);
+char *StripBlanks (char *);
+int Strcmp (const char *, const char *);
+char *strtosql(char *, char *, int);
+int __match_regex (char *, char *, int);
+char *parse_range (char *, char *);
+char *gen_rand_string (char *, char *, int);
+void ToLower(char *, char *, unsigned int);
+
+#endif  // _STRING_UTILS_H

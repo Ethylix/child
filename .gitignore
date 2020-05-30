@@ -1,0 +1,16 @@
+*.o
+*.so
+.deps
+Makefile
+autom4te.cache
+*.log
+*.status
+stamp-h1
+AUTHORS
+CLEANUP
+COPYING
+NEWS
+README
+config.h
+child
+.*.swp
