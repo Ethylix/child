@@ -103,7 +103,7 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_child_OBJECTS = botserv.$(OBJEXT) base64.$(OBJEXT) \
 	channel.$(OBJEXT) child.$(OBJEXT) commands.$(OBJEXT) \
-	db.$(OBJEXT) filter.$(OBJEXT) hashmap.$(OBJEXT) \
+	core.$(OBJEXT) db.$(OBJEXT) filter.$(OBJEXT) hashmap.$(OBJEXT) \
 	loadconf.$(OBJEXT) md5.$(OBJEXT) mem.$(OBJEXT) \
 	modules.$(OBJEXT) net.$(OBJEXT) partyline.$(OBJEXT) \
 	parseline.$(OBJEXT) string_utils.$(OBJEXT) trust.$(OBJEXT) \
@@ -263,7 +263,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-child_SOURCES = botserv.c base64.c channel.c child.c commands.c db.c filter.c hashmap.c loadconf.c md5.c mem.c modules.c net.c partyline.c parseline.c string_utils.c trust.c user.c
+child_SOURCES = botserv.c base64.c channel.c child.c commands.c core.c db.c filter.c hashmap.c loadconf.c md5.c mem.c modules.c net.c partyline.c parseline.c string_utils.c trust.c user.c
 all: all-am
 
 .SUFFIXES:
@@ -355,6 +355,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/channel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/child.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/commands.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/core.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/db.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hashmap.Po@am__quote@
