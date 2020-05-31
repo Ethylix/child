@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "botserv.h"
 #include "channel.h"
 #include "commands.h"
+#include "core.h"
 #include "db.h"
 #include "filter.h"
 #include "modules.h"
@@ -64,7 +65,6 @@ wchanlist wchan_list;
 cflaglist cflag_list;
 memberlist member_list;
 limitlist limit_list;
-botlist bot_list;
 chanbotlist chanbot_list;
 commandlist command_list;
 #ifdef USE_FILTER
@@ -205,6 +205,7 @@ int main(int argc, char **argv)
     startuptime = time(NULL);
 
     InitMem();
+    init_core();
 
     int retval,mysql_lastconn,newfd,i,lastcheck,lastcheck2,nbfd;
     struct sockaddr_storage sa;

@@ -22,7 +22,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "channel.h"
 #include "child.h"   
 #include "commands.h"
+#include "core.h"
 #include "filter.h"
+#include "hashmap.h"
 #include "modules.h"
 #include "net.h"
 #include "string_utils.h"
@@ -33,7 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern botlist bot_list;
 extern cflaglist cflag_list;
 extern chanbotlist chanbot_list;
 extern chanlist chan_list;
@@ -362,6 +363,7 @@ void m_kick (char *sender, char *tail)
 
 void m_kill (char *sender, char *tail)
 {
+    struct hashmap_entry *entry;
     char *nick;
     Nick *nptr;
     User *uptr;
@@ -390,7 +392,8 @@ void m_kill (char *sender, char *tail)
             return;
         }
 
-        LIST_FOREACH_ALL(bot_list, bot) {
+        HASHMAP_FOREACH_ENTRY(get_core()->bots, entry) {
+            bot = entry->value;
             if (!Strcmp(nick,bot->nick)) {
                 fakeuser(bot->nick,bot->ident,bot->host,BOTSERV_UMODES);
                 LIST_FOREACH_ALL(chanbot_list, chanbot) {

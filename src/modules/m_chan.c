@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "channel.h"
 #include "child.h"
 #include "commands.h"
+#include "core.h"
+#include "hashmap.h"
 #include "modules.h"
 #include "net.h"
 #include "string_utils.h"
@@ -30,7 +32,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern botlist bot_list;
 extern cflaglist cflag_list;
 extern chanbotlist chanbot_list;
 extern commandlist command_list;
@@ -1451,12 +1452,15 @@ void chan_unassign (Nick *nptr, User *uptr, Chan *chptr, char *all)
 
 void chan_botlist (Nick *nptr)
 {
+    struct hashmap_entry *entry;
     Bot *bot;
 
     NoticeToUser(nptr,"List of available bots :");
-    LIST_FOREACH_ALL(bot_list, bot)
+    HASHMAP_FOREACH_ENTRY(get_core()->bots, entry) {
+        bot = entry->value;
         NoticeToUser(nptr,"     \2%s\2 (%s@%s)",bot->nick,bot->ident,bot->host);
-    NoticeToUser(nptr,"End of list (%d entries).",bot_list.size);
+    }
+    NoticeToUser(nptr,"End of list (%d entries).", hashmap_size(get_core()->bots));
 }
 
 void chan_addbot (Nick *nptr, User *uptr __unused, Chan *chptr __unused, char *all)
@@ -1477,7 +1481,7 @@ void chan_addbot (Nick *nptr, User *uptr __unused, Chan *chptr __unused, char *a
         return;
     }
 
-    addBot(arg1,arg2,arg3);
+    add_bot(arg1, arg2, arg3);
     fakeuser(arg1,arg2,arg3,BOTSERV_UMODES);
     SendRaw("SQLINE %s :Reserved for services",arg1);
     NoticeToUser(nptr,"Done.");
@@ -1505,7 +1509,7 @@ void chan_delbot (Nick *nptr, User *uptr __unused, Chan *chptr __unused, char *a
     }
 
     fakekill(bot->nick,"Bot deleted");
-    delBot(bot);
+    remove_bot(bot);
 
     NoticeToUser(nptr,"Done.");
 }

@@ -21,16 +21,17 @@ USA.
 
 #include "botserv.h"
 
+#include "core.h"
+#include "hashmap.h"
 #include "mem.h"
 #include "string_utils.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-extern botlist bot_list;
 extern chanbotlist chanbot_list;
 
-/* addBot function. It adds a new bot to be used with botserv to the database. It doesn't create the fakeuser.
+/* add_bot function. It adds a new bot to be used with botserv to the database. It doesn't create the fakeuser.
  * params:
  *      nick: the nickname of the bot
  *      ident: its ident
@@ -38,16 +39,22 @@ extern chanbotlist chanbot_list;
  * return value: pointer to the new bot.
  */
 
-Bot *addBot (char *nick, char *ident, char *host)
+Bot *add_bot(const char *nick, const char *ident, const char *host)
 {
-    Bot *newbot;
-    newbot = (Bot *)malloc(sizeof(Bot));
+    Bot *newbot = malloc(sizeof(Bot));
+    if (!newbot)
+        return NULL;
 
-    strncpy(newbot->nick,nick,NICKLEN);
-    strncpy(newbot->ident,ident,NICKLEN);
-    strncpy(newbot->host,host,HOSTLEN);
+    strncpy(newbot->nick, nick, NICKLEN);
+    strncpy(newbot->ident, ident, NICKLEN);
+    strncpy(newbot->host, host, HOSTLEN);
 
-    LIST_INSERT_HEAD(bot_list, newbot, HASH(nick));
+    if (!hashmap_insert(get_core()->bots, newbot->nick, newbot, NULL)) {
+        fprintf(stderr, "Failed to insert new bot \"%s\" into hashmap "
+                        "(duplicate entry?)\n", newbot->nick);
+        free(newbot);
+        return NULL;
+    }
 
     return newbot;
 }
@@ -80,9 +87,12 @@ Chanbot *addChanbot (char *name, char *bot)
  * return value: none.
  */
 
-void delBot (Bot *bot)
+void remove_bot(Bot *bot)
 {
-    LIST_REMOVE(bot_list, bot, HASH(bot->nick));
+    if (!hashmap_erase(get_core()->bots, bot->nick)) {
+        fprintf(stderr, "Failed to remove bot \"%s\" from hashmap.\n",
+                bot->nick);
+    }
     free(bot);
 }
 
@@ -105,15 +115,14 @@ void delChanbot (Chanbot *chanbot)
  * return value: If found, pointer to the searched bot. Otherwise, NULL pointer.
  */
 
-Bot *find_bot (char *nick)
+Bot *find_bot(const char *nick)
 {
-    Bot *tmp;
-    LIST_FOREACH(bot_list, tmp, HASH(nick)) {
-        if (!Strcmp(tmp->nick,nick))
-            return tmp;
-    }
+    struct hashmap_entry *entry;
 
-    return NULL;
+    if (!hashmap_find(get_core()->bots, nick, &entry))
+        return NULL;
+
+    return entry->value;
 }
 
 /* find_chanbot function. It searches a channel managed by botserv in the database.

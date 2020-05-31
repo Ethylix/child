@@ -47,7 +47,6 @@ extern wchanlist wchan_list;
 extern cflaglist cflag_list;
 extern memberlist member_list;
 extern limitlist limit_list;
-extern botlist bot_list;
 extern chanbotlist chanbot_list;
 extern commandlist command_list;
 #ifdef USE_FILTER
@@ -161,7 +160,6 @@ void InitMem()
     LIST_INIT(cflag_list);
     LIST_INIT(member_list);
     LIST_INIT(limit_list);
-    LIST_INIT(bot_list);
     LIST_INIT(chanbot_list);
     LIST_INIT(command_list);
 #ifdef USE_FILTER

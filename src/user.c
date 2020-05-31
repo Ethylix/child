@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "botserv.h"
 #include "channel.h"
 #include "child.h"
+#include "core.h"
+#include "hashmap.h"
 #include "mem.h"
 #include "net.h"
 #include "string_utils.h"
@@ -36,7 +38,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 #include <unistd.h>
 
-extern botlist bot_list;
 extern cflaglist cflag_list;
 extern chanlist chan_list;
 extern cloneslist clones_list;
@@ -425,17 +426,22 @@ int sendmail(char *to, char *mail)
 
 void killallfakes()
 {
+    struct hashmap_entry *entry;
     Bot *bot;
 
-    LIST_FOREACH_ALL(bot_list, bot)
+    HASHMAP_FOREACH_ENTRY(get_core()->bots, entry) {
+        bot = entry->value;
         fakekill(bot->nick,"Exiting");
+    }
 }
 
 void loadallfakes()
 {
+    struct hashmap_entry *entry;
     Bot *bot;
 
-    LIST_FOREACH_ALL(bot_list, bot) {
+    HASHMAP_FOREACH_ENTRY(get_core()->bots, entry) {
+        bot = entry->value;
         fakeuser(bot->nick,bot->ident,bot->host,BOTSERV_UMODES);
         SendRaw("SQLINE %s :Reserved for services",bot->nick);
     }

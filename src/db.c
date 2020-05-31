@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "botserv.h"
 #include "channel.h"
 #include "child.h"
+#include "core.h"
+#include "hashmap.h"
 #include "modules.h"
 #include "string_utils.h"
 #include "trust.h"
@@ -33,7 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern botlist bot_list;
 extern cflaglist cflag_list;
 extern chanbotlist chanbot_list;
 extern chanlist chan_list;
@@ -280,7 +281,7 @@ void loadbotservdb()
         strncpy(ident,row[1],NICKLEN);
         strncpy(host,row[2],HOSTLEN);
         if (find_bot(nick)) continue;
-        addBot(nick,ident,host);
+        add_bot(nick, ident, host);
         if (vv) printf("Bot %s added (%s@%s)\n",nick,ident,host);
     }
 
@@ -422,6 +423,7 @@ void savebotservdb()
     char tmp[1024];
     Bot *bot;
     Chanbot *chanbot;
+    struct hashmap_entry *entry;
 
     if (!reconnect_to_db()) {
         fprintf(stderr,"Cannot connect to db\n");
@@ -431,7 +433,8 @@ void savebotservdb()
 
     mysql_query(&mysql,"DELETE FROM child_botserv_bots");
 
-    LIST_FOREACH_ALL(bot_list, bot) {
+    HASHMAP_FOREACH_ENTRY(get_core()->bots, entry) {
+        bot = entry->value;
         snprintf(tmp,1024,"INSERT INTO child_botserv_bots VALUES ('%s','%s','%s')",bot->nick,bot->ident,bot->host);
         mysql_query(&mysql,tmp);
     }
