@@ -25,9 +25,9 @@ struct hashmap *hashmap_new(unsigned int (*hash)(const void *key),
     }
 
     for (i = 0; i < hm->bucket_count; i++)
-        llist_init(&hm->map[i]);
+        LLIST_INIT(&hm->map[i]);
 
-    llist_init(&hm->keys);
+    LLIST_INIT(&hm->keys);
 
     hm->hash = hash;
     hm->compare = compare;
@@ -63,16 +63,16 @@ static int hashmap_resize(struct hashmap *hm, size_t new_bucket_count)
         return -1;
 
     for (i = 0; i < new_bucket_count; i++)
-        llist_init(&new_map[i]);
+        LLIST_INIT(&new_map[i]);
 
     // New bucket count must be set before rehashing for hashmap_bucket()
     // to return the correct value.
     hm->bucket_count = new_bucket_count;
 
-    llist_foreach(&hm->keys, he, key_head) {
-        llist_remove(&he->map_head);
+    LLIST_FOREACH_ENTRY(&hm->keys, he, key_head) {
+        LLIST_REMOVE(&he->map_head);
         idx = hashmap_bucket(hm, he->key);
-        llist_insert_tail(&new_map[idx], &he->map_head);
+        LLIST_INSERT_TAIL(&new_map[idx], &he->map_head);
     }
 
     free(hm->map);
@@ -81,7 +81,7 @@ static int hashmap_resize(struct hashmap *hm, size_t new_bucket_count)
     return 0;
 }
 
-bool hashmap_insert(struct hashmap *hm, const void *key, const void *value,
+bool hashmap_insert(struct hashmap *hm, const void *key, void *value,
                     struct hashmap_entry **entry)
 {
     struct hashmap_entry *he;
@@ -89,7 +89,7 @@ bool hashmap_insert(struct hashmap *hm, const void *key, const void *value,
 
     idx = hashmap_bucket(hm, key);
 
-    llist_foreach(&hm->map[idx], he, map_head) {
+    LLIST_FOREACH_ENTRY(&hm->map[idx], he, map_head) {
         if (hm->compare(he->key, key) == 0) {
             if (entry)
                 *entry = he;
@@ -111,8 +111,8 @@ bool hashmap_insert(struct hashmap *hm, const void *key, const void *value,
     he->key = key;
     he->value = value;
 
-    llist_insert_tail(&hm->map[idx], &he->map_head);
-    llist_insert_tail(&hm->keys, &he->key_head);
+    LLIST_INSERT_TAIL(&hm->map[idx], &he->map_head);
+    LLIST_INSERT_TAIL(&hm->keys, &he->key_head);
 
     hm->size++;
 
@@ -130,7 +130,7 @@ bool hashmap_find(const struct hashmap *hm, const void *key,
 
     idx = hashmap_bucket(hm, key);
 
-    llist_foreach(&hm->map[idx], he, map_head) {
+    LLIST_FOREACH_ENTRY(&hm->map[idx], he, map_head) {
         if (hm->compare(he->key, key) == 0) {
             if (entry)
                 *entry = he;
@@ -148,10 +148,10 @@ bool hashmap_erase(struct hashmap *hm, const void *key)
 
     idx = hashmap_bucket(hm, key);
 
-    llist_foreach(&hm->map[idx], he, map_head) {
+    LLIST_FOREACH_ENTRY(&hm->map[idx], he, map_head) {
         if (hm->compare(he->key, key) == 0) {
-            llist_remove(&he->map_head);
-            llist_remove(&he->key_head);
+            LLIST_REMOVE(&he->map_head);
+            LLIST_REMOVE(&he->key_head);
             hm->size--;
             free(he);
             return true;
@@ -165,10 +165,10 @@ void hashmap_flush(struct hashmap *hm)
 {
     struct hashmap_entry *he;
 
-    while (!llist_empty(&hm->keys)) {
-        he = llist_first_entry(&hm->keys, struct hashmap_entry, key_head);
-        llist_remove(&he->key_head);
-        llist_remove(&he->map_head);
+    while (!LLIST_EMPTY(&hm->keys)) {
+        he = LLIST_FIRST_ENTRY(&hm->keys, struct hashmap_entry, key_head);
+        LLIST_REMOVE(&he->key_head);
+        LLIST_REMOVE(&he->map_head);
         hm->size--;
         free(he);
     }

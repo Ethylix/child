@@ -17,13 +17,13 @@ struct llist_head {
     const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
     (type *)( (char *)__mptr - offsetof(type, member) ); })
 
-#define llist_init(head)    \
+#define LLIST_INIT(head)    \
 {                \
     (head)->next = head;    \
     (head)->prev = head;    \
 }
 
-#define llist_insert_tail(head, elem)    \
+#define LLIST_INSERT_TAIL(head, elem)    \
 {                    \
     (elem)->next = (head);        \
     (elem)->prev = (head)->prev;    \
@@ -31,7 +31,7 @@ struct llist_head {
     (head)->prev = (elem);        \
 }
 
-#define llist_insert_head(head, elem)    \
+#define LLIST_INsERT_HEAD(head, elem)    \
 {                    \
     (elem)->next = (head)->next;    \
     (elem)->prev = (head);        \
@@ -39,7 +39,7 @@ struct llist_head {
     (head)->next = (elem);        \
 }
 
-#define llist_remove(elem)            \
+#define LLIST_REMOVE(elem)            \
 {                        \
     (elem)->next->prev = (elem)->prev;    \
     (elem)->prev->next = (elem)->next;    \
@@ -47,29 +47,29 @@ struct llist_head {
     (elem)->prev = (elem);            \
 }
 
-#define llist_empty(head) ((head)->next == (head))
+#define LLIST_EMPTY(head) ((head)->next == (head))
 
-#define llist_entry(head, type, member)    \
+#define LLIST_ENTRY(head, type, member)    \
     container_of(head, type, member)
 
-#define llist_first_entry(head, type, member) \
-    llist_entry((head)->next, type, member)
+#define LLIST_FIRST_ENTRY(head, type, member) \
+    LLIST_ENTRY((head)->next, type, member)
 
-#define llist_next_entry(elem, member)    \
-    llist_entry((elem)->member.next, typeof(*(elem)), member)
+#define LLIST_NEXT_ENTRY(elem, member)    \
+    LLIST_ENTRY((elem)->member.next, typeof(*(elem)), member)
 
-#define llist_last_entry(head, type, member) \
-    llist_entry((head)->prev, type, member)
+#define LLIST_LAST_ENTRY(head, type, member) \
+    LLIST_ENTRY((head)->prev, type, member)
 
-#define llist_foreach(head, elem, member)                 \
-    for ((elem) = llist_first_entry(head, typeof(*(elem)), member);    \
+#define LLIST_FOREACH_ENTRY(head, elem, member)                 \
+    for ((elem) = LLIST_FIRST_ENTRY(head, typeof(*(elem)), member);    \
          &((elem)->member) != (head);                \
-         (elem) = llist_next_entry(elem, member))
+         (elem) = LLIST_NEXT_ENTRY(elem, member))
 
-#define llist_foreach_safe(head, elem, tmp, member)            \
-    for ((elem) = llist_first_entry(head, typeof(*(elem)), member),    \
-         (tmp) = llist_next_entry(elem, member);            \
+#define LLIST_FOREACH_ENTRY_SAFE(head, elem, tmp, member)            \
+    for ((elem) = LLIST_FIRST_ENTRY(head, typeof(*(elem)), member),    \
+         (tmp) = LLIST_NEXT_ENTRY(elem, member);            \
          &((elem)->member) != (head);                \
-         (elem) = (tmp), (tmp) = llist_next_entry(tmp, member))
+         (elem) = (tmp), (tmp) = LLIST_NEXT_ENTRY(tmp, member))
 
 #endif
