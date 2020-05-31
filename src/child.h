@@ -24,57 +24,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <config.h>
 
-/*
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <arpa/inet.h>
-#include <time.h>
-#include <sys/time.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <stdarg.h>
-#include <dlfcn.h>
-#include <mysql/mysql.h>
-#include <openssl/evp.h>
-#include <signal.h>
-#include <ctype.h>
-#include <errno.h>
-#include <err.h>
-#include <fcntl.h>
-#include <sys/poll.h>
-#include <regex.h>
-#include <sys/wait.h>
-#include <setjmp.h>
-#include <sys/resource.h>
-#ifdef USE_GNUTLS
-#include <gnutls/gnutls.h>
-#endif
-
-#ifdef __FreeBSD__
-#include <kvm.h>
-#include <paths.h>
-#include <sys/param.h>
-#include <sys/sysctl.h>
-#include <sys/user.h>
-#endif
-
-#include <botserv.h>
-#include <channel.h>
-#include <commands.h>
-#ifdef USE_FILTER
-#include <filter.h>
-#endif
-#include <mem.h>
-#include <modules.h>
-#include <net.h>
-#include <partyline.h>
-#include <trust.h>
-#include <user.h>*/
-
 #include "user.h"
 
 #define HASHMAX 65000
