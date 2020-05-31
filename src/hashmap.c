@@ -11,6 +11,9 @@ struct hashmap *hashmap_new(unsigned int (*hash)(const void *key),
     struct hashmap *hm;
     unsigned int i;
 
+    if (!hash || !compare)
+        return NULL;
+
     hm = malloc(sizeof(*hm));
     if (!hm)
         return NULL;

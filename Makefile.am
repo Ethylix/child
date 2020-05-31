@@ -1,4 +1,4 @@
-SUBDIRS=src src/modules
+SUBDIRS=src src/modules tests
 bin_SCRIPTS=childsymlink
 
 module:

@@ -2,9 +2,11 @@ AC_PREREQ(2.59)
 AC_INIT([child], [1.4-svn], [David Lebrun (target0@geeknode.org)])
 AC_CONFIG_AUX_DIR([autotools])
 AC_CONFIG_MACRO_DIR([autotools])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([1.11 subdir-objects])
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_SRCDIR([src/child.c])
+
+PKG_CHECK_MODULES([CHECK], [check >= 0.9.6])
 
 AC_CANONICAL_HOST
 
@@ -103,5 +105,5 @@ AC_CHECK_HEADERS([dlfcn.h mysql/mysql.h openssl/evp.h],,[AC_MSG_ERROR([Required 
 
 CFLAGS="-g -Wall -W -pipe -export-dynamic $CFLAGS"
 
-AC_CONFIG_FILES([Makefile src/Makefile src/modules/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile src/modules/Makefile tests/Makefile])
 AC_OUTPUT
