@@ -1,0 +1,16 @@
+set(CMAKE_SHARED_MODULE_PREFIX "")
+
+macro(add_child_module name src)
+  add_library(${name} MODULE ${src})
+  target_include_directories(${name} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/.." "${PROJECT_BINARY_DIR}")
+#  target_compile_options(${name} PUBLIC -fPIC)
+#  target_link_libraries(${name} -shared)
+endmacro(add_child_module)
+
+add_child_module(secserv secserv.c)
+add_child_module(m_bot m_bot.c)
+add_child_module(m_chan m_chan.c)
+add_child_module(m_help m_help.c)
+add_child_module(m_host m_host.c)
+add_child_module(m_nick m_nick.c)
+add_child_module(m_oper m_oper.c)
