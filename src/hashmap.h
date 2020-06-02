@@ -54,6 +54,11 @@ static inline int hashmap_size(const struct hashmap *hm)
     return hm->size;
 }
 
+static inline bool hashmap_empty(const struct hashmap *hm)
+{
+    return hm->size == 0;
+}
+
 static inline int compare_str(const void *k1, const void *k2)
 {
 	return strcmp((char *)k1, (char *)k2);

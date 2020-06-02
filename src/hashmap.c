@@ -144,24 +144,25 @@ bool hashmap_find(const struct hashmap *hm, const void *key,
     return false;
 }
 
+static void hashmap_remove_entry(struct hashmap *hm, struct hashmap_entry *he)
+{
+    LLIST_REMOVE(&he->map_head);
+    LLIST_REMOVE(&he->key_head);
+    hm->size--;
+    free(he);
+}
+
 bool hashmap_erase(struct hashmap *hm, const void *key)
 {
     struct hashmap_entry *he;
     unsigned int idx;
 
-    idx = hashmap_bucket(hm, key);
+    if (!hashmap_find(hm, key, &he))
+        return false;
 
-    LLIST_FOREACH_ENTRY(&hm->map[idx], he, map_head) {
-        if (hm->compare(he->key, key) == 0) {
-            LLIST_REMOVE(&he->map_head);
-            LLIST_REMOVE(&he->key_head);
-            hm->size--;
-            free(he);
-            return true;
-        }
-    }
+    hashmap_remove_entry(hm, he);
 
-    return false;
+    return true;
 }
 
 void hashmap_flush(struct hashmap *hm)
@@ -170,9 +171,6 @@ void hashmap_flush(struct hashmap *hm)
 
     while (!LLIST_EMPTY(&hm->keys)) {
         he = LLIST_FIRST_ENTRY(&hm->keys, struct hashmap_entry, key_head);
-        LLIST_REMOVE(&he->key_head);
-        LLIST_REMOVE(&he->map_head);
-        hm->size--;
-        free(he);
+        hashmap_remove_entry(hm, he);
     }
 }
