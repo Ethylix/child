@@ -24,11 +24,13 @@ void init_core(void) {
     memset(core, 0, sizeof(struct core));
 
     ASSIGN_OR_DIE_IF_NULL(core->users, hashmap_str_new());
+    ASSIGN_OR_DIE_IF_NULL(core->nicks, hashmap_str_new());
     ASSIGN_OR_DIE_IF_NULL(core->bots, hashmap_str_new());
 }
 
 void free_core(void) {
     hashmap_free(core->users);
+    hashmap_free(core->nicks);
     hashmap_free(core->bots);
 
     free(core);

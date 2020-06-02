@@ -33,7 +33,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdio.h>
 #include <string.h>
 
-extern nicklist nick_list;
 extern cloneslist clones_list;
 extern modulelist module_list;
 extern hooklist hook_list;
@@ -58,8 +57,6 @@ void FreeAllMem()
 {
     while (!LIST_EMPTY(chan_list))
         DeleteChannel(LIST_HEAD(chan_list));
-    while (!LIST_EMPTY(nick_list))
-        DeleteWildNick(LIST_HEAD(nick_list));
     /* module_list and hook_list are not checked because unloadallmod() should be called before this function. */
     while (!LIST_EMPTY(trust_list))
         DeleteTrust(LIST_HEAD(trust_list));
@@ -97,8 +94,6 @@ void cleanup_reconnect()
         DeleteLimit(LIST_HEAD(limit_list));
     while (!LIST_EMPTY(guest_list))
         DeleteGuest(LIST_HEAD(guest_list)->nick);
-    while (!LIST_EMPTY(nick_list))
-        DeleteWildNick(LIST_HEAD(nick_list));
     while (!LIST_EMPTY(fake_list))
         DeleteFake(LIST_HEAD(fake_list));
 }
@@ -143,7 +138,6 @@ long get_mem(int which)
 
 void InitMem()
 {
-    LIST_INIT(nick_list);
     LIST_INIT(clones_list);
     LIST_INIT(module_list);
     LIST_INIT(hook_list);

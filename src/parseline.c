@@ -40,7 +40,6 @@ extern chanbotlist chanbot_list;
 extern chanlist chan_list;
 extern commandlist command_list;
 extern memberlist member_list;
-extern nicklist nick_list;
 extern tblist tb_list;
 
 extern int eos;
@@ -378,7 +377,6 @@ void m_kill (char *sender, char *tail)
         return;
 
     nptr = find_nick(nick);
-    nick = nptr->nick;
 
     if (!nptr) {
         if (!Strcmp(nick, me.nick)) {
@@ -864,10 +862,14 @@ void m_nick (char *sender, char *tail)
 
     DeleteGuest(nptr->nick);
 
+    // TODO(target0): handle error cases.
+    hashmap_erase(get_core()->nicks, nptr->nick);
+
     strncpy(nptr->nick,newnick,NICKLEN - 1);
     nptr->nick[NICKLEN - 1] = '\0';
-    LIST_REMOVE(nick_list, nptr, HASH(oldnick));
-    LIST_INSERT_HEAD(nick_list, nptr, HASH(newnick));
+
+    // TODO(target0): handle error cases.
+    hashmap_insert(get_core()->nicks, nptr->nick, nptr, NULL);
 
     uptr = find_user(oldnick);
 

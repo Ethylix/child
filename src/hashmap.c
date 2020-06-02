@@ -155,7 +155,6 @@ static void hashmap_remove_entry(struct hashmap *hm, struct hashmap_entry *he)
 bool hashmap_erase(struct hashmap *hm, const void *key)
 {
     struct hashmap_entry *he;
-    unsigned int idx;
 
     if (!hashmap_find(hm, key, &he))
         return false;

@@ -44,7 +44,6 @@ extern cloneslist clones_list;
 extern fakelist fake_list;
 extern guestlist guest_list;
 extern linklist link_list;
-extern nicklist nick_list;
 
 extern int eos;
 
@@ -61,8 +60,11 @@ User *find_user(char *name)
 Nick *find_nick(char *name)
 {
     Nick *tmp;
+    struct hashmap_entry *entry;
 
-    LIST_FOREACH_ALL(nick_list, tmp) {
+    // TODO(target0): do a proper O(1) lookup.
+    HASHMAP_FOREACH_ENTRY(get_core()->nicks, entry) {
+        tmp = entry->value;
         if (!Strcmp(tmp->nick,name) || !Strcmp(tmp->uid,name))
             return tmp;
     }
@@ -161,6 +163,12 @@ Nick *AddNick(char *nick, char *ident, char *host, char *uid, char *hiddenhost, 
     new_nick->loginattempts = 0;
     new_nick->lasttry = 0;
 
+    if (!hashmap_insert(get_core()->nicks, new_nick->nick, new_nick, NULL)) {
+        fprintf(stderr, "Failed to insert new nick \"%s\" into hashmap (duplicate entry?)\n", new_nick->nick);
+        free(new_nick);
+        return NULL;
+    }
+
     Clone *clone;
     if ((clone = find_clone(reshost)) != NULL)
         clone->count++;
@@ -170,8 +178,6 @@ Nick *AddNick(char *nick, char *ident, char *host, char *uid, char *hiddenhost, 
         clone->count = 1;
         LIST_INSERT_HEAD(clones_list, clone, HASH(reshost));
     }
-
-    LIST_INSERT_HEAD(nick_list, new_nick, HASH(nick));
 
     return new_nick;
 }
@@ -231,7 +237,10 @@ void DeleteAccount (User *user)
 void DeleteWildNick (Nick *nptr)
 {
     Clone *clone;
-    LIST_REMOVE(nick_list, nptr, HASH(nptr->nick));
+
+    if (!hashmap_erase(get_core()->nicks, nptr->nick))
+        return;
+
     if ((clone = find_clone(nptr->reshost)) != NULL) {
         clone->count--;
         if (clone->count == 0) {

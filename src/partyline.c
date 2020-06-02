@@ -23,7 +23,9 @@ USA.
 
 #include "channel.h"
 #include "child.h"
+#include "core.h"
 #include "db.h"
+#include "hashmap.h"
 #include "mem.h"
 #include "modules.h"
 #include "string_utils.h"
@@ -37,7 +39,6 @@ USA.
 
 extern eclientlist eclient_list;
 extern modulelist module_list;
-extern nicklist nick_list;
 
 extern int emerg, emerg_req;
 
@@ -709,12 +710,14 @@ void p_modunload (Eclient *eclient, User *user, char *command, char *tail)
 void p_nicklist (Eclient *eclient, User *user __unused, char *command, char *tail)
 {
     CheckAndLog();
+    struct hashmap_entry *entry;
     char *pattern = tail;
     SeperateWord(pattern);
-    
+
     int count=0;
     Nick *nptr;
-    LIST_FOREACH_ALL(nick_list, nptr) {
+    HASHMAP_FOREACH_ENTRY(get_core()->nicks, entry) {
+        nptr = entry->value;
         if (pattern && *pattern != '\0') {
             if (Strstr(nptr->nick,pattern) || Strstr(nptr->ident,pattern) || Strstr(nptr->host,pattern)) {
                 send_to(eclient,"\t%s\t%s@%s",nptr->nick,nptr->ident,nptr->host);

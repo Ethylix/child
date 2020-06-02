@@ -192,12 +192,6 @@ typedef struct fakeuser {
 
 typedef struct {
     int size;
-    TABLE(Nick);
-    Nick *lhead;
-} nicklist;
-
-typedef struct {
-    int size;
     TABLE(Clone);
     Clone *lhead;
 } cloneslist;
