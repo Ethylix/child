@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "channel.h"
 #include "child.h"
 #include "commands.h"
+#include "core.h"
+#include "hashmap.h"
 #include "mem.h"
 #include "net.h"
 #include "modules.h"
@@ -34,7 +36,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 extern cflaglist cflag_list;
 extern commandlist command_list;
 extern linklist link_list;
-extern userlist user_list;
 
 extern int emerg;
 
@@ -396,7 +397,7 @@ void nick_register (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    if (!LIST_EMPTY(user_list))
+    if (!hashmap_empty(get_core()->users))
         AddUser(nptr->nick,1);
     else {
         AddUser(nptr->nick,me.level_owner);

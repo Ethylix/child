@@ -50,8 +50,7 @@ Bot *add_bot(const char *nick, const char *ident, const char *host)
     strncpy(newbot->host, host, HOSTLEN);
 
     if (!hashmap_insert(get_core()->bots, newbot->nick, newbot, NULL)) {
-        fprintf(stderr, "Failed to insert new bot \"%s\" into hashmap "
-                        "(duplicate entry?)\n", newbot->nick);
+        fprintf(stderr, "Failed to insert new bot \"%s\" into hashmap (duplicate entry?)\n", newbot->nick);
         free(newbot);
         return NULL;
     }

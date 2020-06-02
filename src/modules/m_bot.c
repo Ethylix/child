@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "channel.h"
 #include "child.h"
 #include "commands.h"
+#include "core.h"
+#include "hashmap.h"
 #include "mem.h"
 #include "modules.h"
 #include "net.h"
@@ -34,7 +36,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 
 extern memberlist member_list;
-extern userlist user_list;
 
 void bot_god (Nick *, User *, Chan *, Wchan *);
 void bot_owner (Nick *, User *, Chan *, Wchan *);
@@ -730,10 +731,12 @@ void bot_admin (Nick *nptr, User *uptr __unused, Chan *chptr __unused, Wchan *wc
 {
     User *uptr2;
     Nick *nptr2;
+    struct hashmap_entry *entry;
 
     char *bot = whatbot(wchan->chname);
 
-    LIST_FOREACH_ALL(user_list, uptr2) {
+    HASHMAP_FOREACH_ENTRY(get_core()->users, entry) {
+        uptr2 = entry->value;
         nptr2 = find_nick(uptr2->nick);
         if (nptr2 && IsOper(nptr2) && uptr2->authed == 1) {
             if (uptr2->level >= me.level_root)

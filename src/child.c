@@ -51,7 +51,6 @@ int verbose, vv, raws, eos;
 int emerg, emerg_req;
 MYSQL mysql;
 
-userlist user_list;
 nicklist nick_list;
 cloneslist clones_list;
 modulelist module_list;
@@ -156,6 +155,7 @@ static void write_pid()
 void child_clean()
 {
     FreeAllMem();
+    free_core();
     exit(0);
 }
 

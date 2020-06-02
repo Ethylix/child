@@ -45,19 +45,17 @@ extern fakelist fake_list;
 extern guestlist guest_list;
 extern linklist link_list;
 extern nicklist nick_list;
-extern userlist user_list;
 
 extern int eos;
 
 User *find_user(char *name)
 {
-    User *tmp;
-    LIST_FOREACH(user_list, tmp, HASH(name)) {
-        if (!Strcmp(tmp->nick,name))
-            return tmp;
-    }
+    struct hashmap_entry *entry;
 
-    return NULL;
+    if (!hashmap_find(get_core()->users, name, &entry))
+        return NULL;
+
+    return entry->value;
 }
 
 Nick *find_nick(char *name)
@@ -65,9 +63,8 @@ Nick *find_nick(char *name)
     Nick *tmp;
 
     LIST_FOREACH_ALL(nick_list, tmp) {
-        if (!Strcmp(tmp->nick,name) || !Strcmp(tmp->uid,name)) {
+        if (!Strcmp(tmp->nick,name) || !Strcmp(tmp->uid,name))
             return tmp;
-	}
     }
 
     return NULL;
@@ -135,7 +132,12 @@ User *AddUser (char *nick, int level)
     new_user->regtime = 0;
     new_user->lastseen = 0;
 
-    LIST_INSERT_HEAD(user_list, new_user, HASH(nick));
+    if (!hashmap_insert(get_core()->users, new_user->nick, new_user, NULL)) {
+        fprintf(stderr, "Failed to insert new user \"%s\" into hashmap (duplicate entry?)\n", new_user->nick);
+        free(new_user);
+        return NULL;
+    }
+
     return new_user;
 }
 
@@ -215,9 +217,11 @@ Fake *AddFake(char *nick, char *ident, char *host)
     return new_fake;
 }
 
-inline void DeleteAccount (User *user)
+void DeleteAccount (User *user)
 {
-    LIST_REMOVE(user_list, user, HASH(user->nick));
+    if (!hashmap_erase(get_core()->users, user->nick))
+        return;
+
     if (find_nick(user->nick) && eos)
         SendRaw("SVSMODE %s -r",user->nick);
     if (HasOption(user, UOPT_PROTECT)) DeleteGuest(user->nick);

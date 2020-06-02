@@ -33,7 +33,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdio.h>
 #include <string.h>
 
-extern userlist user_list;
 extern nicklist nick_list;
 extern cloneslist clones_list;
 extern modulelist module_list;
@@ -57,8 +56,6 @@ extern fakelist fake_list;
 
 void FreeAllMem()
 {
-    while (!LIST_EMPTY(user_list))
-        DeleteAccount(LIST_HEAD(user_list));
     while (!LIST_EMPTY(chan_list))
         DeleteChannel(LIST_HEAD(chan_list));
     while (!LIST_EMPTY(nick_list))
@@ -146,7 +143,6 @@ long get_mem(int which)
 
 void InitMem()
 {
-    LIST_INIT(user_list);
     LIST_INIT(nick_list);
     LIST_INIT(clones_list);
     LIST_INIT(module_list);

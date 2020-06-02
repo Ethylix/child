@@ -21,8 +21,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "child.h"
 #include "config.h"
 #include "commands.h"
+#include "core.h"
 #include "db.h"
 #include "filter.h"
+#include "hashmap.h"
 #include "modules.h"
 #include "net.h"
 #include "string_utils.h"
@@ -43,7 +45,6 @@ extern nicklist nick_list;
 extern rulelist rule_list;
 #endif
 extern trustlist trust_list;
-extern userlist user_list;
 
 extern int raws;
 extern int emerg, emerg_req;
@@ -274,6 +275,8 @@ void oper_userlist (Nick *nptr, User *uptr __unused, char *all)
     User *uptr2;
     Nick *nptr2;
     char *arg3;
+    struct hashmap_entry *entry;
+
     arg3 = all;
     SeperateWord(arg3);
 
@@ -281,7 +284,8 @@ void oper_userlist (Nick *nptr, User *uptr __unused, char *all)
     bzero(tmp,1024);
 
     int count = 0;
-    LIST_FOREACH_ALL(user_list, uptr2) {
+    HASHMAP_FOREACH_ENTRY(get_core()->users, entry) {
+        uptr2 = entry->value;
         if (arg3 && *arg3 != '\0') {
             if (Strstr(uptr2->nick,arg3) || Strstr(uptr2->vhost,arg3)) {
                 nptr2 = find_nick(uptr2->nick);
@@ -886,7 +890,7 @@ void oper_stats (Nick *nptr)
     int uptime = time(NULL) - startuptime;
     int days = uptime / 86400, hours = (uptime / 3600) % 24, mins = (uptime / 60) % 60, secs = uptime % 60;
 
-    NoticeToUser(nptr,"There are %d registered users and %d registered channels",user_list.size,chan_list.size);
+    NoticeToUser(nptr,"There are %d registered users and %d registered channels", hashmap_size(get_core()->users), chan_list.size);
 
     int j=0,k=0,l=0,m=0,n=0,o=0;
     LIST_FOREACH_ALL(nick_list, nptr2) {

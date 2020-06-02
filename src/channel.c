@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "botserv.h"
 #include "child.h"
+#include "core.h"
+#include "hashmap.h"
 #include "mem.h"
 #include "net.h"
 #include "string_utils.h"
@@ -38,7 +40,6 @@ extern chanbotlist chanbot_list;
 extern limitlist limit_list;
 extern memberlist member_list;
 extern tblist tb_list;
-extern userlist user_list;
 extern wchanlist wchan_list;
 
 extern int eos;
@@ -561,11 +562,12 @@ int IsAclOnChan (Chan *chptr)
 
 void checkexpired()
 {
-    User *uptr, *unext;
+    User *uptr;
     Chan *chptr, *cnext;
+    struct hashmap_entry *entry, *tmp_entry;
 
-    for (uptr = LIST_HEAD(user_list); uptr; uptr = unext) {
-        unext = LIST_LNEXT(uptr);
+    HASHMAP_FOREACH_ENTRY_SAFE(get_core()->users, entry, tmp_entry) {
+        uptr = entry->value;
         if (((time(NULL) - uptr->lastseen) >= 60*60*24*me.nick_expire) && uptr->authed != 1
                 && uptr->level < me.level_oper && !(IsUserNoexpire(uptr)))
             userdrop(uptr);

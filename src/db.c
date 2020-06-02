@@ -40,7 +40,6 @@ extern chanbotlist chanbot_list;
 extern chanlist chan_list;
 extern linklist link_list;
 extern trustlist trust_list;
-extern userlist user_list;
 
 extern MYSQL mysql;
 extern int verbose, vv;
@@ -308,6 +307,8 @@ void saveuserdb()
     char tmp[1024];
     char buf[512];
     User *uptr;
+    struct hashmap_entry *entry;
+
     bzero(buf,512);
 
     if (!reconnect_to_db()) {
@@ -318,7 +319,8 @@ void saveuserdb()
 
     mysql_query(&mysql,"DELETE FROM child_users");
 
-    LIST_FOREACH_ALL(user_list, uptr) {
+    HASHMAP_FOREACH_ENTRY(get_core()->users, entry) {
+        uptr = entry->value;
         snprintf(tmp,1024,"INSERT INTO child_users VALUES ('%s',%d,%d,'%s','%s',%ld,%d,'%s',%d)",strtosql(buf,uptr->nick,512),uptr->level,uptr->lastseen,uptr->vhost,uptr->md5_pass,uptr->options,uptr->timeout,uptr->email,uptr->regtime);
         mysql_query(&mysql,tmp);
     }

@@ -20,6 +20,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "child.h"
 #include "commands.h"
+#include "core.h"
+#include "hashmap.h"
 #include "modules.h"
 #include "net.h"
 #include "string_utils.h"
@@ -29,7 +31,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 
 extern commandlist command_list;
-extern userlist user_list;
 
 void do_host (Nick *, User *, char *);
 void do_help (Nick *, User *, char *);
@@ -126,8 +127,10 @@ void host_set (Nick *nptr, User *uptr __unused, char *all)
 void host_list (Nick *nptr)
 {
     User *uptr2;
+    struct hashmap_entry *entry;
 
-    LIST_FOREACH_ALL(user_list, uptr2) {
+    HASHMAP_FOREACH_ENTRY(get_core()->users, entry) {
+        uptr2 = entry->value;
         if (uptr2->vhost && uptr2->vhost[0] != '\0')
             NoticeToUser(nptr,"%s             %s",uptr2->nick,uptr2->vhost);
     }
