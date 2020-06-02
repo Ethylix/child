@@ -1,0 +1,19 @@
+jobs:
+  build:
+    docker:
+      - image: gcc:7.5
+    environment:
+      DEBIAN_FRONTEND: noninteractive
+      CK_TAP_LOG_FILE_NAME: tests/results.tap
+    steps:
+      - run: apt update && apt install -y cmake check
+      - checkout:
+      - run: cmake .
+      - run: make
+      - run: make test
+      - store_artifacts:
+          path: src/child
+          destination: child
+      - run: apt install -y npm && npm install tap-xunit -g && cat tests/results.tap | tap-xunit > tests/results.xml
+      - store_test_results:
+          path: tests
