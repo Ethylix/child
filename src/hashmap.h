@@ -106,10 +106,11 @@ static inline unsigned int hash_int(void *key)
 
 // Typed hashmap implementation.
 
-#define DECLARE_HASHMAP(name, type) \
-    struct {                        \
-        struct hashmap map;         \
-        type value_t[0];            \
+#define DECLARE_HASHMAP(name, key_type, value_type) \
+    struct {                                        \
+        struct hashmap map;                         \
+        key_type key_t[0];                          \
+        value_type value_t[0];                      \
     } *name;
 
 #define ACCESS_HASHMAP(name) \
@@ -120,5 +121,20 @@ static inline unsigned int hash_int(void *key)
 
 #define HASHMAP_FOREACH_ENTRY_VALUE(hmap, elem, value) \
     LLIST_FOREACH_ENTRY_EXT(&(ACCESS_HASHMAP(hmap))->keys, elem, key_head, (value) = HASHMAP_ENTRY_VALUE(hmap, elem))
+
+#define HASHMAP_INSERT(hmap, key, value, entry) ({                          \
+    typeof( *((hmap)->key_t) ) _key = (key);                                \
+    typeof( *((hmap)->value_t) ) _value = (value);                          \
+    hashmap_insert(ACCESS_HASHMAP(hmap), _key, _value, entry); })
+
+#define HASHMAP_FIND(hmap, key, entry) ({       \
+    typeof( *((hmap)->key_t) ) _key = (key);    \
+    hashmap_find(ACCESS_HASHMAP(hmap), _key, entry); })
+
+#define HASHMAP_ERASE(hmap, key) ({ \
+    typeof( *((hmap)->key_t) ) _key = (key);    \
+    hashmap_erase(ACCESS_HASHMAP(hmap), _key); })
+
+#define HASHMAP_SIZE(hmap) hashmap_size(ACCESS_HASHMAP(hmap))
 
 #endif

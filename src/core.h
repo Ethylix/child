@@ -105,7 +105,7 @@ struct core {
     struct hashmap *cflags;
     struct hashmap *members;
     struct hashmap *limits;
-    DECLARE_HASHMAP(bots, struct bot *);
+    DECLARE_HASHMAP(bots, const char *, struct bot *);
     struct hashmap *chanbots;
     struct hashmap *commands;
 #ifdef USE_FILTER

@@ -1459,7 +1459,7 @@ void chan_botlist (Nick *nptr)
     HASHMAP_FOREACH_ENTRY_VALUE(get_core()->bots, entry, bot) {
         NoticeToUser(nptr,"     \2%s\2 (%s@%s)",bot->nick,bot->ident,bot->host);
     }
-    NoticeToUser(nptr,"End of list (%d entries).", hashmap_size(ACCESS_HASHMAP(get_core()->bots)));
+    NoticeToUser(nptr,"End of list (%d entries).", HASHMAP_SIZE(get_core()->bots));
 }
 
 void chan_addbot (Nick *nptr, User *uptr __unused, Chan *chptr __unused, char *all)
