@@ -33,7 +33,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdio.h>
 #include <string.h>
 
-extern cloneslist clones_list;
 extern modulelist module_list;
 extern hooklist hook_list;
 extern trustlist trust_list;
@@ -138,7 +137,6 @@ long get_mem(int which)
 
 void InitMem()
 {
-    LIST_INIT(clones_list);
     LIST_INIT(module_list);
     LIST_INIT(hook_list);
     LIST_INIT(trust_list);

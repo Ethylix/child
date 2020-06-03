@@ -40,7 +40,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 extern cflaglist cflag_list;
 extern chanlist chan_list;
-extern cloneslist clones_list;
 extern fakelist fake_list;
 extern guestlist guest_list;
 extern linklist link_list;
@@ -175,7 +174,10 @@ Nick *AddNick(char *nick, char *ident, char *host, char *uid, char *hiddenhost, 
         clone = (Clone *)malloc(sizeof(Clone));
         strncpy(clone->host, reshost, HOSTLEN);
         clone->count = 1;
-        LIST_INSERT_HEAD(clones_list, clone, HASH(reshost));
+        if (!HASHMAP_INSERT(get_core()->clones, clone->host, clone, NULL)) {
+            fprintf(stderr, "Failed to insert new clone \"%s\" into hashmap (duplicate entry?)\n", clone->host);
+            free(clone);
+        }
     }
 
     return new_nick;
@@ -243,7 +245,7 @@ void DeleteWildNick (Nick *nptr)
     if ((clone = find_clone(nptr->reshost)) != NULL) {
         clone->count--;
         if (clone->count == 0) {
-            LIST_REMOVE(clones_list, clone, HASH(nptr->reshost));
+            HASHMAP_ERASE(get_core()->clones, clone->host);
             free(clone);
         }
     }
@@ -323,7 +325,9 @@ void send_global (char *target, char *msg, ...)
 Clone *find_clone (char *host)
 {
     Clone *tmp;
-    LIST_FOREACH(clones_list, tmp, HASH(host)) {
+    struct hashmap_entry *entry;
+
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->clones, entry, tmp) {
         if (!Strcmp(tmp->host, host))
             return tmp;
     }

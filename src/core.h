@@ -10,6 +10,7 @@
 
 struct bot;
 struct user_;
+struct clone;
 
 struct config {
     char *nick;
@@ -94,7 +95,7 @@ struct config {
 struct core {
     DECLARE_HASHMAP(users, const char *, struct user_ *);
     DECLARE_HASHMAP(nicks, const char *, struct nick *);
-    struct hashmap *clones;
+    DECLARE_HASHMAP(clones, const char *, struct clone *);
     struct hashmap *modules;
     struct hashmap *hooks;
     struct hashmap *trusts;
