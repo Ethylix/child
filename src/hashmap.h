@@ -35,9 +35,6 @@ struct hashmap {
 #define HASHMAP_FOREACH_ENTRY_SAFE(hmap, elem, tmp)	\
 	LLIST_FOREACH_ENTRY_SAFE(&(hmap)->keys, elem, tmp, key_head)
 
-#define HASHMAP_EMPTY(hmap)	\
-	LLIST_EMPTY(&(hmap)->keys)
-
 struct hashmap *hashmap_new(unsigned int (*hash)(const void *key),
 			 int (*compare)(const void *k1, const void *k2));
 void hashmap_free(struct hashmap *hm);
@@ -122,6 +119,9 @@ static inline unsigned int hash_int(void *key)
 #define HASHMAP_FOREACH_ENTRY_VALUE(hmap, elem, value) \
     LLIST_FOREACH_ENTRY_EXT(&(ACCESS_HASHMAP(hmap))->keys, elem, key_head, (value) = HASHMAP_ENTRY_VALUE(hmap, elem))
 
+#define HASHMAP_FOREACH_ENTRY_VALUE_SAFE(hmap, elem, tmp, value) \
+    LLIST_FOREACH_ENTRY_SAFE_EXT(&(ACCESS_HASHMAP(hmap))->keys, elem, tmp, key_head, (value) = HASHMAP_ENTRY_VALUE(hmap, elem))
+
 #define HASHMAP_INSERT(hmap, key, value, entry) ({                          \
     typeof( *((hmap)->key_t) ) _key = (key);                                \
     typeof( *((hmap)->value_t) ) _value = (value);                          \
@@ -136,5 +136,9 @@ static inline unsigned int hash_int(void *key)
     hashmap_erase(ACCESS_HASHMAP(hmap), _key); })
 
 #define HASHMAP_SIZE(hmap) hashmap_size(ACCESS_HASHMAP(hmap))
+
+#define HASHMAP_EMPTY(hmap) hashmap_empty(ACCESS_HASHMAP(hmap))
+
+#define HASHMAP_FREE(hmap) hashmap_free(ACCESS_HASHMAP(hmap))
 
 #endif

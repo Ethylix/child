@@ -77,4 +77,10 @@ struct llist_head {
          &((elem)->member) != (head);                \
          (elem) = (tmp), (tmp) = LLIST_NEXT_ENTRY(tmp, member))
 
+#define LLIST_FOREACH_ENTRY_SAFE_EXT(head, elem, tmp, member, ext)            \
+    for ((elem) = LLIST_FIRST_ENTRY(head, typeof(*(elem)), member),    \
+         (tmp) = LLIST_NEXT_ENTRY(elem, member), ext;            \
+         &((elem)->member) != (head);                \
+         (elem) = (tmp), (tmp) = LLIST_NEXT_ENTRY(tmp, member), ext)
+
 #endif

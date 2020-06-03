@@ -129,8 +129,7 @@ void host_list (Nick *nptr)
     User *uptr2;
     struct hashmap_entry *entry;
 
-    HASHMAP_FOREACH_ENTRY(get_core()->users, entry) {
-        uptr2 = entry->value;
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->users, entry, uptr2) {
         if (uptr2->vhost && uptr2->vhost[0] != '\0')
             NoticeToUser(nptr,"%s             %s",uptr2->nick,uptr2->vhost);
     }

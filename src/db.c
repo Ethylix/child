@@ -319,8 +319,7 @@ void saveuserdb()
 
     mysql_query(&mysql,"DELETE FROM child_users");
 
-    HASHMAP_FOREACH_ENTRY(get_core()->users, entry) {
-        uptr = entry->value;
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->users, entry, uptr) {
         snprintf(tmp,1024,"INSERT INTO child_users VALUES ('%s',%d,%d,'%s','%s',%ld,%d,'%s',%d)",strtosql(buf,uptr->nick,512),uptr->level,uptr->lastseen,uptr->vhost,uptr->md5_pass,uptr->options,uptr->timeout,uptr->email,uptr->regtime);
         mysql_query(&mysql,tmp);
     }

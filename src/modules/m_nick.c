@@ -397,7 +397,7 @@ void nick_register (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    if (!hashmap_empty(get_core()->users))
+    if (!HASHMAP_EMPTY(get_core()->users))
         AddUser(nptr->nick,1);
     else {
         AddUser(nptr->nick,me.level_owner);

@@ -566,8 +566,7 @@ void checkexpired()
     Chan *chptr, *cnext;
     struct hashmap_entry *entry, *tmp_entry;
 
-    HASHMAP_FOREACH_ENTRY_SAFE(get_core()->users, entry, tmp_entry) {
-        uptr = entry->value;
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->users, entry, tmp_entry, uptr) {
         if (((time(NULL) - uptr->lastseen) >= 60*60*24*me.nick_expire) && uptr->authed != 1
                 && uptr->level < me.level_oper && !(IsUserNoexpire(uptr)))
             userdrop(uptr);

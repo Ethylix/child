@@ -51,10 +51,10 @@ User *find_user(char *name)
 {
     struct hashmap_entry *entry;
 
-    if (!hashmap_find(get_core()->users, name, &entry))
+    if (!HASHMAP_FIND(get_core()->users, name, &entry))
         return NULL;
 
-    return entry->value;
+    return HASHMAP_ENTRY_VALUE(get_core()->users, entry);
 }
 
 Nick *find_nick(char *name)
@@ -134,7 +134,7 @@ User *AddUser (char *nick, int level)
     new_user->regtime = 0;
     new_user->lastseen = 0;
 
-    if (!hashmap_insert(get_core()->users, new_user->nick, new_user, NULL)) {
+    if (!HASHMAP_INSERT(get_core()->users, new_user->nick, new_user, NULL)) {
         fprintf(stderr, "Failed to insert new user \"%s\" into hashmap (duplicate entry?)\n", new_user->nick);
         free(new_user);
         return NULL;
@@ -225,7 +225,7 @@ Fake *AddFake(char *nick, char *ident, char *host)
 
 void DeleteAccount (User *user)
 {
-    if (!hashmap_erase(get_core()->users, user->nick))
+    if (!HASHMAP_ERASE(get_core()->users, user->nick))
         return;
 
     if (find_nick(user->nick) && eos)

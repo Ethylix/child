@@ -9,6 +9,7 @@
 #include <stdbool.h>
 
 struct bot;
+struct user_;
 
 struct config {
     char *nick;
@@ -91,7 +92,7 @@ struct config {
 };
 
 struct core {
-    struct hashmap *users;
+    DECLARE_HASHMAP(users, const char *, struct user_ *);
     struct hashmap *nicks;
     struct hashmap *clones;
     struct hashmap *modules;

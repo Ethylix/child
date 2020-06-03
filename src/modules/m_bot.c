@@ -735,8 +735,7 @@ void bot_admin (Nick *nptr, User *uptr __unused, Chan *chptr __unused, Wchan *wc
 
     char *bot = whatbot(wchan->chname);
 
-    HASHMAP_FOREACH_ENTRY(get_core()->users, entry) {
-        uptr2 = entry->value;
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->users, entry, uptr2) {
         nptr2 = find_nick(uptr2->nick);
         if (nptr2 && IsOper(nptr2) && uptr2->authed == 1) {
             if (uptr2->level >= me.level_root)
