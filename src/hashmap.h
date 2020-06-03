@@ -104,4 +104,21 @@ static inline unsigned int hash_int(void *key)
 	return x;
 }
 
+// Typed hashmap implementation.
+
+#define DECLARE_HASHMAP(name, type) \
+    struct {                        \
+        struct hashmap map;         \
+        type value_t[0];            \
+    } *name;
+
+#define ACCESS_HASHMAP(name) \
+    ((struct hashmap *)(name))
+
+#define HASHMAP_ENTRY_VALUE(hmap, elem) \
+    ((typeof( *((hmap)->value_t) )) (elem)->value)
+
+#define HASHMAP_FOREACH_ENTRY_VALUE(hmap, elem, value) \
+    LLIST_FOREACH_ENTRY_EXT(&(ACCESS_HASHMAP(hmap))->keys, elem, key_head, (value) = HASHMAP_ENTRY_VALUE(hmap, elem))
+
 #endif

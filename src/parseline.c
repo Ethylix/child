@@ -390,8 +390,7 @@ void m_kill (char *sender, char *tail)
             return;
         }
 
-        HASHMAP_FOREACH_ENTRY(get_core()->bots, entry) {
-            bot = entry->value;
+        HASHMAP_FOREACH_ENTRY_VALUE(get_core()->bots, entry, bot) {
             if (!Strcmp(nick,bot->nick)) {
                 fakeuser(bot->nick,bot->ident,bot->host,BOTSERV_UMODES);
                 LIST_FOREACH_ALL(chanbot_list, chanbot) {

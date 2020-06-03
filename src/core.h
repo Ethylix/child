@@ -1,11 +1,14 @@
 #ifndef _CORE_H
 #define _CORE_H
 
+#include "hashmap.h"
 #include "partyline.h"
 
 #include <mysql/mysql.h>
 #include <poll.h>
 #include <stdbool.h>
+
+struct bot;
 
 struct config {
     char *nick;
@@ -102,7 +105,7 @@ struct core {
     struct hashmap *cflags;
     struct hashmap *members;
     struct hashmap *limits;
-    struct hashmap *bots;
+    DECLARE_HASHMAP(bots, struct bot *);
     struct hashmap *chanbots;
     struct hashmap *commands;
 #ifdef USE_FILTER
@@ -128,5 +131,6 @@ struct core {
 
 struct core *get_core(void);
 void init_core(void);
+void free_core(void);
 
 #endif  // _CORE_H

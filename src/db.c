@@ -435,8 +435,7 @@ void savebotservdb()
 
     mysql_query(&mysql,"DELETE FROM child_botserv_bots");
 
-    HASHMAP_FOREACH_ENTRY(get_core()->bots, entry) {
-        bot = entry->value;
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->bots, entry, bot) {
         snprintf(tmp,1024,"INSERT INTO child_botserv_bots VALUES ('%s','%s','%s')",bot->nick,bot->ident,bot->host);
         mysql_query(&mysql,tmp);
     }

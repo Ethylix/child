@@ -442,8 +442,7 @@ void killallfakes()
     struct hashmap_entry *entry;
     Bot *bot;
 
-    HASHMAP_FOREACH_ENTRY(get_core()->bots, entry) {
-        bot = entry->value;
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->bots, entry, bot) {
         fakekill(bot->nick,"Exiting");
     }
 }
@@ -453,8 +452,7 @@ void loadallfakes()
     struct hashmap_entry *entry;
     Bot *bot;
 
-    HASHMAP_FOREACH_ENTRY(get_core()->bots, entry) {
-        bot = entry->value;
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->bots, entry, bot) {
         fakeuser(bot->nick,bot->ident,bot->host,BOTSERV_UMODES);
         SendRaw("SQLINE %s :Reserved for services",bot->nick);
     }
