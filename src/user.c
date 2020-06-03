@@ -324,15 +324,12 @@ void send_global (char *target, char *msg, ...)
 
 Clone *find_clone (char *host)
 {
-    Clone *tmp;
     struct hashmap_entry *entry;
 
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->clones, entry, tmp) {
-        if (!Strcmp(tmp->host, host))
-            return tmp;
-    }
+    if (!HASHMAP_FIND(get_core()->clones, host, &entry))
+        return NULL;
 
-    return NULL;
+    return HASHMAP_ENTRY_VALUE(get_core()->clones, entry);
 }
 
 int howmanyclones(char *host)

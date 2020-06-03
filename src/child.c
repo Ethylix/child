@@ -51,7 +51,6 @@ int verbose, vv, raws, eos;
 int emerg, emerg_req;
 MYSQL mysql;
 
-modulelist module_list;
 hooklist hook_list;
 trustlist trust_list;
 linklist link_list;

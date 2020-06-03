@@ -39,7 +39,6 @@ extern chanlist chan_list;
 extern commandlist command_list;
 extern fakelist fake_list;
 extern memberlist member_list;
-extern modulelist module_list;
 #ifdef USE_FILTER
 extern rulelist rule_list;
 #endif
@@ -782,10 +781,13 @@ void oper_modunload (Nick *nptr, User *uptr __unused, char *all)
 void oper_modlist (Nick *nptr)
 {
     Module *mod;
+    struct hashmap_entry *entry;
+
     NoticeToUser(nptr,"Modules list :");
-    LIST_FOREACH_ALL(module_list, mod)
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->modules, entry, mod) {
         NoticeToUser(nptr,"   \2%s\2",mod->modname);
-    NoticeToUser(nptr,"End of list. (%d entries)",module_list.size);
+    }
+    NoticeToUser(nptr,"End of list. (%d entries)", HASHMAP_SIZE(get_core()->modules));
 }
 
 void oper_fakejoin (Nick *nptr, User *uptr __unused, char *all)

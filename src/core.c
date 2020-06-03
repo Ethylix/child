@@ -27,6 +27,7 @@ void init_core(void) {
     ASSIGN_OR_DIE_IF_NULL(core->nicks, (void *)hashmap_str_new());
     ASSIGN_OR_DIE_IF_NULL(core->bots, (void *)hashmap_str_new());
     ASSIGN_OR_DIE_IF_NULL(core->clones, (void *)hashmap_str_new());
+    ASSIGN_OR_DIE_IF_NULL(core->modules, (void *)hashmap_str_new());
 }
 
 void free_core(void) {
@@ -34,6 +35,7 @@ void free_core(void) {
     HASHMAP_FREE(core->nicks);
     HASHMAP_FREE(core->bots);
     HASHMAP_FREE(core->clones);
+    HASHMAP_FREE(core->modules);
 
     free(core);
     core = NULL;

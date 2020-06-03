@@ -141,12 +141,6 @@ typedef struct {
     Hook *lhead;
 } hooklist;
 
-typedef struct {
-    int size;
-    TABLE(Module);
-    Module *lhead;
-} modulelist;
-
 Module *find_module (char *);
 Hook *find_hook (char *, char *);
 Module *loadmodule (char *);

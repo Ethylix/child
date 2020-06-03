@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "modules.h"
 
 #include "channel.h"
+#include "core.h"
+#include "hashmap.h"
 #include "mem.h"
 #include "string_utils.h"
 #include "user.h"
@@ -31,17 +33,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 
 extern hooklist hook_list;
-extern modulelist module_list;
 
 Module *find_module (char *name)
 {
-    Module *tmp;
-    LIST_FOREACH(module_list, tmp, HASH(name)) {
-        if (!Strcmp(tmp->modname,name))
-            return tmp;
-    }
+    struct hashmap_entry *entry;
 
-    return NULL;
+    if (!HASHMAP_FIND(get_core()->modules, name, &entry))
+        return NULL;
+
+    return HASHMAP_ENTRY_VALUE(get_core()->modules, entry);
 }
 
 Hook *find_hook (char *name, char *modname)
@@ -57,9 +57,10 @@ Hook *find_hook (char *name, char *modname)
 
 void unloadallmod()
 {
-    Module *mod,*next;
-    for (mod = LIST_HEAD(module_list); mod; mod = next) {
-        next = LIST_LNEXT(mod);
+    Module *mod;
+    struct hashmap_entry *entry, *tmp_entry;
+
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->modules, entry, tmp_entry, mod) {
         unloadmodule(mod->modname);
     }
 }
@@ -98,7 +99,12 @@ Module *loadmodule(char *name)
     mod->handle = handle; /* saving module handle */
     mod->nodreload = 0;
 
-    LIST_INSERT_HEAD(module_list, mod, HASH(mod->modname));
+    if (!HASHMAP_INSERT(get_core()->modules, mod->modname, mod, NULL)) {
+        fprintf(stderr, "Failed to insert module \"%s\" into hashmap (duplicate entry?)\n", mod->modname);
+        dlclose(handle);
+        free(mod);
+        return NULL;
+    }
 
     func(mod);
 
@@ -129,7 +135,7 @@ int unloadmodule(char *name)
 
     dlclose(mod->handle); /* closing module handle */
 
-    LIST_REMOVE(module_list, mod, HASH(mod->modname));
+    HASHMAP_ERASE(get_core()->modules, mod->modname);
     free(mod);
 
     return 1;

@@ -38,7 +38,6 @@ USA.
 #include <time.h>
 
 extern eclientlist eclient_list;
-extern modulelist module_list;
 
 extern int emerg, emerg_req;
 
@@ -637,16 +636,19 @@ void p_kill (Eclient *eclient, User *user __unused, char *command, char *tail)
 
 void p_modlist (Eclient *eclient, User *user, char *command, char *tail)
 {
+    Module *mod;
+    struct hashmap_entry *entry;
+
     CheckAndLog();
     if (user->level < me.level_root) {
         send_to(eclient,"Access denied");
         return;
     }   
     
-    Module *mod;
     send_to(eclient,"Modules list :");
-    LIST_FOREACH_ALL(module_list, mod)
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->modules, entry, mod) {
         send_to(eclient,"   %s",mod->modname);
+    }
     send_to(eclient,"End of list.");
 }
 
