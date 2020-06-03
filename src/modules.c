@@ -1,6 +1,6 @@
 /*
 Child, Internet Relay Chat Services
-Copyright (C) 2005-2009  David Lebrun (target0@geeknode.org)
+Copyright (C) 2005-2020  David Lebrun (target0@geeknode.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
