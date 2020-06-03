@@ -862,13 +862,13 @@ void m_nick (char *sender, char *tail)
     DeleteGuest(nptr->nick);
 
     // TODO(target0): handle error cases.
-    hashmap_erase(get_core()->nicks, nptr->nick);
+    HASHMAP_ERASE(get_core()->nicks, nptr->nick);
 
     strncpy(nptr->nick,newnick,NICKLEN - 1);
     nptr->nick[NICKLEN - 1] = '\0';
 
     // TODO(target0): handle error cases.
-    hashmap_insert(get_core()->nicks, nptr->nick, nptr, NULL);
+    HASHMAP_INSERT(get_core()->nicks, nptr->nick, nptr, NULL);
 
     uptr = find_user(oldnick);
 

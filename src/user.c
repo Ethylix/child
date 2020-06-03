@@ -63,8 +63,7 @@ Nick *find_nick(char *name)
     struct hashmap_entry *entry;
 
     // TODO(target0): do a proper O(1) lookup.
-    HASHMAP_FOREACH_ENTRY(get_core()->nicks, entry) {
-        tmp = entry->value;
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->nicks, entry, tmp) {
         if (!Strcmp(tmp->nick,name) || !Strcmp(tmp->uid,name))
             return tmp;
     }
@@ -163,7 +162,7 @@ Nick *AddNick(char *nick, char *ident, char *host, char *uid, char *hiddenhost, 
     new_nick->loginattempts = 0;
     new_nick->lasttry = 0;
 
-    if (!hashmap_insert(get_core()->nicks, new_nick->nick, new_nick, NULL)) {
+    if (!HASHMAP_INSERT(get_core()->nicks, new_nick->nick, new_nick, NULL)) {
         fprintf(stderr, "Failed to insert new nick \"%s\" into hashmap (duplicate entry?)\n", new_nick->nick);
         free(new_nick);
         return NULL;
@@ -238,7 +237,7 @@ void DeleteWildNick (Nick *nptr)
 {
     Clone *clone;
 
-    if (!hashmap_erase(get_core()->nicks, nptr->nick))
+    if (!HASHMAP_ERASE(get_core()->nicks, nptr->nick))
         return;
 
     if ((clone = find_clone(nptr->reshost)) != NULL) {

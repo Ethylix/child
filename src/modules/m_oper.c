@@ -256,8 +256,7 @@ void oper_nicklist (Nick *nptr, User *uptr __unused, char *all)
     SeperateWord(arg3);
 
     int count=0;
-    HASHMAP_FOREACH_ENTRY(get_core()->nicks, entry) {
-        nptr2 = entry->value;
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->nicks, entry, nptr2) {
         if (arg3 && *arg3 != '\0') {
             if (Strstr(nptr2->nick,arg3) || Strstr(nptr2->ident,arg3) || Strstr(nptr2->host,arg3)) {
                 NoticeToUser(nptr,"\2%s\2!%s@%s",nptr2->nick,nptr2->ident,nptr2->host);
@@ -355,8 +354,7 @@ void oper_killall (Nick *nptr, User *uptr __unused, char *all)
     }   
 
     char mask[128];
-    HASHMAP_FOREACH_ENTRY_SAFE(get_core()->nicks, entry, tmp_entry) {
-        nptr2 = entry->value;
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->nicks, entry, tmp_entry, nptr2) {
         snprintf(mask, 128, "%s!%s@%s",nptr2->nick,nptr2->ident,nptr2->host);
         if (match_mask(arg3,mask)) {
             killuser(nptr2->nick,"Clearing users",me.nick);
@@ -386,8 +384,7 @@ void oper_regexpcheck (Nick *nptr, User *uptr __unused, char *all)
 
     char mask[128];
     NoticeToUser(nptr, "Affected users :");
-    HASHMAP_FOREACH_ENTRY(get_core()->nicks, entry) {
-        nptr2 = entry->value;
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->nicks, entry, nptr2) {
         snprintf(mask, 128, "%s!%s@%s", nptr2->nick, nptr2->ident, nptr2->host);
         if (match_mask(all, mask)) {
             NoticeToUser(nptr, "\2%s\2      (%s@%s)", nptr2->nick, nptr2->ident, nptr2->host);
@@ -415,8 +412,7 @@ void oper_glineall (Nick *nptr, User *uptr __unused, char *all)
     }
 
     char mask[128];
-    HASHMAP_FOREACH_ENTRY_SAFE(get_core()->nicks, entry, tmp_entry) {
-        nptr2 = entry->value;
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->nicks, entry, tmp_entry, nptr2) {
         snprintf(mask, 128, "%s!%s@%s",nptr2->nick,nptr2->ident,nptr2->host);
         if (match_mask(arg3,mask)) {
             glineuser("*", nptr2->host, 86400, "Clearing users");
@@ -878,8 +874,7 @@ void oper_operlist (Nick *nptr)
     struct hashmap_entry *entry;
 
     NoticeToUser(nptr,"Online operators :");
-    HASHMAP_FOREACH_ENTRY(get_core()->nicks, entry) {
-        nptr2 = entry->value;
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->nicks, entry, nptr2) {
         if (IsOper(nptr2)) {
             NoticeToUser(nptr,"\2%s\2     %s@%s",nptr2->nick,nptr2->ident,nptr2->host);
             count++;
@@ -900,8 +895,7 @@ void oper_stats (Nick *nptr)
     NoticeToUser(nptr,"There are %d registered users and %d registered channels", HASHMAP_SIZE(get_core()->users), chan_list.size);
 
     int j=0,k=0,l=0,m=0,n=0,o=0;
-    HASHMAP_FOREACH_ENTRY(get_core()->nicks, entry) {
-        nptr2 = entry->value;
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->nicks, entry, nptr2) {
         if (IsOper(nptr2)) j++;
         if (IsOper(nptr2) && !IsBot(nptr2) && !IsService(nptr2)) k++;
         if ((IsOper(nptr2) && IsBot(nptr2)) || IsService(nptr2)) l++;
@@ -909,9 +903,9 @@ void oper_stats (Nick *nptr)
         if (IsBot(nptr2) || IsService(nptr2)) n++;
     }
 
-    o = hashmap_size(get_core()->nicks) - l - m - k;
+    o = HASHMAP_SIZE(get_core()->nicks) - l - m - k;
 
-    NoticeToUser(nptr,"There are \2%d\2 online users (\2%d\2 opers)", hashmap_size(get_core()->nicks) + fake_list.size,j);
+    NoticeToUser(nptr,"There are \2%d\2 online users (\2%d\2 opers)", HASHMAP_SIZE(get_core()->nicks) + fake_list.size,j);
     NoticeToUser(nptr,"   %d fakeusers",fake_list.size);
     NoticeToUser(nptr,"   %d ircops",k);
     NoticeToUser(nptr,"   %d bots",n);

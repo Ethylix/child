@@ -716,8 +716,7 @@ void p_nicklist (Eclient *eclient, User *user __unused, char *command, char *tai
 
     int count=0;
     Nick *nptr;
-    HASHMAP_FOREACH_ENTRY(get_core()->nicks, entry) {
-        nptr = entry->value;
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->nicks, entry, nptr) {
         if (pattern && *pattern != '\0') {
             if (Strstr(nptr->nick,pattern) || Strstr(nptr->ident,pattern) || Strstr(nptr->host,pattern)) {
                 send_to(eclient,"\t%s\t%s@%s",nptr->nick,nptr->ident,nptr->host);

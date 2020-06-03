@@ -93,7 +93,7 @@ struct config {
 
 struct core {
     DECLARE_HASHMAP(users, const char *, struct user_ *);
-    struct hashmap *nicks;
+    DECLARE_HASHMAP(nicks, const char *, struct nick *);
     struct hashmap *clones;
     struct hashmap *modules;
     struct hashmap *hooks;
