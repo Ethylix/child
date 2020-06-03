@@ -1,0 +1,12 @@
+version: "3.7"
+services:
+  mysql:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: child
+      MYSQL_DATABASE: child
+  child:
+    build: ./
+  unrealircd:
+    image: bbriggs/unrealircd:4.2.4.1
+    
