@@ -20,6 +20,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "trust.h"
 
+#include "core.h"
+#include "hashmap.h"
 #include "mem.h"
 #include "net.h"
 #include "string_utils.h"
@@ -28,25 +30,23 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 #include <string.h>
 
-extern trustlist trust_list;
-
 Trust *find_trust_strict (char *host)
 {
-    Trust *tmp;
-    LIST_FOREACH(trust_list, tmp, HASH(host)) {
-        if (!Strcmp(tmp->host,host))
-            return tmp;
-    }
+    struct hashmap_entry *entry;
 
-    return NULL;
+    if (!HASHMAP_FIND(get_core()->trusts, host, &entry))
+        return NULL;
+
+    return HASHMAP_ENTRY_VALUE(get_core()->trusts, entry);
 }
 
 Trust *find_trust(char *host)
 {
     char *mask,*bits;
     Trust *tmp;
+    struct hashmap_entry *entry;
 
-    LIST_FOREACH_ALL(trust_list, tmp) {
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->trusts, entry, tmp) {
         if (!Strcmp(tmp->host,host))
             return tmp;
 
@@ -77,12 +77,16 @@ Trust *AddTrust(char *host, int limit)
     strncpy(new_trust->host,host,HOSTLEN);
     new_trust->limit = limit;
 
-    LIST_INSERT_HEAD(trust_list, new_trust, HASH(host));
+    if (!HASHMAP_INSERT(get_core()->trusts, new_trust->host, new_trust, NULL)) {
+        fprintf(stderr, "Failed to insert new trust \"%s\" into hashmap (duplicate entry?)\n", new_trust->host);
+        free(new_trust);
+        return NULL;
+    }
     return new_trust;
 }
 
 void DeleteTrust(Trust *trust)
 {
-    LIST_REMOVE(trust_list, trust, HASH(trust->host));
+    HASHMAP_ERASE(get_core()->trusts, trust->host);
     free(trust);
 }

@@ -39,7 +39,6 @@ extern cflaglist cflag_list;
 extern chanbotlist chanbot_list;
 extern chanlist chan_list;
 extern linklist link_list;
-extern trustlist trust_list;
 
 extern MYSQL mysql;
 extern int verbose, vv;
@@ -377,6 +376,7 @@ void savetrustdb()
 {
     char tmp[1024];
     Trust *trust;
+    struct hashmap_entry *entry;
 
     if (!reconnect_to_db()) {
         fprintf(stderr,"Cannot connect to db\n");
@@ -386,7 +386,7 @@ void savetrustdb()
 
     mysql_query(&mysql,"DELETE FROM child_trusts");
 
-    LIST_FOREACH_ALL(trust_list, trust) {
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->trusts, entry, trust) {
         snprintf(tmp,1024,"INSERT INTO child_trusts VALUES ('%s',%d)",trust->host,trust->limit);
         mysql_query(&mysql,tmp);
     }

@@ -34,7 +34,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 
 extern hooklist hook_list;
-extern trustlist trust_list;
 extern linklist link_list;
 extern eclientlist eclient_list;
 extern guestlist guest_list;
@@ -56,8 +55,6 @@ void FreeAllMem()
     while (!LIST_EMPTY(chan_list))
         DeleteChannel(LIST_HEAD(chan_list));
     /* module_list and hook_list are not checked because unloadallmod() should be called before this function. */
-    while (!LIST_EMPTY(trust_list))
-        DeleteTrust(LIST_HEAD(trust_list));
     while (!LIST_EMPTY(wchan_list))
         DeleteWchan(LIST_HEAD(wchan_list));
     while (!LIST_EMPTY(cflag_list))
@@ -137,7 +134,6 @@ long get_mem(int which)
 void InitMem()
 {
     LIST_INIT(hook_list);
-    LIST_INIT(trust_list);
     LIST_INIT(link_list);
     LIST_INIT(eclient_list);
     LIST_INIT(guest_list);

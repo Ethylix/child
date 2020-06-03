@@ -31,12 +31,6 @@ typedef struct trust {
     struct trust *lnext,*lprev;
 } Trust;
 
-typedef struct {
-    int size;
-    TABLE(Trust);
-    Trust *lhead;
-} trustlist;
-
 Trust *find_trust_strict (char *);
 Trust *find_trust (char *);
 Trust *AddTrust (char *, int);

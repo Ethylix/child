@@ -42,7 +42,6 @@ extern memberlist member_list;
 #ifdef USE_FILTER
 extern rulelist rule_list;
 #endif
-extern trustlist trust_list;
 
 extern int raws;
 extern int emerg, emerg_req;
@@ -578,8 +577,11 @@ void oper_trustlist (Nick *nptr)
 {
     NoticeToUser(nptr,"Trustlist :");
     Trust *trust;
-    LIST_FOREACH_ALL(trust_list, trust)
+    struct hashmap_entry *entry;
+
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->trusts, entry, trust) {
         NoticeToUser(nptr,"%s         %d",trust->host,trust->limit);
+    }
     NoticeToUser(nptr,"End of list.");
 }
 
