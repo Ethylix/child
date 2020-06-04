@@ -16,17 +16,22 @@
 START_TEST(test_hashmap_new)
 {
     struct hashmap *hm;
+    struct hashmap_descriptor desc = {};
 
-    hm = hashmap_new(NULL, NULL);
+    hm = hashmap_new(&desc);
     ck_assert_ptr_null(hm);
 
-    hm = hashmap_new(hash_str, NULL);
+    desc.hash = hash_str;
+    hm = hashmap_new(&desc);
     ck_assert_ptr_null(hm);
 
-    hm = hashmap_new(NULL, compare_str);
+    desc.hash = NULL;
+    desc.compare = compare_str;
+    hm = hashmap_new(&desc);
     ck_assert_ptr_null(hm);
 
-    hm = hashmap_new(hash_str, compare_str);
+    desc.hash = hash_str;
+    hm = hashmap_new(&desc);
     ck_assert_ptr_nonnull(hm);
     ck_assert_int_eq(hm->size, 0);
     ck_assert_int_eq(hm->bucket_count, HASHMAP_DEFAULT_BUCKET_COUNT);
@@ -49,7 +54,13 @@ START_TEST(test_hashmap_insert)
     struct hashmap *hm;
     bool inserted;
 
-    hm = hashmap_str_new();
+    struct hashmap_descriptor desc =
+        {
+            .hash = hash_str,
+            .compare = compare_str,
+        };
+
+    hm = hashmap_new(&desc);
     ck_assert_ptr_nonnull(hm);
 
     inserted = hashmap_insert(hm, "one", (void *)1, &entry);

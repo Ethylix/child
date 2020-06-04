@@ -5,20 +5,19 @@
 
 #include "hashmap.h"
 
-struct hashmap *hashmap_new(unsigned int (*hash)(const void *key),
-                            int (*compare)(const void *k1, const void *k2))
+struct hashmap *hashmap_new(const struct hashmap_descriptor *desc)
 {
     struct hashmap *hm;
     unsigned int i;
 
-    if (!hash || !compare)
+    if (!desc->hash || !desc->compare)
         return NULL;
 
     hm = malloc(sizeof(*hm));
     if (!hm)
         return NULL;
 
-    hm->bucket_count = HASHMAP_DEFAULT_BUCKET_COUNT;
+    hm->bucket_count = desc->initial_bucket_count ?: HASHMAP_DEFAULT_BUCKET_COUNT;
     hm->size = 0;
 
     hm->map = malloc(hm->bucket_count * sizeof(struct llist_head));
@@ -32,8 +31,10 @@ struct hashmap *hashmap_new(unsigned int (*hash)(const void *key),
 
     LLIST_INIT(&hm->keys);
 
-    hm->hash = hash;
-    hm->compare = compare;
+    hm->hash = desc->hash;
+    hm->compare = desc->compare;
+    hm->create_key = desc->create_key;
+    hm->destroy_key = desc->destroy_key;
 
     return hm;
 }
@@ -111,7 +112,11 @@ bool hashmap_insert(struct hashmap *hm, const void *key, void *value,
     if (!he)
         return false;
 
-    he->key = key;
+    if (hm->create_key)
+        he->key = hm->create_key(key);
+    else
+        he->key = key;
+
     he->value = value;
 
     LLIST_INSERT_TAIL(&hm->map[idx], &he->map_head);
@@ -149,6 +154,10 @@ static void hashmap_remove_entry(struct hashmap *hm, struct hashmap_entry *he)
     LLIST_REMOVE(&he->map_head);
     LLIST_REMOVE(&he->key_head);
     hm->size--;
+
+    if (hm->destroy_key)
+        hm->destroy_key((void *)he->key);
+
     free(he);
 }
 

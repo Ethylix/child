@@ -12,6 +12,11 @@
 
 #define HASHMAP_DEFAULT_BUCKET_COUNT	16
 
+typedef unsigned int (*hashmap_hashfn_t)(const void *key);
+typedef int (*hashmap_comparefn_t)(const void *k1, const void *k2);
+typedef const void *(*hashmap_createkeyfn_t)(const void *key);
+typedef void (*hashmap_destroykeyfn_t)(void *key);
+
 struct hashmap_entry {
 	const void *key;
 	void *value;
@@ -25,8 +30,18 @@ struct hashmap {
 	struct llist_head *map;
 	struct llist_head keys;
 
-	unsigned int (*hash)(const void *key);
-	int (*compare)(const void *k1, const void *k2);
+    hashmap_hashfn_t hash;
+    hashmap_comparefn_t compare;
+    hashmap_createkeyfn_t create_key;
+    hashmap_destroykeyfn_t destroy_key;
+};
+
+struct hashmap_descriptor {
+    size_t initial_bucket_count;
+    hashmap_hashfn_t hash;
+    hashmap_comparefn_t compare;
+    hashmap_createkeyfn_t create_key;
+    hashmap_destroykeyfn_t destroy_key;
 };
 
 #define HASHMAP_FOREACH_ENTRY(hmap, elem)	\
@@ -35,8 +50,7 @@ struct hashmap {
 #define HASHMAP_FOREACH_ENTRY_SAFE(hmap, elem, tmp)	\
 	LLIST_FOREACH_ENTRY_SAFE(&(hmap)->keys, elem, tmp, key_head)
 
-struct hashmap *hashmap_new(unsigned int (*hash)(const void *key),
-			 int (*compare)(const void *k1, const void *k2));
+struct hashmap *hashmap_new(const struct hashmap_descriptor *desc);
 void hashmap_free(struct hashmap *hm);
 int hashmap_bucket(const struct hashmap *hm, const void *key);
 bool hashmap_insert(struct hashmap *hm, const void *key, void *value,
@@ -72,11 +86,6 @@ static inline unsigned int hash_str(const void *key)
 		hash = ((hash << 5) + hash) + c;
 
 	return hash;
-}
-
-static inline struct hashmap *hashmap_str_new(void)
-{
-    return hashmap_new(hash_str, compare_str);
 }
 
 static inline int compare_int(const void *k1, const void *k2)

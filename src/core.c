@@ -2,6 +2,7 @@
 
 #include "hashmap.h"
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -18,18 +19,61 @@ struct core *get_core(void) {
     return core;
 }
 
+#define HASH_BUF_LEN 1024
+
+static char _hash_buf[HASH_BUF_LEN];
+
+static unsigned int hash_str_nocase(const void *key)
+{
+    const char *key_str = key;
+    size_t key_len = strlen(key_str);
+
+    if (key_len >= HASH_BUF_LEN)
+        abort();
+
+    for (size_t i = 0; i < key_len; i++)
+        _hash_buf[i] = tolower(key_str[i]);
+    _hash_buf[key_len] = 0;
+
+    return hash_str(_hash_buf);
+}
+
+static int compare_str_nocase(const void *k1, const void *k2)
+{
+    return strcasecmp(k1, k2);
+}
+
+static const void *create_key_str(const void *key)
+{
+    return strdup(key);
+}
+
+static void destroy_key_str(void *key)
+{
+    free(key);
+}
+
 void init_core(void) {
+    struct hashmap_descriptor desc =
+        {
+            .initial_bucket_count = HASHMAP_DEFAULT_BUCKET_COUNT,
+            .hash = hash_str_nocase,
+            .compare = compare_str_nocase,
+            .create_key = create_key_str,
+            .destroy_key = destroy_key_str,
+        };
+
     ASSIGN_OR_DIE_IF_NULL(core, malloc(sizeof(struct core)));
 
     memset(core, 0, sizeof(struct core));
 
-    ASSIGN_OR_DIE_IF_NULL(core->users, (void *)hashmap_str_new());
-    ASSIGN_OR_DIE_IF_NULL(core->nicks, (void *)hashmap_str_new());
-    ASSIGN_OR_DIE_IF_NULL(core->bots, (void *)hashmap_str_new());
-    ASSIGN_OR_DIE_IF_NULL(core->clones, (void *)hashmap_str_new());
-    ASSIGN_OR_DIE_IF_NULL(core->modules, (void *)hashmap_str_new());
-    ASSIGN_OR_DIE_IF_NULL(core->trusts, (void *)hashmap_str_new());
-    ASSIGN_OR_DIE_IF_NULL(core->links, (void *)hashmap_str_new());
+    ASSIGN_OR_DIE_IF_NULL(core->users, (void *)hashmap_new(&desc));
+    ASSIGN_OR_DIE_IF_NULL(core->nicks, (void *)hashmap_new(&desc));
+    ASSIGN_OR_DIE_IF_NULL(core->bots, (void *)hashmap_new(&desc));
+    ASSIGN_OR_DIE_IF_NULL(core->clones, (void *)hashmap_new(&desc));
+    ASSIGN_OR_DIE_IF_NULL(core->modules, (void *)hashmap_new(&desc));
+    ASSIGN_OR_DIE_IF_NULL(core->trusts, (void *)hashmap_new(&desc));
+    ASSIGN_OR_DIE_IF_NULL(core->links, (void *)hashmap_new(&desc));
 }
 
 void free_core(void) {
