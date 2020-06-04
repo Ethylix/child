@@ -14,6 +14,6 @@ jobs:
       - store_artifacts:
           path: src/child
           destination: child
-      - run: apt install -y npm && npm install tap-xunit -g && sleep 1 && cat tests/results.tap | tap-xunit > tests/results.xml
+      - run: apt install -y npm && npm install tap-xunit -g && sleep 1 && chmod +x /usr/local/lib/node_modules/tap-xunit/bin/tap-xunit && cat tests/results.tap | tap-xunit > tests/results.xml
       - store_test_results:
           path: tests
