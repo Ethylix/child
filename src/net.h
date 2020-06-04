@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define CHUNKSIZE   65536
 #define SENDQSIZE   65536 /* 64 KB should be really enough */
 
-#define RECONNECT_DELAY 60
+#define RECONNECT_DELAY 10
 #define MAX_RECO_ATTEMPTS 10
 #define CONNECT_TIMEOUT 5
 

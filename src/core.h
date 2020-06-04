@@ -2,7 +2,6 @@
 #define _CORE_H
 
 #include "hashmap.h"
-#include "partyline.h"
 
 #include <mysql/mysql.h>
 #include <poll.h>
@@ -60,10 +59,6 @@ struct config {
 
     char *guest_prefix;
 
-    int listen_port;
-    char *pl_logfile;
-
-    int enable_exec;
     int anonymous_global;
 
     char *sendmail;
@@ -107,7 +102,6 @@ struct core {
     struct hashmap *hooks;
     DECLARE_HASHMAP(trusts, const char *, struct trust *);
     DECLARE_HASHMAP(links, const char *, struct link_ *);
-    struct hashmap *eclients;
     DECLARE_HASHMAP(guests, const char *, struct guest *);
     DECLARE_HASHMAP(chans, const char *, struct chan *);
     DECLARE_HASHMAP(wchans, const char *, struct wchan *);
@@ -126,16 +120,12 @@ struct core {
     struct config config;
 
     int sock;
-    int esock;
     int startuptime;
     bool verbose;
     bool vv;
     int raws;
     int eos;
-    int emerg;
-    int emerg_req;
     MYSQL mysql_handle;
-    struct pollfd ufds[ECL_MAXSOCK];
 };
 
 struct core *get_core(void);

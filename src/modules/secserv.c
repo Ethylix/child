@@ -33,8 +33,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define IsDigit(c) (c <= '9' && c >= '0')
 #define set_perm(a) perm = (a);
 
-extern int emerg;
-
 char *modname = "secserv";
 char *logchan = "#stats";
 char *modes = "R";
@@ -48,7 +46,6 @@ int (check_nick)();
 int (reset_vars)();
 void secserv_cmds (Nick *, User *, char *);
 void secserv_help (Nick *);
-int (emergchange)();
 int kills,seclev,perm,old_maxclones,glines,rmode;
 int set_seclev(int);
 int sec_perm(int);
@@ -57,16 +54,10 @@ void child_init()
 {
     kills = perm = rmode = 0;
     seclev = 1;
-    if (emerg) {
-        set_seclev(2);
-        set_perm(1);
-    }
     old_maxclones = me.maxclones;
     AddHook(HOOK_NICKCREATE,&check_nick,"check_nickcreate",modname);
     AddHook(HOOK_NICKCHANGE,&check_nick,"check_nickchange",modname);
     AddHook(HOOK_PING,&reset_vars,"reset_vars",modname);
-    AddHook(HOOK_EMERG_ON,&emergchange,"emergchangeon",modname);
-    AddHook(HOOK_EMERG_OFF,&emergchange,"emergechangeoff",modname);
     addOperCommand("seclev",secserv_cmds,me.level_admin);
     addHelpOperCommand("seclev",secserv_help,"Manage security level",me.level_admin);
     MsgToChan(logchan,"[SecServ] Hi !");
@@ -113,19 +104,6 @@ static void remove_mode_allchans()
         SendRaw("MODE %s -%s",chan->channelname,modes);
     }
     rmode = 0;
-}
-
-int emergchange()
-{
-    if (emerg) {
-        set_perm(1);
-        set_seclev(2);
-    } else {
-        set_perm(0);
-        set_seclev(1);
-    }
-
-    return MOD_CONTINUE;
 }
 
 int reset_vars()
@@ -237,11 +215,6 @@ void secserv_cmds (Nick *nptr, User *uptr, char *all)
     if (!arg2 || *arg2 == '\0') {
         NoticeToUser(nptr,"Current security level : \2%d\2. Perm level : %d",seclev,perm);
         return;
-    }
-
-    if (emerg) {
-        NoticeToUser(nptr,"Cannot change seclev or perm while emergency status enabled");
-         return;
     }
 
     if ((uptr->level < me.level_root || uptr->authed != 1) && atoi(arg2) == 4) {

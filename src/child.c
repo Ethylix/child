@@ -27,7 +27,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "db.h"
 #include "filter.h"
 #include "modules.h"
-#include "partyline.h"
 #include "string_utils.h"
 #include "trust.h"
 #include "user.h"
@@ -45,14 +44,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 #include <unistd.h>
 
-int sock,esock;
+int sock;
 int startuptime;
 int verbose, vv, raws, eos;
-int emerg, emerg_req;
 MYSQL mysql;
 
 hooklist hook_list;
-eclientlist eclient_list;
 cflaglist cflag_list;
 memberlist member_list;
 limitlist limit_list;
@@ -62,8 +59,6 @@ commandlist command_list;
 rulelist rule_list;
 #endif
 tblist tb_list;
-
-struct pollfd ufds[ECL_MAXSOCK];
 
 #ifdef USE_GNUTLS
 gnutls_session_t session;
@@ -198,14 +193,10 @@ int main(int argc, char **argv)
     InitMem();
     init_core();
 
-    int retval,mysql_lastconn,newfd,i,lastcheck,lastcheck2,nbfd;
-    struct sockaddr_storage sa;
-    socklen_t salen = sizeof(sa);
-    Eclient *eclient;
+    int retval,mysql_lastconn,lastcheck,lastcheck2,timenow;
+    struct pollfd pfd;
 
     indata.nextline = indata.chunkbufentry = indata.chunkbuf;
-
-    emerg = emerg_req = 0;
 
     eos = raws = verbose = vv = 0;
     int daemonize = 1;
@@ -248,7 +239,6 @@ int main(int argc, char **argv)
     strcpy(me.mysql_passwd,"childp4ss");
     strcpy(me.logfile,"child.log");
     strcpy(me.guest_prefix,"Geek");
-    strcpy(me.pl_logfile,"partyline.log");
     strcpy(me.sendmail,"/usr/sbin/sendmail -t");
     strcpy(me.sendfrom,"noreply@geeknode.org");
     strcpy(me.usercloak,".users.geeknode.org");
@@ -264,11 +254,9 @@ int main(int argc, char **argv)
     me.level_owner = 1000;
     me.limittime = 5;
     me.savedb_interval = 60;
-    me.listen_port = 0;
 #ifdef USE_GNUTLS
     me.ssl = 0;
 #endif
-    me.enable_exec = 0;
     me.anonymous_global = 0;
     me.maxmsgtime = 2;
     me.maxmsgnb = 5;
@@ -313,14 +301,6 @@ int main(int argc, char **argv)
         loadrulefile();
 #endif
 
-    if (me.listen_port) {
-        if (!Bind()) {
-            fprintf(stderr,"Error while binding\n");
-            child_clean();
-        }
-        pllog("Partyline created");
-    }
-
     retval = ConnectToServer();
     switch(retval) {
         case -1:
@@ -328,7 +308,7 @@ int main(int argc, char **argv)
             operlog("Failed to connect to %s:%d (connection timed out)",me.server,me.port);
             child_clean();
         case 0:
-            fprintf(stderr,"Failed to connect to %s:%d",me.server,me.port);
+            fprintf(stderr,"Failed to connect to %s:%d\n",me.server,me.port);
             operlog("Failed to connect to %s:%d",me.server,me.port);
             child_clean();
     }
@@ -355,78 +335,40 @@ int main(int argc, char **argv)
     if (daemonize) daemon(1,0);
     write_pid();
 
-    nbfd = build_poll();
-    struct pollfd pfdout;
-    pfdout.fd = sock;
-    pfdout.events = POLLOUT;
-    pfdout.revents = 0;
+    for (;;) {
+        if (!me.connected)
+            goto try_reconnect;
 
-    while(1) {
-        if (outdata.writebytes > 0) {
-            retval = poll(&pfdout,1,1);
-            if (retval > 0 && (pfdout.revents & POLLOUT))
-                flush_sendq();
-        }
-        retval = poll(ufds,nbfd,1);
+        pfd.fd = sock;
+        pfd.events = POLLIN | POLLPRI;
+        if (outdata.writebytes > 0)
+            pfd.events |= POLLOUT;
+        pfd.revents = 0;
+
+        retval = poll(&pfd, 1, 10);
         if (retval > 0) {
-            for (i=0;i<nbfd;i++) {
-                if (ufds[i].revents & (POLLIN | POLLPRI)) {
-                    switch(i) {
-                        case 0:
-                            if (!ReadChunk()) {
-                                if (!me.connected || !eos) break;
-                                operlog("Connection reset by peer");
-                                savealldb();
-                                eos = me.retry_attempts = me.connected = 0;
-                                me.nextretry = time(NULL)+1;
-                                cleanup_reconnect();
-                                close(sock);
-                                break;
-                            }
-                            while (GetLineFromChunk())
-                                ParseLine();
-                            break;
-                        case 1:
-                            if (!me.listen_port) break;
-                            newfd = accept(esock,(struct sockaddr *)&sa,&salen);
-                            if (eclient_list.size+1 >= ECL_MAXSOCK) {
-                                close(newfd);
-                                break;
-                            }
-                            fcntl(newfd,F_SETFL,O_NONBLOCK);
-                            eclient = AddEclient(newfd,sa,salen);
-                            sendto_all_butone(eclient,"*** Connection from %s (%s)",eclient->host,eclient->addr);
-                            nbfd = build_poll(); i++;
-                            break;
-                        default:
-                            eclient = find_eclient(ufds[i].fd);
-                            if (!eclient) break;
-                            int oldnbfd = nbfd;
-                            int old_eclient_size = eclient_list.size;
-                            if (!ReadPChunk(eclient)) {
-                                if (eclient->authed == 1)
-                                    sendto_all_butone(eclient,"*** User %s (%s) logged out (Connection reset by peer)",eclient->nick,eclient->host);
-                                else
-                                    sendto_all_butone(eclient,"*** Lost connection from %s",eclient->host);
-                                close(eclient->fd);
-                                DeleteEclient(eclient);
-                                nbfd = build_poll();
-                                i--;
-                                break;
-                            }
-                            int tmpfd = eclient->fd;
-                            while (GetLineFromPChunk(tmpfd))
-                                ParseEclient(eclient);
-                            if (old_eclient_size > eclient_list.size)
-                                nbfd = build_poll();
-                            if (nbfd < oldnbfd) i -= (oldnbfd - nbfd);
-                            break;
-                    }
+            if (pfd.revents & POLLOUT)
+                flush_sendq();
+
+            if (pfd.revents & (POLLIN | POLLPRI)) {
+                if (!ReadChunk()) {
+                    if (!me.connected || !eos)
+                        continue;
+                    operlog("Connection reset by peer");
+                    savealldb();
+                    eos = me.retry_attempts = me.connected = 0;
+                    me.nextretry = time(NULL)+1;
+                    cleanup_reconnect();
+                    close(sock);
+                    continue;
                 }
+                while (GetLineFromChunk())
+                    ParseLine();
             }
         }
 
-        int timenow = time(NULL);
+try_reconnect:
+        timenow = time(NULL);
 
         if (!me.connected && timenow - me.nextretry >= 0) {
             retval = ConnectToServer();
@@ -467,6 +409,10 @@ int main(int argc, char **argv)
             checkexpired();
             lastcheck2 = timenow;
         }
+
+        // Avoid burning the CPU while trying to reconnect.
+        if (!me.connected)
+            usleep(10000);
     }
 
     operlog("Program shouldn't reach this piece of code, WTF ? Saving DBs and exiting.");

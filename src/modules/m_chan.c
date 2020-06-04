@@ -38,8 +38,6 @@ extern commandlist command_list;
 extern memberlist member_list;
 extern tblist tb_list;
 
-extern int emerg;
-
 void do_chan (Nick *, User *, char *);
 void do_help (Nick *, User *, char *);
 void chan_register (Nick *, User *, Chan *, char *);
@@ -241,11 +239,6 @@ void chan_register (Nick *nptr, User *uptr, Chan *chptr, char *all)
         
     if (chptr) {
         NoticeToUser(nptr,"This channel is already registered");
-        return;
-    }
-        
-    if (emerg) {
-        NoticeToUser(nptr,"Channels registrations are currently disabled. Please try again later.");
         return;
     }
 

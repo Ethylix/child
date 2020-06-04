@@ -101,9 +101,6 @@ void loadconf(int what)
         if (sscanf(line,"SSL %i",&me.ssl)) { if (vv) printf("\tssl = '%i'\n",me.ssl); continue; }
 #endif
         if (sscanf(line,"GuestPrefix \"%[^\"]\"",me.guest_prefix)) { if (vv) printf("\tguest_prefix = '%s'\n",me.guest_prefix); continue; }
-        if (sscanf(line,"ListenPort %i",&me.listen_port)) { if (vv) printf("\tlisten_port = '%i'\n",me.listen_port); continue; }
-        if (sscanf(line,"PartyLineLog \"%[^\"]\"",me.pl_logfile)) { if (vv) printf("\tpl_logfile = '%s'\n",me.pl_logfile); continue; }
-        if (sscanf(line,"Exec %i",&me.enable_exec)) { if (vv) printf("\tenable_exec = '%i'\n",me.enable_exec); continue; }
         if (sscanf(line,"AnonGlobal %i",&me.anonymous_global)) { if (vv) printf("\tanonymous_global = '%i'\n",me.anonymous_global); continue; }
         if (sscanf(line,"SendMailPath \"%[^\"]\"",me.sendmail)) { if (vv) printf("\tsendmail = '%s'\n",me.sendmail); continue; }
         if (sscanf(line,"SendFrom \"%[^\"]\"",me.sendfrom)) { if (vv) printf("\tsendfrom = '%s'\n",me.sendfrom); continue; }

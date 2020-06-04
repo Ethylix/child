@@ -25,7 +25,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "commands.h"
 #include "filter.h"
 #include "modules.h"
-#include "partyline.h"
 #include "string_utils.h"
 #include "trust.h"
 #include "user.h"
@@ -34,7 +33,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 
 extern hooklist hook_list;
-extern eclientlist eclient_list;
 extern cflaglist cflag_list;
 extern memberlist member_list;
 extern limitlist limit_list;
@@ -54,8 +52,6 @@ void FreeAllMem()
         DeleteMember(LIST_HEAD(member_list));
     while (!LIST_EMPTY(limit_list))
         DeleteLimit(LIST_HEAD(limit_list));
-    while (!LIST_EMPTY(eclient_list))
-        DeleteEclient(LIST_HEAD(eclient_list));
 #ifdef USE_FILTER
     while (!LIST_EMPTY(rule_list))
         remove_rule(LIST_HEAD(rule_list));
@@ -120,7 +116,6 @@ long get_mem(int which)
 void InitMem()
 {
     LIST_INIT(hook_list);
-    LIST_INIT(eclient_list);
     LIST_INIT(cflag_list);
     LIST_INIT(member_list);
     LIST_INIT(limit_list);

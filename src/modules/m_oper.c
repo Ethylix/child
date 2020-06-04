@@ -42,7 +42,6 @@ extern rulelist rule_list;
 #endif
 
 extern int raws;
-extern int emerg, emerg_req;
 extern int startuptime;
 
 void do_oper (Nick *, User *, char *);
@@ -79,7 +78,6 @@ void oper_setraws (Nick *, User *, char *);
 void oper_rehash (Nick *);
 void oper_restart (Nick *, User *, char *);
 void oper_die (Nick *, User *, char *);
-void oper_emerg (Nick *, User *, char *);
 void oper_noexpire (Nick *, User *, char *);
 void oper_suspend (Nick *, User *, char *);
 void oper_cmdlev (Nick *, User *, char *);
@@ -142,7 +140,6 @@ void child_init(Module *module)
     addOperCommand("fakelist",oper_fakelist,me.level_oper);
     addOperCommand("fakekill",oper_fakekill,me.level_oper);
     addOperCommand("fakejoin",oper_fakejoin,me.level_oper);
-    addOperCommand("emerg",oper_emerg,me.level_owner);
     addOperCommand("die",oper_die,me.level_root);
     addOperCommand("cmdlev",oper_cmdlev,me.level_owner);
     addOperCommand("chanlist",oper_chanlist,me.level_oper);
@@ -184,7 +181,6 @@ void child_cleanup()
     delOperCommand("rehash");
     delOperCommand("restart");
     delOperCommand("die");
-    delOperCommand("emerg");
     delOperCommand("noexpire");
     delOperCommand("suspend");
     delOperCommand("cmdlev");
@@ -716,12 +712,6 @@ void oper_modload (Nick *nptr, User *uptr __unused, char *all)
     char *arg3 = all;
     SeperateWord(arg3);
 
-        
-    if (emerg) {
-        NoticeToUser(nptr,"Cannot load module: emergency status is enabled");
-        return;
-    }   
-        
     if (!arg3 || *arg3 == '\0') {
         NoticeToUser(nptr,"Syntax: \2modload \037modname\037\2");
         return;
@@ -747,12 +737,6 @@ void oper_modunload (Nick *nptr, User *uptr __unused, char *all)
     char *arg3 = all;
     SeperateWord(arg3);
 
-        
-    if (emerg) {
-        NoticeToUser(nptr,"Cannot unload module: emergency status is enabled");
-        return;
-    }   
-        
     if (!arg3 || *arg3 == '\0') {
         NoticeToUser(nptr,"Syntax: \2modunload \037modname\037\2");
         return;
@@ -1014,18 +998,13 @@ void oper_sglobal (Nick *nptr, User *uptr __unused, char *all)
         send_global(serv, "(sGlobal) [%s] %s", nptr->nick, message);
 }
 
-void oper_raw (Nick *nptr, User *uptr, char *all)
+void oper_raw (Nick *nptr, User *uptr __unused, char *all)
 {
     if (raws != 1) {
         NoticeToUser(nptr,"The raws are disabled");
         return;
-    }   
+    }
 
-    if (uptr->level < me.level_owner && emerg) {
-        NoticeToUser(nptr,"Cannot send raw while emergency status enabled");
-        return;
-    }   
-        
     if (!all || *all == '\0') {
         NoticeToUser(nptr,"Syntax: \2raw \037message\037\2");
         return;
@@ -1087,67 +1066,6 @@ void oper_die (Nick *nptr, User *uptr __unused, char *all)
     if (!arg3 || *arg3 == '\0')
         child_die(1);
     if (!Strcmp(arg3,"0")) child_die(0);
-}
-
-void oper_emerg (Nick *nptr, User *uptr, char *all)
-{
-    char *arg3 = all;
-    SeperateWord(arg3);
-
-    if (!arg3 || *arg3 == '\0') {
-        NoticeToUser(nptr,"Emergency status \2%s\2",emerg ? "on" : "off");
-        return;
-    }
-
-    if (uptr->level < me.level_owner) {
-        operlog("%s tried to modify emergency status, denied.",nptr->nick);
-        return;
-    }
-
-    if (!me.listen_port) {
-        NoticeToUser(nptr,"Cannot enable emergency status if partyline is disabled");
-        return;
-    }
-
-    if (!Strcmp(arg3,"on")) {
-        if (emerg) {
-            NoticeToUser(nptr,"Emergency status already activated");
-            return;
-        }
-
-        if (emerg_req) {
-            NoticeToUser(nptr,"Activating request already sent");
-            return;
-        }
-
-        init_srandom();
-        emerg_req = random()%999999999;
-        NoticeToUser(nptr,"Please confirm your request in the partyline with .emerg command. Code: %d",emerg_req);
-        MsgToChan(OPERCHAN,"\2%s\2 requested emergency status to be \2enabled\2",nptr->nick);
-        operlog("%s requested emergency status to be enabled",nptr->nick);
-        return;
-    } else if (!Strcmp(arg3,"off")) {
-        if (emerg_req) {
-            emerg_req = 0;
-            NoticeToUser(nptr,"Request cancelled");
-            MsgToChan(OPERCHAN,"\2%s\2 cancelled his/her request",nptr->nick);
-            operlog("%s cancelled his/her request",nptr->nick);
-            return;
-        }
-
-        if (!emerg) {
-            NoticeToUser(nptr,"Emergency status already disabled");
-            return;
-        }
-
-        emerg = 0;
-        NoticeToUser(nptr,"Emergency status disabled");
-        MsgToChan(OPERCHAN,"\2%s\2 \0033\037disabled\037\003 emergency status",nptr->nick);
-        operlog("%s disabled emergency status",nptr->nick);
-        RunHooks(HOOK_EMERG_OFF,NULL,NULL,NULL,NULL);
-        return;
-    } else
-        NoticeToUser(nptr,"Syntax: \2emerg [\037on\037|\037off\037]\2");
 }
 
 void oper_noexpire (Nick *nptr, User *uptr __unused, char *all)

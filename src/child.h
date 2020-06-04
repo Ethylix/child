@@ -33,7 +33,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define DEFAULT_CONFFILE "child.conf"
 
 #define operlog(x, ...) mylog(me.logfile, x, ##__VA_ARGS__)
-#define pllog(x, ...) mylog(me.pl_logfile, x, ##__VA_ARGS__)
 
 struct {
     char nick[32];
@@ -64,9 +63,6 @@ struct {
     int ssl;
 #endif
     char guest_prefix[32];
-    int listen_port;
-    char pl_logfile[32];
-    int enable_exec;
     int anonymous_global;
     char sendmail[128];
     char sendfrom[128];

@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "child.h"
 #include "filter.h"
 #include "mem.h"
-#include "partyline.h"
 #include "string_utils.h"
 
 #include <errno.h>
@@ -40,11 +39,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 #include <unistd.h>
 
-extern eclientlist eclient_list;
-
-extern struct pollfd ufds[ECL_MAXSOCK];
 extern int vv;
-extern int sock, esock;
+extern int sock;
 extern int eos;
 
 static jmp_buf timeout_jump;
@@ -52,129 +48,6 @@ static jmp_buf timeout_jump;
 void timeout()
 {
     longjmp(timeout_jump,1);
-}
-
-int build_poll()
-{
-    int i,j=0;
-    Eclient *ecl;
-    for (i=0;i<ECL_MAXSOCK;i++) {
-        ufds[i].fd = 0;
-        ufds[i].events = POLLIN | POLLPRI;
-        ufds[i].revents = 0;
-    }
-
-    ufds[j++].fd = sock;
-    if (me.listen_port) {
-        ufds[j++].fd = esock;
-        LIST_FOREACH_ALL(eclient_list, ecl)
-            ufds[j++].fd = ecl->fd;
-    }
-
-    return j;
-}
-
-Eclient *find_eclient (int fd)
-{
-    Eclient *tmp;
-    LIST_FOREACH(eclient_list, tmp, HASH_INT(fd)) {
-        if (tmp->fd == fd)
-            return tmp;
-    }
-
-    return NULL;
-}
-
-Eclient *find_eclient_name (char *nick)
-{
-    Eclient *tmp;
-    LIST_FOREACH_ALL(eclient_list, tmp) {
-        if (!Strcmp(tmp->nick,nick))
-            return tmp;
-    }
-
-    return NULL;
-}
-
-Eclient *AddEclient (int fd, struct sockaddr_storage sa, socklen_t salen)
-{
-    Eclient *new_eclient;
-    int n;
-    new_eclient = (Eclient *)malloc(sizeof(Eclient));
-
-    if ((n = getnameinfo((struct sockaddr *)&sa,salen,new_eclient->addr,NI_MAXHOST,new_eclient->port,NI_MAXSERV,NI_NUMERICHOST+NI_NUMERICSERV))) {
-        fprintf(stderr,"getaddrinfo: %s\n",gai_strerror(n));
-        if (n == EAI_SYSTEM) perror("warning: getnameinfo");
-        close(fd);
-        return NULL;
-    }
-
-    if ((n = getnameinfo((struct sockaddr *)&sa,salen,new_eclient->host,NI_MAXHOST,NULL,0,0))) {
-        fprintf(stderr,"getaddrinfo: %s\n",gai_strerror(n));
-        if (n == EAI_SYSTEM) perror("warning: getnameinfo");
-        close(fd);
-        return NULL;
-    }
-
-    bzero(new_eclient->nick,NICKLEN);
-    new_eclient->authed = 0;
-    new_eclient->fd = fd;
-    new_eclient->pchunkbufentry = new_eclient->pchunkbuf;
-    new_eclient->pnextline = new_eclient->pchunkbuf;
-
-    LIST_INSERT_HEAD(eclient_list, new_eclient, HASH_INT(fd));
-    return new_eclient;
-}
-
-void DeleteEclient (Eclient *eclient)
-{
-    LIST_REMOVE(eclient_list, eclient, HASH_INT(eclient->fd));
-    free(eclient);
-}
-
-int Bind()
-{
-    int n;
-    struct addrinfo hints;
-    struct addrinfo *res = NULL;
-
-    hints.ai_flags = AI_PASSIVE;
-    hints.ai_family = PF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-    hints.ai_addrlen = 0;
-    hints.ai_addr = NULL;
-    hints.ai_canonname = NULL;
-    hints.ai_next = NULL;
-
-    char port[6];
-    sprintf(port,"%d",me.listen_port);
-
-    n = getaddrinfo(*me.bindip ? me.bindip : NULL,port,&hints,&res);
-    if (n != 0) {
-        fprintf(stderr,"getaddrinfo: %s\n",gai_strerror(n));
-        if (n == EAI_SYSTEM) perror("getaddrinfo");
-        return 0;
-    }
-
-    esock = socket(res->ai_family,res->ai_socktype,res->ai_protocol);
-    if (esock < 0) { perror("socket"); return 0; }
-
-    int yes = 1;
-    setsockopt(esock,SOL_SOCKET,SO_REUSEADDR,(char *)&yes,sizeof(yes));
-
-    if (bind(esock,res->ai_addr,res->ai_addrlen) == -1) {
-        perror("bind");
-        return 0;
-    }
-
-    freeaddrinfo(res);
-
-    if (listen(esock,5) == -1)
-        return 0;
-
-    fcntl(esock,F_SETFL,O_NONBLOCK);
-    return 1;
 }
 
 #ifdef USE_GNUTLS
@@ -384,45 +257,6 @@ void SendRaw (char *msg, ...)
     outdata.writebytes += len;
 }
 
-void send_to (Eclient *eclient, char *msg, ...)
-{
-    char tmp[1024];
-    char buf[1024];
-    va_list val;
-    ircsprintf(buf,1024,msg,val);
-
-    snprintf(tmp,1024,"%s\r\n",buf);
-
-    send(eclient->fd,tmp,strlen(tmp),0);
-}
-
-void sendto_all (char *msg, ...)
-{
-    char buf[1024];
-    va_list val;
-    ircsprintf(buf,1024,msg,val);
-
-    Eclient *eclient;
-    LIST_FOREACH_ALL(eclient_list, eclient) {
-        if (eclient->authed == 1)
-            send_to(eclient,buf);
-    }
-}
-
-void sendto_all_butone (Eclient *ecl, char *msg, ...)
-{
-    char buf[1024];
-    va_list val;
-    ircsprintf(buf,1024,msg,val);
-
-    Eclient *eclient;
-    LIST_FOREACH_ALL(eclient_list, eclient) {
-        if (eclient->fd != ecl->fd && eclient->authed == 1)
-            send_to(eclient,buf);
-    }
-    pllog(buf);
-}
-
 int ReadChunk(void)
 {
     int oldbytes;
@@ -510,19 +344,6 @@ void CloseAllSock()
     if (me.ssl)
         close_secure_connection();
 #endif
-
-    if (me.listen_port) {
-        Eclient *eclient;
-
-        while (!LIST_EMPTY(eclient_list)) {
-            eclient = LIST_HEAD(eclient_list);
-            close(eclient->fd);
-            DeleteEclient(eclient);
-        }
-
-        close(esock);
-        pllog("Partyline closed");
-    }
 }
 
 int match_ipmask (int addr, int mask, int bits)

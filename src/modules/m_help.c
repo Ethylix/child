@@ -132,7 +132,6 @@ void help_oper_modunload (Nick *);
 void help_oper_modlist (Nick *);
 void help_oper_rehash (Nick *);
 void help_oper_setraws (Nick *);
-void help_oper_emerg (Nick *);
 void help_oper_cmdlev (Nick *);
 #ifdef USE_FILTER
 void help_oper_ruleslist (Nick *);
@@ -292,7 +291,6 @@ void child_init(Module *module)
     addHelpOperCommand("fakelist",help_oper_fakelist,"List fakeusers",me.level_oper);
     addHelpOperCommand("fakekill",help_oper_fakekill,"Make a fake user quit",me.level_oper);
     addHelpOperCommand("fakejoin",help_oper_fakejoin,"Make a fake user join a channel",me.level_oper);
-    addHelpOperCommand("emerg",help_oper_emerg,"Enable/disable emergency status",me.level_owner);
     addHelpOperCommand("die",help_oper_die,"Die services",me.level_root);
     addHelpOperCommand("cmdlev",help_oper_cmdlev,"Change the level of a command",me.level_owner);
     addHelpOperCommand("chanlist",help_oper_chanlist,"Search a registered channel",me.level_oper);
@@ -431,7 +429,6 @@ void child_cleanup()
     delHelpOperCommand("restart");
     delHelpOperCommand("die");
     delHelpOperCommand("setraws");
-    delHelpOperCommand("emerg");
     delHelpOperCommand("cmdlev");
 #ifdef USE_FILTER
     delHelpOperCommand("reloadrules");
@@ -1392,12 +1389,6 @@ void help_oper_setraws (Nick *nptr)
 {
     NoticeToUser(nptr,"Syntax: \2setraws \0370|1\037\2");
     NoticeToUser(nptr,"Enable/disable raws");
-}
-
-void help_oper_emerg (Nick *nptr)
-{
-    NoticeToUser(nptr,"Syntax: \2emerg [\037on\037|\037off\037]\2");
-    NoticeToUser(nptr,"Enable emergency status");
 }
 
 void help_oper_cmdlev (Nick *nptr)

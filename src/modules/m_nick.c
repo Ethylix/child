@@ -36,8 +36,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 extern cflaglist cflag_list;
 extern commandlist command_list;
 
-extern int emerg;
-
 void do_nick (Nick *, User *, char *);
 void do_help (Nick *, User *, char *);
 void nick_link (Nick *, User *, char *);
@@ -371,12 +369,7 @@ void nick_register (Nick *nptr, User *uptr, char *all)
         NoticeToUser(nptr,"This nick is already registered");
         return;
     }   
-        
-    if (emerg) {
-        NoticeToUser(nptr,"Nick registrations are currently disabled. Please try again later.");
-        return;
-    }   
-        
+
     if (!arg3 || *arg3 == '\0' || !arg4 || *arg4 == '\0') {
         NoticeToUser(nptr,"Syntax: \2NICK REGISTER \037password\037 \037email\037\2");
         return;

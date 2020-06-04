@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define _USER_H
 
 #include "mem.h"
+#include "net.h"
 
 #include <time.h>
 
@@ -224,6 +225,7 @@ void sync_user (Nick *);
 Fake *AddFake (char *, char *, char *);
 Fake *find_fake (char *);
 void DeleteFake (Fake *);
+void clear_fakes(void);
 User *get_link_master (User *);
 int IsSuperAdmin (User *);
 
