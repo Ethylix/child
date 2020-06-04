@@ -258,6 +258,16 @@ void DeleteWildNick (Nick *nptr)
     free(nptr);
 }
 
+void clear_nicks(void)
+{
+    struct hashmap_entry *entry, *tmp_entry;
+    Nick *nptr;
+
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->nicks, entry, tmp_entry, nptr) {
+        DeleteWildNick(nptr);
+    }
+}
+
 void DeleteGuest (char *nick)
 {
     Guest *guest = find_guest(nick);

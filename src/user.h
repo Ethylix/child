@@ -213,6 +213,7 @@ Guest *AddGuest (char *, int, int);
 Link *AddLink (char *, char *);
 void DeleteAccount (User *);
 void DeleteWildNick (Nick *);
+void clear_nicks(void);
 void DeleteGuest (char *);
 void DeleteLink (char *);
 void DeleteLinks (char *);

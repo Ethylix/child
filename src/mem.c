@@ -78,6 +78,8 @@ void FreeAllMem()
 
 void cleanup_reconnect()
 {
+    clear_nicks();
+
     while (!LIST_EMPTY(member_list))
         DeleteMember(LIST_HEAD(member_list));
     while (!LIST_EMPTY(wchan_list))
