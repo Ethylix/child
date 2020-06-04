@@ -22,7 +22,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define _MODULES_H
 
 #include "channel.h"
+#include "llist.h"
 #include "user.h"
+
+#include <stdint.h>
 
 #ifndef __unused
 #define __unused __attribute__((unused))
@@ -119,33 +122,25 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 typedef struct hook {
     char name[50+1];
     char modname[50+1]; /* hash key */
-    long int hook;
+    uint64_t hook_mask;
     int (*ptr)(Nick *, User *, Chan *, char *[]);
-    struct hook *next,*prev;
-    struct hook *lnext,*lprev;
+    struct llist_head list_head;
 } Hook;
 
 typedef struct module_ {
     char modname[50+1]; /* hash key */
     void *handle;
     int nodreload;
-    struct module_ *next,*prev;
-    struct module_ *lnext,*lprev;
+    struct llist_head hooks;
 } Module;
 
-typedef struct {
-    int size;
-    TABLE(Hook);
-    Hook *lhead;
-} hooklist;
-
-Module *find_module (char *);
-Hook *find_hook (char *, char *);
-Module *loadmodule (char *);
-int unloadmodule (char *);
-Hook *AddHook (long int, int (*fptr)(Nick *, User *, Chan *, char **), char *, char *);
-int DelHook (char *, char *);
-int RunHooks (long int, Nick *, User *, Chan *, char *[]);
-void unloadallmod (void);
+Module *find_module(const char *);
+Hook *find_hook(const Module *, const char *);
+Module *loadmodule(const char *);
+int unloadmodule(const char *);
+Hook *AddHook(uint64_t, int (*fptr)(Nick *, User *, Chan *, char **), char *, char *);
+void DelHook(Hook *);
+int RunHooks(uint64_t, Nick *, User *, Chan *, char *[]);
+void unloadallmod(void);
 
 #endif

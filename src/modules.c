@@ -32,9 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 #include <string.h>
 
-extern hooklist hook_list;
-
-Module *find_module (char *name)
+Module *find_module(const char *name)
 {
     struct hashmap_entry *entry;
 
@@ -44,28 +42,29 @@ Module *find_module (char *name)
     return HASHMAP_ENTRY_VALUE(get_core()->modules, entry);
 }
 
-Hook *find_hook (char *name, char *modname)
+Hook *find_hook(const Module *mod, const char *name)
 {
     Hook *tmp;
-    LIST_FOREACH(hook_list, tmp, HASH(modname)) {
-        if (!Strcmp(tmp->name,name) && !Strcmp(tmp->modname,modname))
+
+    LLIST_FOREACH_ENTRY(&mod->hooks, tmp, list_head) {
+        if (!Strcmp(tmp->name,name))
             return tmp;
     }
 
     return NULL;
 }
 
-void unloadallmod()
+void unloadallmod(void)
 {
-    Module *mod;
     struct hashmap_entry *entry, *tmp_entry;
+    Module *mod;
 
     HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->modules, entry, tmp_entry, mod) {
         unloadmodule(mod->modname);
     }
 }
 
-Module *loadmodule(char *name)
+Module *loadmodule(const char *name)
 {
     char n[60];
     bzero(n,60);
@@ -98,6 +97,7 @@ Module *loadmodule(char *name)
     mod->modname[50] = '\0';
     mod->handle = handle; /* saving module handle */
     mod->nodreload = 0;
+    LLIST_INIT(&mod->hooks);
 
     if (!HASHMAP_INSERT(get_core()->modules, mod->modname, mod, NULL)) {
         fprintf(stderr, "Failed to insert module \"%s\" into hashmap (duplicate entry?)\n", mod->modname);
@@ -111,18 +111,16 @@ Module *loadmodule(char *name)
     return mod;
 }
 
-int unloadmodule(char *name)
+int unloadmodule(const char *name)
 {
     Module *mod;
-    Hook *hook, *next;;
+    Hook *hook, *tmp_hook;
 
     mod = find_module(name);
     if (!mod) return 0;
 
-    for (hook = hook_list.table[HASH(name)]; hook; hook = next) {
-        next = hook->next;
-        if (!Strcmp(hook->modname,name))
-            DelHook(hook->name,hook->modname);
+    LLIST_FOREACH_ENTRY_SAFE(&mod->hooks, hook, tmp_hook, list_head) {
+        DelHook(hook);
     }
 
     void (*func)();
@@ -141,10 +139,17 @@ int unloadmodule(char *name)
     return 1;
 }
 
-Hook *AddHook(long int what, int (*fptr)(Nick *, User *, Chan *, char *[]), char *name, char *modname)
+Hook *AddHook(uint64_t hook_mask, int (*fptr)(Nick *, User *, Chan *, char *[]), char *name, char *modname)
 {
+    Module *mod;
     Hook *hook;
-    if (find_hook(name,modname)) {
+
+    if ((mod = find_module(modname)) == NULL) {
+        fprintf(stderr, "Cannot add hook %s to module %s: module does not exist.\n", name, modname);
+        return NULL;
+    }
+
+    if (find_hook(mod, name) != NULL) {
         fprintf(stderr,"Warning: Cannot add hook %s: hook alreay exists\n",name);
         return NULL;
     }
@@ -153,33 +158,32 @@ Hook *AddHook(long int what, int (*fptr)(Nick *, User *, Chan *, char *[]), char
     strncpy(hook->name,name,50);
     strncpy(hook->modname,modname,50);
     hook->ptr = fptr;
-    hook->hook = what;
+    hook->hook_mask = hook_mask;
 
-    LIST_INSERT_HEAD(hook_list, hook, HASH(modname));
+    LLIST_INSERT_TAIL(&mod->hooks, &hook->list_head);
 
     return hook;
 }
 
-int DelHook(char *name, char *modname)
+void DelHook(Hook *hook)
 {
-    Hook *hook = find_hook(name,modname);
-    if (!hook) return 0;
-
-    LIST_REMOVE(hook_list, hook, HASH(modname));
+    LLIST_REMOVE(&hook->list_head);
     free(hook);
-
-    return 1;
 }
 
-int RunHooks(long int what, Nick *nptr, User *uptr, Chan *chptr, char *parv[])
+int RunHooks(uint64_t hook_mask, Nick *nptr, User *uptr, Chan *chptr, char *parv[])
 {
+    struct hashmap_entry *entry;
+    Module *mod;
     Hook *hook;
     int ret,modstop=0;
 
-    LIST_FOREACH_ALL(hook_list, hook) {
-        if (hook->hook & what) {
-            ret = hook->ptr(nptr,uptr,chptr,parv);
-            if (ret == MOD_STOP) modstop = 1;
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->modules, entry, mod) {
+        LLIST_FOREACH_ENTRY(&mod->hooks, hook, list_head) {
+            if (hook->hook_mask & hook_mask) {
+                ret = hook->ptr(nptr,uptr,chptr,parv);
+                if (ret == MOD_STOP) modstop = 1;
+            }
         }
     }
 

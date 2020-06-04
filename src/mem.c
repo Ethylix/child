@@ -32,7 +32,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdio.h>
 #include <string.h>
 
-extern hooklist hook_list;
 extern cflaglist cflag_list;
 extern memberlist member_list;
 extern limitlist limit_list;
@@ -45,7 +44,6 @@ extern tblist tb_list;
 
 void FreeAllMem()
 {
-    /* module_list and hook_list are not checked because unloadallmod() should be called before this function. */
     while (!LIST_EMPTY(cflag_list))
         DeleteCflag(LIST_HEAD(cflag_list));
     while (!LIST_EMPTY(member_list))
@@ -118,7 +116,6 @@ long get_mem(int which)
 
 void InitMem()
 {
-    LIST_INIT(hook_list);
     LIST_INIT(cflag_list);
     LIST_INIT(member_list);
     LIST_INIT(limit_list);

@@ -99,7 +99,6 @@ struct core {
     DECLARE_HASHMAP(nicks, const char *, struct nick *);
     DECLARE_HASHMAP(clones, const char *, struct clone *);
     DECLARE_HASHMAP(modules, const char *, struct module_ *);
-    struct hashmap *hooks;
     DECLARE_HASHMAP(trusts, const char *, struct trust *);
     DECLARE_HASHMAP(links, const char *, struct link_ *);
     DECLARE_HASHMAP(guests, const char *, struct guest *);
