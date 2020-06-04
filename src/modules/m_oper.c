@@ -346,9 +346,9 @@ void oper_killall (Nick *nptr, User *uptr __unused, char *all)
         return;
     }   
 
-    char mask[128];
+    char mask[256];
     HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->nicks, entry, tmp_entry, nptr2) {
-        snprintf(mask, 128, "%s!%s@%s",nptr2->nick,nptr2->ident,nptr2->host);
+        snprintf(mask, 256, "%s!%s@%s",nptr2->nick,nptr2->ident,nptr2->host);
         if (match_mask(arg3,mask)) {
             killuser(nptr2->nick,"Clearing users",me.nick);
         }
@@ -375,10 +375,10 @@ void oper_regexpcheck (Nick *nptr, User *uptr __unused, char *all)
         return;
     }
 
-    char mask[128];
+    char mask[256];
     NoticeToUser(nptr, "Affected users :");
     HASHMAP_FOREACH_ENTRY_VALUE(get_core()->nicks, entry, nptr2) {
-        snprintf(mask, 128, "%s!%s@%s", nptr2->nick, nptr2->ident, nptr2->host);
+        snprintf(mask, 256, "%s!%s@%s", nptr2->nick, nptr2->ident, nptr2->host);
         if (match_mask(all, mask)) {
             NoticeToUser(nptr, "\2%s\2      (%s@%s)", nptr2->nick, nptr2->ident, nptr2->host);
             i++;
@@ -404,9 +404,9 @@ void oper_glineall (Nick *nptr, User *uptr __unused, char *all)
         return;
     }
 
-    char mask[128];
+    char mask[256];
     HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->nicks, entry, tmp_entry, nptr2) {
-        snprintf(mask, 128, "%s!%s@%s",nptr2->nick,nptr2->ident,nptr2->host);
+        snprintf(mask, 256, "%s!%s@%s",nptr2->nick,nptr2->ident,nptr2->host);
         if (match_mask(arg3,mask)) {
             glineuser("*", nptr2->host, 86400, "Clearing users");
         }

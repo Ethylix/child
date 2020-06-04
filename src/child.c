@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "trust.h"
 #include "user.h"
 
-#include <fcntl.h>
+#include <errno.h>
 #include <mysql/mysql.h>
 #include <signal.h>
 #include <stdio.h>
@@ -157,6 +157,7 @@ void child_die(int save)
     child_clean();
 }
 
+// TODO(target0): improve this.
 void child_restart(int save)
 {
     if (save) savealldb();
@@ -167,9 +168,17 @@ void child_restart(int save)
     CloseAllSock();
     char buf[1024];
     char dir[1024];
-    getcwd(buf,1024);
+    if (getcwd(buf,1024) == NULL) {
+        fprintf(stderr, "Failed to getcwd(%s) for restart: %s\n", buf, strerror(errno));
+        abort();
+    }
     snprintf(dir,1024,"%s/child",buf);
-    system(dir);
+    // Note that this only checks for child process creation and not execution errors.
+    // See system(3).
+    if (system(dir) < 0) {
+        fprintf(stderr, "Failed to system(%s) for restart: %s\n", dir, strerror(errno));
+        abort();
+    }
     child_clean();
 }
 
@@ -332,7 +341,12 @@ int main(int argc, char **argv)
     SendRaw("EOS");
 
     lastcheck = lastcheck2 = mysql_lastconn = time(NULL);
-    if (daemonize) daemon(1,0);
+    if (daemonize) {
+        if (daemon(1,0) < 0) {
+            fprintf(stderr, "Failed to daemonize: %s\n", strerror(errno));
+            abort();
+        }
+    }
     write_pid();
 
     for (;;) {

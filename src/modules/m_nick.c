@@ -346,9 +346,9 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
         NoticeToUser(nptr,"Your vhost \2%s\2 has been activated",user->vhost);
     } else if (HasOption(user, UOPT_CLOAKED)) {
         SendRaw("CHGHOST %s %s%s", nptr->nick, user->nick, me.usercloak);
-        char host[HOSTLEN + 1];
-        bzero(host, HOSTLEN+1);
-        snprintf(host, HOSTLEN, "%s%s", user->nick, me.usercloak);
+        char host[HOSTLEN + NICKLEN + 1];
+        bzero(host, HOSTLEN+NICKLEN+1);
+        snprintf(host, HOSTLEN + NICKLEN + 1, "%s%s", user->nick, me.usercloak);
         strncpy(nptr->hiddenhost, host, HOSTLEN);
         NoticeToUser(nptr,"Your cloak has been activated");
     }
@@ -655,14 +655,14 @@ void nick_set_hidemail (Nick *nptr, User *uptr, char *all)
 void nick_set_cloak (Nick *nptr, User *uptr, char *all)
 {
     char *arg1 = all;
-    char host[HOSTLEN + 1];
+    char host[HOSTLEN + NICKLEN + 1];
     SeperateWord(all);
 
     if (!Strcmp(arg1,"on")) {
         SetOption(uptr, UOPT_CLOAKED);
         SendRaw("CHGHOST %s %s%s", uptr->nick, uptr->nick, me.usercloak);
-        bzero(host, HOSTLEN+1);
-        snprintf(host, HOSTLEN, "%s%s", uptr->nick, me.usercloak);
+        bzero(host, HOSTLEN+NICKLEN+1);
+        snprintf(host, HOSTLEN+NICKLEN+1, "%s%s", uptr->nick, me.usercloak);
         strncpy(nptr->hiddenhost, host, HOSTLEN);
         NoticeToUser(nptr,"Your host is now cloaked");
     } else if (!Strcmp(arg1, "off")) {

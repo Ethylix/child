@@ -98,7 +98,10 @@ long get_mem(int which)
     FILE *proc_stat = fopen("/proc/self/stat","r");
     if (!proc_stat) return -1;
 
-    fscanf(proc_stat,"%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %lu %ld %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d",&vsize,&rss);
+    if (fscanf(proc_stat,"%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %lu %ld %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d",&vsize,&rss) == EOF) {
+        fprintf(stderr, "Failed to read /proc/self/stat (EOF).\n");
+        return -1;
+    }
     fclose(proc_stat);
     vsize /= 1024;
     rss *= 4;
