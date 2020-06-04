@@ -210,12 +210,6 @@ typedef struct timeban {
 
 typedef struct {
     int size;
-    TABLE(Chan);
-    Chan *lhead;
-} chanlist;
-
-typedef struct {
-    int size;
     TABLE(Wchan);
     Wchan *lhead;
 } wchanlist;

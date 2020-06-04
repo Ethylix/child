@@ -37,7 +37,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 extern cflaglist cflag_list;
 extern chanbotlist chanbot_list;
-extern chanlist chan_list;
 
 extern MYSQL mysql;
 extern int verbose, vv;
@@ -335,6 +334,7 @@ void savechandb()
     char owner[NICKLEN+1];
     char entrymsg[250+1];
     char topic[TOPICLEN+1];
+    struct hashmap_entry *entry;
 
     if (!reconnect_to_db()) {
         fprintf(stderr,"Cannot connect to db\n");
@@ -345,7 +345,7 @@ void savechandb()
     mysql_query(&mysql,"DELETE FROM child_chans");
     mysql_query(&mysql,"DELETE FROM child_chan_access");
 
-    LIST_FOREACH_ALL(chan_list, chptr) {
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chptr) {
         bzero(chname,CHANLEN);
         bzero(nick,NICKLEN);
         bzero(owner,NICKLEN);

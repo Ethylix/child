@@ -15,6 +15,7 @@ struct module_;
 struct trust;
 struct link_;
 struct guest;
+struct chan;
 
 struct config {
     char *nick;
@@ -106,7 +107,7 @@ struct core {
     DECLARE_HASHMAP(links, const char *, struct link_ *);
     struct hashmap *eclients;
     DECLARE_HASHMAP(guests, const char *, struct guest *);
-    struct hashmap *chans;
+    DECLARE_HASHMAP(chans, const char *, struct chan *);
     struct hashmap *wchans;
     struct hashmap *cflags;
     struct hashmap *members;

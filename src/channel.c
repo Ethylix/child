@@ -35,7 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 
 extern cflaglist cflag_list;
-extern chanlist chan_list;
 extern chanbotlist chanbot_list;
 extern limitlist limit_list;
 extern memberlist member_list;
@@ -46,13 +45,12 @@ extern int eos;
 
 Chan *find_channel (char *name)
 {
-    Chan *tmp;
-    LIST_FOREACH(chan_list, tmp, HASH(name)) {
-        if (!Strcmp(tmp->channelname, name))
-            return tmp;
-    }
+    struct hashmap_entry *entry;
 
-    return NULL;
+    if (!HASHMAP_FIND(get_core()->chans, name, &entry))
+        return NULL;
+
+    return HASHMAP_ENTRY_VALUE(get_core()->chans, entry);
 }
 
 Wchan *find_wchan (char *name)
@@ -163,7 +161,11 @@ Chan *CreateChannel (char *name, char *owner, int lastseen)
     else
         new_chan->lastseen = lastseen;
 
-    LIST_INSERT_HEAD(chan_list, new_chan, HASH(name));
+    if (!HASHMAP_INSERT(get_core()->chans, new_chan->channelname, new_chan, NULL)) {
+        fprintf(stderr, "Failed to insert new channel \"%s\" into hashmap (duplicate entry?)\n", new_chan->channelname);
+        free(new_chan);
+        return NULL;
+    }
 
     Chan *chan;
     User *uptr;
@@ -247,7 +249,7 @@ void DeleteChannel (Chan *chan)
 {
     Chanbot *chanbot;
 
-    LIST_REMOVE(chan_list, chan, HASH(chan->channelname));
+    HASHMAP_ERASE(get_core()->chans, chan->channelname);
 
     chanbot = find_chanbot(chan->channelname);
     if (!chanbot) {
@@ -563,7 +565,7 @@ int IsAclOnChan (Chan *chptr)
 void checkexpired()
 {
     User *uptr;
-    Chan *chptr, *cnext;
+    Chan *chptr;
     struct hashmap_entry *entry, *tmp_entry;
 
     HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->users, entry, tmp_entry, uptr) {
@@ -572,8 +574,7 @@ void checkexpired()
             userdrop(uptr);
     }
 
-    for (chptr = LIST_HEAD(chan_list); chptr; chptr = cnext) {
-        cnext = LIST_LNEXT(chptr);
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->chans, entry, tmp_entry, chptr) {
         if (((time(NULL) - chptr->lastseen) >= 60*60*24*me.chan_expire) && !(IsChanNoexpire(chptr)) && !(IsAclOnChan(chptr)))
             chandrop(chptr);
     }
@@ -637,7 +638,9 @@ int chansreg (char *nick)
 {
     int count = 0;
     Chan *chan;
-    LIST_FOREACH_ALL(chan_list, chan) {
+    struct hashmap_entry *entry;
+
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chan) {
         if (!Strcmp(chan->owner,nick))
             count++;
     }
@@ -658,11 +661,12 @@ void joinallchans()
     Chanbot *chanbot;
     Chan *chptr;
     Wchan *wchan;
+    struct hashmap_entry *entry;
 
     LIST_FOREACH_ALL(chanbot_list, chanbot)
         JoinChannel(chanbot->bot,chanbot->name);
 
-    LIST_FOREACH_ALL(chan_list, chptr) {
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chptr) {
         wchan = find_wchan(chptr->channelname);
         if (!HasOption(chptr, COPT_NOJOIN))
             JoinChannel(me.nick,chptr->channelname);

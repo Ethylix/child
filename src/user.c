@@ -39,7 +39,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <unistd.h>
 
 extern cflaglist cflag_list;
-extern chanlist chan_list;
 extern fakelist fake_list;
 
 extern int eos;
@@ -490,10 +489,11 @@ void loadallfakes()
 
 void userdrop (User *uptr)
 {
-    Chan *chptr, *next;
+    struct hashmap_entry *entry, *tmp_entry;
+    Chan *chptr;
     User *uptr2;
-    for (chptr = LIST_HEAD(chan_list); chptr; chptr = next) {
-       next = LIST_LNEXT(chptr);
+
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->chans, entry, tmp_entry, chptr) {
         if (!Strcmp(chptr->owner, uptr->nick)) {
             if ((uptr2 = get_coowner(chptr)) != NULL) {
                 DeleteUserFromChannel(uptr2, chptr);

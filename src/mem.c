@@ -35,7 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 extern hooklist hook_list;
 extern eclientlist eclient_list;
-extern chanlist chan_list;
 extern wchanlist wchan_list;
 extern cflaglist cflag_list;
 extern memberlist member_list;
@@ -50,8 +49,6 @@ extern fakelist fake_list;
 
 void FreeAllMem()
 {
-    while (!LIST_EMPTY(chan_list))
-        DeleteChannel(LIST_HEAD(chan_list));
     /* module_list and hook_list are not checked because unloadallmod() should be called before this function. */
     while (!LIST_EMPTY(wchan_list))
         DeleteWchan(LIST_HEAD(wchan_list));
@@ -131,7 +128,6 @@ void InitMem()
 {
     LIST_INIT(hook_list);
     LIST_INIT(eclient_list);
-    LIST_INIT(chan_list);
     LIST_INIT(wchan_list);
     LIST_INIT(cflag_list);
     LIST_INIT(member_list);

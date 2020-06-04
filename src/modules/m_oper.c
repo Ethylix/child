@@ -35,7 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern chanlist chan_list;
 extern commandlist command_list;
 extern fakelist fake_list;
 extern memberlist member_list;
@@ -314,13 +313,14 @@ void oper_userlist (Nick *nptr, User *uptr __unused, char *all)
 
 void oper_chanlist (Nick *nptr, User *uptr __unused, char *all)
 {
+    struct hashmap_entry *entry;
     Chan *chptr;
     char *arg3 = all;
     SeperateWord(arg3);
 
     int count = 0;
 
-    LIST_FOREACH_ALL(chan_list, chptr) {
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chptr) {
         if (arg3 && *arg3 != '\0') {
             if (Strstr(chptr->channelname,arg3) || Strstr(chptr->owner,arg3)) {
                 NoticeToUser(nptr,"%s     %s",chptr->channelname,chptr->owner);
@@ -896,7 +896,8 @@ void oper_stats (Nick *nptr)
     int uptime = time(NULL) - startuptime;
     int days = uptime / 86400, hours = (uptime / 3600) % 24, mins = (uptime / 60) % 60, secs = uptime % 60;
 
-    NoticeToUser(nptr,"There are %d registered users and %d registered channels", HASHMAP_SIZE(get_core()->users), chan_list.size);
+    NoticeToUser(nptr,"There are %d registered users and %d registered channels",
+                 HASHMAP_SIZE(get_core()->users), HASHMAP_SIZE(get_core()->chans));
 
     int j=0,k=0,l=0,m=0,n=0,o=0;
     HASHMAP_FOREACH_ENTRY_VALUE(get_core()->nicks, entry, nptr2) {

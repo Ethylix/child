@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "commands.h"
 #include "channel.h"
 #include "child.h"
+#include "core.h"
+#include "hashmap.h"
 #include "modules.h"
 #include "net.h"
 #include "string_utils.h"
@@ -31,7 +33,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define IsDigit(c) (c <= '9' && c >= '0')
 #define set_perm(a) perm = (a);
 
-extern chanlist chan_list;
 extern int emerg;
 
 char *modname = "secserv";
@@ -90,23 +91,27 @@ static int match_bad_pattern(char *string)
 
 static void set_mode_allchans()
 {
+    struct hashmap_entry *entry;
     Chan *chan;
 
     if (rmode) return;
 
-    LIST_FOREACH_ALL(chan_list, chan)
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chan) {
         SendRaw("MODE %s +%s",chan->channelname,modes);
+    }
     rmode = 1;
 }
 
 static void remove_mode_allchans()
 {
+    struct hashmap_entry *entry;
     Chan *chan;
 
     if (!rmode) return;
 
-    LIST_FOREACH_ALL(chan_list, chan)
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chan) {
         SendRaw("MODE %s -%s",chan->channelname,modes);
+    }
     rmode = 0;
 }
 

@@ -37,7 +37,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 extern cflaglist cflag_list;
 extern chanbotlist chanbot_list;
-extern chanlist chan_list;
 extern commandlist command_list;
 extern memberlist member_list;
 extern tblist tb_list;
@@ -382,7 +381,7 @@ void m_kill (char *sender, char *tail)
         if (!Strcmp(nick, me.nick)) {
             fakeuser(me.nick,me.ident,me.host,MY_UMODES);
             Chan *chptr;
-            LIST_FOREACH_ALL(chan_list, chptr) {
+            HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chptr) {
                 if (!HasOption(chptr, COPT_NOJOIN))
                     JoinChannel(me.nick,chptr->channelname);
             }
