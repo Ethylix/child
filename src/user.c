@@ -39,7 +39,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <unistd.h>
 
 extern cflaglist cflag_list;
-extern fakelist fake_list;
 
 extern int eos;
 
@@ -105,13 +104,12 @@ Link *find_link2 (char *master, char *slave)
 
 Fake *find_fake (char *nick)
 {
-    Fake *tmp;
-    LIST_FOREACH(fake_list, tmp, HASH(nick)) {
-        if (!Strcmp(tmp->nick, nick))
-            return tmp;
-    }
+    struct hashmap_entry *entry;
 
-    return NULL;
+    if (!HASHMAP_FIND(get_core()->fakeusers, nick, &entry))
+        return NULL;
+
+    return HASHMAP_ENTRY_VALUE(get_core()->fakeusers, entry);
 }
 
 User *AddUser (char *nick, int level)
@@ -227,7 +225,12 @@ Fake *AddFake(char *nick, char *ident, char *host)
     strncpy(new_fake->ident, ident, NICKLEN);
     strncpy(new_fake->host, host, HOSTLEN);
 
-    LIST_INSERT_HEAD(fake_list, new_fake, HASH(nick));
+    if (!HASHMAP_INSERT(get_core()->fakeusers, new_fake->nick, new_fake, NULL)) {
+        fprintf(stderr, "Failed to insert new fakeuser \"%s\" into hashmap (duplicate entry?)\n", new_fake->nick);
+        free(new_fake);
+        return NULL;
+    }
+
     return new_fake;
 }
 
@@ -308,8 +311,18 @@ void DeleteLinks (char *nick)
 
 void DeleteFake (Fake *fake)
 {
-    LIST_REMOVE(fake_list, fake, HASH(fake->nick));
+    HASHMAP_ERASE(get_core()->fakeusers, fake->nick);
     free(fake);
+}
+
+void clear_fakes(void)
+{
+    struct hashmap_entry *entry, *tmp_entry;
+    Fake *fake;
+
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->fakeusers, entry, tmp_entry, fake) {
+        DeleteFake(fake);
+    }
 }
 
 void FakeMsg (char *who, char *chan, char *msg, ...)

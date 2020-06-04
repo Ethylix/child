@@ -17,6 +17,7 @@ struct link_;
 struct guest;
 struct chan;
 struct wchan;
+struct fakeuser;
 
 struct config {
     char *nick;
@@ -120,7 +121,7 @@ struct core {
     struct hashmap *rules;
 #endif  // USE_FILTER
     struct hashmap *timebans;
-    struct hashmap *fakes;
+    DECLARE_HASHMAP(fakeusers, const char *, struct fakeuser *);
 
     struct config config;
 

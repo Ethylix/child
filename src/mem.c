@@ -44,7 +44,6 @@ extern commandlist command_list;
 extern rulelist rule_list;
 #endif
 extern tblist tb_list;
-extern fakelist fake_list;
 
 void FreeAllMem()
 {
@@ -63,8 +62,6 @@ void FreeAllMem()
 #endif
     while (!LIST_EMPTY(tb_list))
         DeleteTB(LIST_HEAD(tb_list));
-    while (!LIST_EMPTY(fake_list))
-        DeleteFake(LIST_HEAD(fake_list));
 }
 
 void cleanup_reconnect()
@@ -79,9 +76,7 @@ void cleanup_reconnect()
 
     clear_guests();
     clear_nicks();
-
-    while (!LIST_EMPTY(fake_list))
-        DeleteFake(LIST_HEAD(fake_list));
+    clear_fakes();
 }
 
 long get_mem(int which)
@@ -135,7 +130,6 @@ void InitMem()
     LIST_INIT(rule_list);
 #endif
     LIST_INIT(tb_list);
-    LIST_INIT(fake_list);
     memset(&indata, 0, sizeof(indata));
     memset(&outdata, 0, sizeof(outdata));
 }

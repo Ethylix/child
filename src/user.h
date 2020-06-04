@@ -190,12 +190,6 @@ typedef struct fakeuser {
     struct fakeuser *lnext,*lprev;
 } Fake;
 
-typedef struct {
-    int size;
-    TABLE(Fake);
-    Fake *lhead;
-} fakelist;
-
 User *find_user (char *);
 Nick *find_nick (char *);
 Guest *find_guest (char *);

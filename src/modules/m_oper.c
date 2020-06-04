@@ -36,7 +36,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 
 extern commandlist command_list;
-extern fakelist fake_list;
 extern memberlist member_list;
 #ifdef USE_FILTER
 extern rulelist rule_list;
@@ -500,18 +499,19 @@ void oper_fakenick (Nick *nptr, User *uptr __unused, char *all)
         return;
     }
 
-    LIST_REMOVE(fake_list, fake, HASH(fake->nick));
+    HASHMAP_ERASE(get_core()->fakeusers, fake->nick);
     strncpy(fake->nick, arg4, NICKLEN);
-    LIST_INSERT_HEAD(fake_list, fake, HASH(fake->nick));
+    HASHMAP_INSERT(get_core()->fakeusers, fake->nick, fake, NULL);
     SendRaw(":%s NICK %s %ld",arg3,arg4,time(NULL));
 }
 
 void oper_fakelist (Nick *nptr)
 {
+    struct hashmap_entry *entry;
     Fake *fake;
 
     NoticeToUser(nptr, "Fakeusers list :");
-    LIST_FOREACH_ALL(fake_list, fake) {
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->fakeusers, entry, fake) {
         NoticeToUser(nptr, "\2%s\2 (%s@%s)", fake->nick, fake->ident, fake->host);
     }
     NoticeToUser(nptr, "End of list.");
@@ -910,8 +910,8 @@ void oper_stats (Nick *nptr)
 
     o = HASHMAP_SIZE(get_core()->nicks) - l - m - k;
 
-    NoticeToUser(nptr,"There are \2%d\2 online users (\2%d\2 opers)", HASHMAP_SIZE(get_core()->nicks) + fake_list.size,j);
-    NoticeToUser(nptr,"   %d fakeusers",fake_list.size);
+    NoticeToUser(nptr,"There are \2%d\2 online users (\2%d\2 opers)", HASHMAP_SIZE(get_core()->nicks) + HASHMAP_SIZE(get_core()->fakeusers), j);
+    NoticeToUser(nptr,"   %d fakeusers", HASHMAP_SIZE(get_core()->fakeusers));
     NoticeToUser(nptr,"   %d ircops",k);
     NoticeToUser(nptr,"   %d bots",n);
     NoticeToUser(nptr,"       %d opers bots",l);

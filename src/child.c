@@ -62,7 +62,6 @@ commandlist command_list;
 rulelist rule_list;
 #endif
 tblist tb_list;
-fakelist fake_list;
 
 struct pollfd ufds[ECL_MAXSOCK];
 

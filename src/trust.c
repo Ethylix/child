@@ -46,6 +46,7 @@ Trust *find_trust(char *host)
     Trust *tmp;
     struct hashmap_entry *entry;
 
+    // TODO(target0): improve this.
     HASHMAP_FOREACH_ENTRY_VALUE(get_core()->trusts, entry, tmp) {
         if (!Strcmp(tmp->host,host))
             return tmp;
