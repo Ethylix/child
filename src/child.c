@@ -53,7 +53,6 @@ MYSQL mysql;
 
 hooklist hook_list;
 eclientlist eclient_list;
-wchanlist wchan_list;
 cflaglist cflag_list;
 memberlist member_list;
 limitlist limit_list;

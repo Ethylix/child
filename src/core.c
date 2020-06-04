@@ -56,7 +56,6 @@ static void destroy_key_str(void *key)
 void init_core(void) {
     struct hashmap_descriptor desc =
         {
-            .initial_bucket_count = HASHMAP_DEFAULT_BUCKET_COUNT,
             .hash = hash_str_nocase,
             .compare = compare_str_nocase,
             .create_key = create_key_str,
@@ -76,6 +75,7 @@ void init_core(void) {
     ASSIGN_OR_DIE_IF_NULL(core->links, (void *)hashmap_new(&desc));
     ASSIGN_OR_DIE_IF_NULL(core->guests, (void *)hashmap_new(&desc));
     ASSIGN_OR_DIE_IF_NULL(core->chans, (void *)hashmap_new(&desc));
+    ASSIGN_OR_DIE_IF_NULL(core->wchans, (void *)hashmap_new(&desc));
 }
 
 void free_core(void) {
@@ -88,6 +88,7 @@ void free_core(void) {
     HASHMAP_FREE(core->links);
     HASHMAP_FREE(core->guests);
     HASHMAP_FREE(core->chans);
+    HASHMAP_FREE(core->wchans);
 
     free(core);
     core = NULL;

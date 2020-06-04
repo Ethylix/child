@@ -39,7 +39,6 @@ extern chanbotlist chanbot_list;
 extern limitlist limit_list;
 extern memberlist member_list;
 extern tblist tb_list;
-extern wchanlist wchan_list;
 
 extern int eos;
 
@@ -55,13 +54,12 @@ Chan *find_channel (char *name)
 
 Wchan *find_wchan (char *name)
 {
-    Wchan *tmp;
-    LIST_FOREACH(wchan_list, tmp, HASH(name)) {
-        if (!Strcmp(tmp->chname,name))
-            return tmp;
-    }
+    struct hashmap_entry *entry;
 
-    return NULL;
+    if (!HASHMAP_FIND(get_core()->wchans, name, &entry))
+        return NULL;
+
+    return HASHMAP_ENTRY_VALUE(get_core()->wchans, entry);
 }
 
 Cflag *find_cflag (char *nick, char *name)
@@ -192,7 +190,11 @@ Wchan *CreateWchan(char *name)
     strncpy(new_chan->chname,name,CHANLEN);
     bzero(new_chan->topic, TOPICLEN);
 
-    LIST_INSERT_HEAD(wchan_list, new_chan, HASH(name));
+    if (!HASHMAP_INSERT(get_core()->wchans, new_chan->chname, new_chan, NULL)) {
+        fprintf(stderr, "Failed to insert new wchan \"%s\" into hashmap (duplicate entry?)\n", new_chan->chname);
+        free(new_chan);
+        return NULL;
+    }
 
     return new_chan;
 }
@@ -266,8 +268,18 @@ void DeleteChannel (Chan *chan)
 
 void DeleteWchan (Wchan *wchan)
 {
-    LIST_REMOVE(wchan_list, wchan, HASH(wchan->chname));
+    HASHMAP_ERASE(get_core()->wchans, wchan->chname);
     free(wchan);
+}
+
+void clear_wchans(void)
+{
+    struct hashmap_entry *entry, *tmp_entry;
+    Wchan *wchan;
+
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->wchans, entry, tmp_entry, wchan) {
+        DeleteWchan(wchan);
+    }
 }
 
 void DeleteLimit (Limit *limit)

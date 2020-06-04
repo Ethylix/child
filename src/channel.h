@@ -210,12 +210,6 @@ typedef struct timeban {
 
 typedef struct {
     int size;
-    TABLE(Wchan);
-    Wchan *lhead;
-} wchanlist;
-
-typedef struct {
-    int size;
     TABLE(Member);
     Member *lhead;
 } memberlist;
@@ -246,6 +240,7 @@ Chan *CreateChannel (char *, char *, int);
 Wchan *CreateWchan(char *);
 void DeleteChannel(Chan *);
 void DeleteWchan(Wchan *);
+void clear_wchans(void);
 Cflag *AddUserToChannel (User *, Chan *, int, int);
 void DeleteUserFromChannel (User *, Chan *);
 Cflag *AddMaskToChannel (char *, Chan *, int);
