@@ -41,7 +41,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 extern cflaglist cflag_list;
 extern chanlist chan_list;
 extern fakelist fake_list;
-extern guestlist guest_list;
 
 extern int eos;
 
@@ -71,13 +70,12 @@ Nick *find_nick(char *name)
 
 Guest *find_guest(char *name)
 {
-    Guest *tmp;
-    LIST_FOREACH(guest_list, tmp, HASH(name)) {
-        if (!Strcmp(tmp->nick,name))
-            return tmp;
-    }
+    struct hashmap_entry *entry;
 
-    return NULL;
+    if (!HASHMAP_FIND(get_core()->guests, name, &entry))
+        return NULL;
+
+    return HASHMAP_ENTRY_VALUE(get_core()->guests, entry);
 }
 
 /* A nickname has only one master but can have several slaves */
@@ -193,7 +191,11 @@ Guest *AddGuest (char *nick, int timeout, int nickconn)
     new_guest->timeout = timeout;
     new_guest->nickconn = nickconn;
 
-    LIST_INSERT_HEAD(guest_list, new_guest, HASH(nick));
+    if (!HASHMAP_INSERT(get_core()->guests, new_guest->nick, new_guest, NULL)) {
+        fprintf(stderr, "Failed to insert new guest \"%s\" into hashmap (duplicate entry?)\n", new_guest->nick);
+        free(new_guest);
+        return NULL;
+    }
 
     return new_guest;
 }
@@ -272,8 +274,18 @@ void DeleteGuest (char *nick)
 {
     Guest *guest = find_guest(nick);
     if (!guest) return;
-    LIST_REMOVE(guest_list, guest, HASH(nick));
+    HASHMAP_ERASE(get_core()->guests, nick);
     free(guest);
+}
+
+void clear_guests(void)
+{
+    struct hashmap_entry *entry, *tmp_entry;
+    Guest *guest;
+
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->guests, entry, tmp_entry, guest) {
+        DeleteGuest(guest->nick);
+    }
 }
 
 void DeleteLink (char *slave)
@@ -359,11 +371,12 @@ int howmanyclones(char *host)
 
 void CheckGuests()
 {
-    Guest *guest,*next;
+    struct hashmap_entry *entry, *tmp_entry;
+    Guest *guest;
     int gv;
 
-    for (guest = LIST_HEAD(guest_list); guest; guest = next) {
-        next = LIST_LNEXT(guest);
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->guests, entry, tmp_entry, guest) {
+        // TODO(target0): improve this.
         if ((time(NULL) - guest->nickconn) >= guest->timeout) {
             init_srandom();
             gv = random()%999999;

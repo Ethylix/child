@@ -35,7 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 extern hooklist hook_list;
 extern eclientlist eclient_list;
-extern guestlist guest_list;
 extern chanlist chan_list;
 extern wchanlist wchan_list;
 extern cflaglist cflag_list;
@@ -64,8 +63,6 @@ void FreeAllMem()
         DeleteLimit(LIST_HEAD(limit_list));
     while (!LIST_EMPTY(eclient_list))
         DeleteEclient(LIST_HEAD(eclient_list));
-    while (!LIST_EMPTY(guest_list))
-        DeleteGuest(LIST_HEAD(guest_list)->nick);
 #ifdef USE_FILTER
     while (!LIST_EMPTY(rule_list))
         remove_rule(LIST_HEAD(rule_list));
@@ -78,16 +75,16 @@ void FreeAllMem()
 
 void cleanup_reconnect()
 {
-    clear_nicks();
-
     while (!LIST_EMPTY(member_list))
         DeleteMember(LIST_HEAD(member_list));
     while (!LIST_EMPTY(wchan_list))
         DeleteWchan(LIST_HEAD(wchan_list));
     while (!LIST_EMPTY(limit_list))
         DeleteLimit(LIST_HEAD(limit_list));
-    while (!LIST_EMPTY(guest_list))
-        DeleteGuest(LIST_HEAD(guest_list)->nick);
+
+    clear_guests();
+    clear_nicks();
+
     while (!LIST_EMPTY(fake_list))
         DeleteFake(LIST_HEAD(fake_list));
 }
@@ -134,7 +131,6 @@ void InitMem()
 {
     LIST_INIT(hook_list);
     LIST_INIT(eclient_list);
-    LIST_INIT(guest_list);
     LIST_INIT(chan_list);
     LIST_INIT(wchan_list);
     LIST_INIT(cflag_list);

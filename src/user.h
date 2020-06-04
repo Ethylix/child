@@ -192,12 +192,6 @@ typedef struct fakeuser {
 
 typedef struct {
     int size;
-    TABLE(Guest);
-    Guest *lhead;
-} guestlist;
-
-typedef struct {
-    int size;
     TABLE(Fake);
     Fake *lhead;
 } fakelist;
@@ -215,6 +209,7 @@ void DeleteAccount (User *);
 void DeleteWildNick (Nick *);
 void clear_nicks(void);
 void DeleteGuest (char *);
+void clear_guests(void);
 void DeleteLink (char *);
 void DeleteLinks (char *);
 void globops (char *, ...);
