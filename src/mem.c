@@ -34,7 +34,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 
 extern hooklist hook_list;
-extern linklist link_list;
 extern eclientlist eclient_list;
 extern guestlist guest_list;
 extern chanlist chan_list;
@@ -61,8 +60,6 @@ void FreeAllMem()
         DeleteCflag(LIST_HEAD(cflag_list));
     while (!LIST_EMPTY(member_list))
         DeleteMember(LIST_HEAD(member_list));
-    while (!LIST_EMPTY(link_list))
-        DeleteLink(LIST_HEAD(link_list)->slave);
     while (!LIST_EMPTY(limit_list))
         DeleteLimit(LIST_HEAD(limit_list));
     while (!LIST_EMPTY(eclient_list))
@@ -134,7 +131,6 @@ long get_mem(int which)
 void InitMem()
 {
     LIST_INIT(hook_list);
-    LIST_INIT(link_list);
     LIST_INIT(eclient_list);
     LIST_INIT(guest_list);
     LIST_INIT(chan_list);

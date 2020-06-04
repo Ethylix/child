@@ -38,7 +38,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 extern cflaglist cflag_list;
 extern chanbotlist chanbot_list;
 extern chanlist chan_list;
-extern linklist link_list;
 
 extern MYSQL mysql;
 extern int verbose, vv;
@@ -400,6 +399,8 @@ void savelinkdb()
     Link *link;
     char master[NICKLEN];
     char slave[NICKLEN];
+    struct hashmap_entry *entry;
+
     bzero(master,NICKLEN);
     bzero(slave,NICKLEN);
 
@@ -411,7 +412,7 @@ void savelinkdb()
 
     mysql_query(&mysql,"DELETE FROM child_links");
 
-    LIST_FOREACH_ALL(link_list, link) {
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->links, entry, link) {
         snprintf(tmp,1024,"INSERT INTO child_links VALUES ('%s','%s')",strtosql(master,link->master,NICKLEN),strtosql(slave,link->slave,NICKLEN));
         mysql_query(&mysql,tmp);
     }

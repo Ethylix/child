@@ -52,7 +52,6 @@ int emerg, emerg_req;
 MYSQL mysql;
 
 hooklist hook_list;
-linklist link_list;
 eclientlist eclient_list;
 guestlist guest_list;
 chanlist chan_list;

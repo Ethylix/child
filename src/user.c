@@ -42,7 +42,6 @@ extern cflaglist cflag_list;
 extern chanlist chan_list;
 extern fakelist fake_list;
 extern guestlist guest_list;
-extern linklist link_list;
 
 extern int eos;
 
@@ -85,19 +84,21 @@ Guest *find_guest(char *name)
 
 Link *find_link (char *slave)
 {
-    Link *tmp;
-    LIST_FOREACH(link_list, tmp, HASH(slave)) {
-        if (!Strcmp(tmp->slave,slave))
-            return tmp;
-    }
+    struct hashmap_entry *entry;
 
-    return NULL;
+    if (!HASHMAP_FIND(get_core()->links, slave, &entry))
+        return NULL;
+
+    return HASHMAP_ENTRY_VALUE(get_core()->links, entry);
 }
 
 Link *find_link2 (char *master, char *slave)
 {
     Link *tmp;
-    LIST_FOREACH(link_list, tmp, HASH(slave)) {
+    struct hashmap_entry *entry;
+
+    // TODO(target0): do a proper O(1) lookup.
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->links, entry, tmp) {
         if (!Strcmp(tmp->master,master) && !Strcmp(tmp->slave,slave))
             return tmp;
     }
@@ -205,7 +206,12 @@ Link *AddLink(char *master, char *slave)
     strncpy(new_link->master,master,NICKLEN);
     strncpy(new_link->slave,slave,NICKLEN);
 
-    LIST_INSERT_HEAD(link_list, new_link, HASH(slave));
+    if (!HASHMAP_INSERT(get_core()->links, new_link->slave, new_link, NULL)) {
+        fprintf(stderr, "Failed to insert new link \"%s\" into hashmap (duplicate entry?)\n", new_link->slave);
+        free(new_link);
+        return NULL;
+    }
+
     return new_link;
 }
 
@@ -264,15 +270,16 @@ void DeleteLink (char *slave)
 {
     Link *link = find_link(slave);
     if (!link) return;
-    LIST_REMOVE(link_list, link, HASH(slave));
+    HASHMAP_ERASE(get_core()->links, slave);
     free(link);
 }
 
 void DeleteLinks (char *nick)
 {
-    Link *tmp,*next;
-    for (tmp = LIST_HEAD(link_list); tmp; tmp = next) {
-        next = LIST_LNEXT(tmp);
+    Link *tmp;
+    struct hashmap_entry *entry, *tmp_entry;
+
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->links, entry, tmp_entry, tmp) {
         if (!Strcmp(tmp->master,nick) || !Strcmp(tmp->slave,nick))
             DeleteLink(tmp->slave);
     }

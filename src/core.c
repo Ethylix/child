@@ -29,6 +29,7 @@ void init_core(void) {
     ASSIGN_OR_DIE_IF_NULL(core->clones, (void *)hashmap_str_new());
     ASSIGN_OR_DIE_IF_NULL(core->modules, (void *)hashmap_str_new());
     ASSIGN_OR_DIE_IF_NULL(core->trusts, (void *)hashmap_str_new());
+    ASSIGN_OR_DIE_IF_NULL(core->links, (void *)hashmap_str_new());
 }
 
 void free_core(void) {
@@ -38,6 +39,7 @@ void free_core(void) {
     HASHMAP_FREE(core->clones);
     HASHMAP_FREE(core->modules);
     HASHMAP_FREE(core->trusts);
+    HASHMAP_FREE(core->links);
 
     free(core);
     core = NULL;

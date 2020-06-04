@@ -198,12 +198,6 @@ typedef struct {
 
 typedef struct {
     int size;
-    TABLE(Link);
-    Link *lhead;
-} linklist;
-
-typedef struct {
-    int size;
     TABLE(Fake);
     Fake *lhead;
 } fakelist;
