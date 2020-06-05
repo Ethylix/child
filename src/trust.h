@@ -27,8 +27,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 typedef struct trust {
     char host[HOSTLEN + 1]; /* hash key */
     int limit;
-    struct trust *next,*prev;
-    struct trust *lnext,*lprev;
 } Trust;
 
 Trust *find_trust_strict (char *);

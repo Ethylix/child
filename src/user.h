@@ -142,15 +142,11 @@ typedef struct user_ {
     char vhost[HOSTLEN + 1];
     char email[EMAILLEN + 1];
     int regtime;
-    struct user_ *next,*prev;
-    struct user_ *lnext,*lprev;
 } User;
 
 typedef struct clone {
     char host[HOSTLEN + 1];
     int count;
-    struct clone *next,*prev;
-    struct clone *lnext,*lprev;
 } Clone;
 
 typedef struct nick {
@@ -164,31 +160,23 @@ typedef struct nick {
     int msgtime,msgnb;
     int ignored,ignoretime;
     int loginattempts,lasttry;
-    struct nick *next,*prev;
-    struct nick *lnext,*lprev;
 } Nick;
 
 typedef struct guest {
     char nick[NICKLEN+1]; /* hash key */
     int nickconn;
     int timeout;
-    struct guest *next,*prev;
-    struct guest *lnext,*lprev;
 } Guest;
 
 typedef struct link_ {
     char master[NICKLEN + 1];
     char slave[NICKLEN + 1]; /* hash key */
-    struct link_ *next,*prev;
-    struct link_ *lnext,*lprev;
 } Link;
 
 typedef struct fakeuser {
     char nick[NICKLEN + 1]; /* hash key */
     char ident[NICKLEN + 1];
     char host[HOSTLEN + 1];
-    struct fakeuser *next,*prev;
-    struct fakeuser *lnext,*lprev;
 } Fake;
 
 User *find_user (char *);

@@ -162,15 +162,11 @@ typedef struct chan {
     char mlock[50+1];
     char topic[TOPICLEN + 1];
     int autolimit, lastseen, regtime;
-    struct chan *next,*prev;
-    struct chan *lnext,*lprev;
 } Chan;
 
 typedef struct wchan {
     char chname[CHANLEN + 1]; /* hash key */
     char topic[TOPICLEN + 1];
-    struct wchan *next,*prev;
-    struct wchan *lnext,*lprev;
 } Wchan;
 
 typedef struct member_ {
