@@ -72,7 +72,6 @@ void chan_set_protectops (Nick *, User *, Chan *, char *);
 void chan_set_mlock (Nick *, User *, Chan *, char *);
 void chan_set_autolimit (Nick *, User *, Chan *, char *);
 void chan_set_secure (Nick *, User *, Chan *, char *);
-void chan_set_enablemask (Nick *, User *, Chan *, char *);
 void chan_set_mass (Nick *, User *, Chan *, char *);
 void chan_set_enftopic (Nick *, User *, Chan *, char *);
 void chan_set_axxflags (Nick *, User *, Chan *, char *);
@@ -126,7 +125,6 @@ void child_init()
     addChanSetCommand("mass",chan_set_mass,1);
     addChanSetCommand("founder",chan_set_founder,1);
     addChanSetCommand("enftopic",chan_set_enftopic,1);
-    addChanSetCommand("enablemask",chan_set_enablemask,1);
     addChanSetCommand("axxflags", chan_set_axxflags, 1);
     addChanSetCommand("avoice",chan_set_avoice,1);
     addChanSetCommand("autolimit",chan_set_autolimit,1);
@@ -176,7 +174,6 @@ void child_cleanup()
     delChanSetCommand("mlock");
     delChanSetCommand("autolimit");
     delChanSetCommand("secure");
-    delChanSetCommand("enablemask");
     delChanSetCommand("mass");
     delChanSetCommand("enftopic");
     delChanSetCommand("axxflags");
@@ -331,19 +328,6 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
             return;
         }
 
-        if (IsMask(arg5) && HasOption(chptr, COPT_ENABLEMASK)) {
-            int lev;
-            lev = strtol(arg6,NULL,10);
-            if (lev > me.chlev_op) {
-                NoticeToUser(nptr,"You can't add a mask with a level > 5");
-                return;
-            }
-            DeleteMaskFromChannel(arg5,chptr);
-            AddMaskToChannel(arg5,chptr,lev);
-            NoticeToUser(nptr,"Mask \2%s\2 added to channel \2%s\2",arg5,arg3);
-            return;
-        }
-
         uptr2 = find_user(arg5);
         if (!uptr2) {
             NoticeToUser(nptr,"The nick %s is not registered",arg5);
@@ -400,7 +384,7 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
         }
         
         if (!Strcmp(arg5,nptr->nick) || (GetFlag(uptr,chptr) >= 10 && GetFlag(uptr2,chptr) < GetFlag(uptr,chptr))) {
-            cflag = find_cflag_from_user(uptr2, chptr->channelname);
+            cflag = find_cflag(chptr, uptr2);
             if (!cflag)
                 return;
             if (!Strcmp(arg6, "op"))
@@ -435,12 +419,6 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
 
         if (GetFlag(uptr,chptr) < me.chlev_admin && !IsFounder(uptr,chptr) && (uptr->level < me.level_oper || !IsOper(nptr))) {
             NoticeToUser(nptr,"Access denied");
-            return;
-        }
-
-        if (IsMask(arg5) && HasOption(chptr, COPT_ENABLEMASK) && find_cflag_from_chan(chptr, arg5)) {
-            DeleteMaskFromChannel(arg5,chptr);
-            NoticeToUser(nptr,"Mask \2%s\2 removed from channel \2%s\2",arg5,arg3);
             return;
         }
 
@@ -508,7 +486,7 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
                     default:
                         strcpy(stat, "Unknown");
                 }
-                NoticeToUser(nptr, "%s   %s   %d    %s",stat,autom,cflag->flags,cflag->nick);
+                NoticeToUser(nptr, "%s   %s   %d    %s",stat,autom,cflag->flags, cflag->user->nick);
            }
         }
 
@@ -1008,26 +986,6 @@ void chan_set_protectops (Nick *nptr, User *uptr, Chan *chptr, char *all)
         NoticeToUser(nptr,"Syntax: \2CHAN SET #channel protectops {on|off}\2");
 }
 
-void chan_set_enablemask (Nick *nptr, User *uptr, Chan *chptr, char *all)
-{
-    char *arg1 = all;
-    SeperateWord(arg1);
-
-    if (!ChannelCanSet(uptr, chptr) && !IsFounder(uptr, chptr)) {
-        NoticeToUser(nptr,"Access denied");
-        return;
-    }
-            
-    if (!Strcmp(arg1,"on")) {
-        SetOption(chptr, COPT_ENABLEMASK);
-        NoticeToUser(nptr,"The option \2ENABLEMASK\2 has been set to \2on\2 for \2%s\2",chptr->channelname);
-    } else if (!Strcmp(arg1,"off")) {
-        ClearOption(chptr, COPT_ENABLEMASK);
-        NoticeToUser(nptr,"The option \2ENABLEMASK\2 has been set to \2off\2 for \2%s\2",chptr->channelname);
-    } else
-        NoticeToUser(nptr,"Syntax: \2CHAN SET #channel enablemask {on|off}\2");
-}
-
 void chan_set_axxflags (Nick *nptr, User *uptr, Chan *chptr, char *all)
 {
     char *arg1 = all;
@@ -1163,8 +1121,6 @@ void chan_info (Nick *nptr, User *uptr, Chan *chptr, char *all)
         strcat(opt,"Strictop ");
     if (HasOption(chptr, COPT_SECURE))
         strcat(opt,"Secure ");
-    if (HasOption(chptr, COPT_ENABLEMASK))
-        strcat(opt,"Enablemask ");
     if (HasOption(chptr, COPT_PROTECTOPS))
         strcat(opt,"Protectops ");
     if (HasOption(chptr, COPT_MASS))
@@ -1560,12 +1516,13 @@ void chan_suspend (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
 
-    if (HasOption(chptr, COPT_AXXFLAGS)) {
-        if ((find_cflag_from_user(uptr2, chptr->channelname)) == NULL) {
-            NoticeToUser(nptr, "User %s is not on channel access list.", arg1);
-            return;
-        }
+    cflag = find_cflag(chptr, uptr2);
+    if (!cflag) {
+        NoticeToUser(nptr, "User %s is not on channel access list.", arg1);
+        return;
+    }
 
+    if (HasOption(chptr, COPT_AXXFLAGS)) {
         if (!ChannelCanWriteACL(uptr, uptr2, chptr) || uptr == uptr2) {
             NoticeToUser(nptr, "User %s outranks you.", arg1);
             return;
@@ -1580,12 +1537,6 @@ void chan_suspend (Nick *nptr, User *uptr, Chan *chptr, char *all)
             NoticeToUser(nptr, "User %s outranks you.", arg1);
             return;
         }
-    }
-
-    cflag = find_cflag_from_chan(chptr, arg1);
-    if (!cflag) {
-        NoticeToUser(nptr, "An error occured.");
-        return;
     }
 
     if (cflag->suspended == 1) {
@@ -1628,7 +1579,7 @@ void chan_unsuspend (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }   
 
-    cflag = find_cflag_from_chan(chptr, arg1);
+    cflag = find_cflag(chptr, uptr2);
 
     if (!cflag) {
         NoticeToUser(nptr, "User %s is not on channel access list.", arg1);
@@ -1817,7 +1768,7 @@ void chan_flags (Nick *nptr, User *uptr, Chan *chptr, char *all)
             }
 
             uflags_str = get_uflags_string(cflag->uflags);
-            NoticeToUser(nptr, "%s   %s    %s", stat, uflags_str, cflag->nick);
+            NoticeToUser(nptr, "%s   %s    %s", stat, uflags_str, cflag->user->nick);
             free(uflags_str);
         }
 
@@ -1873,12 +1824,12 @@ void chan_flags (Nick *nptr, User *uptr, Chan *chptr, char *all)
             NoticeToUser(nptr, "You are already the owner of this channel. Why the hell do you want to be co-owner ?");
             return;
         }
-        if ((cflag = find_cflag_from_user(uptr2, arg1)) == NULL)
+        if ((cflag = find_cflag(chptr, uptr2)) == NULL)
             AddUserToChannel(uptr2, chptr, 0, flags);
         else
             cflag->uflags |= flags;
     } else {
-        if ((cflag = find_cflag_from_user(uptr2, arg1)) == NULL) {
+        if ((cflag = find_cflag(chptr, uptr2)) == NULL) {
             NoticeToUser(nptr, "Cannot remove flags from a non existent user");
             return;
         }

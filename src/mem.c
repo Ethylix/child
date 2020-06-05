@@ -125,7 +125,7 @@ void InitMem()
     memset(&outdata, 0, sizeof(outdata));
 }
 
-int hash(char *buffer)
+int hash(const char *buffer)
 {
     const char *ptr;
     int tmp, val = 0;

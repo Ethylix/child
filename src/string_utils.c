@@ -153,7 +153,7 @@ char *gen_rand_string (char *dst, char *range, int size)
     return dst;
 }
 
-void ToLower (char *dst, char *buf, unsigned int size)
+void ToLower (char *dst, const char *buf, unsigned int size)
 {
     unsigned int i;
 

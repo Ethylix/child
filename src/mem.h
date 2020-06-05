@@ -89,6 +89,6 @@ long get_mem (int);
 void InitMem (void);
 void FreeAllMem (void);
 void cleanup_reconnect (void);
-int hash(char *buffer);
+int hash(const char *buffer);
 
 #endif

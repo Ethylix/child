@@ -40,7 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 extern int eos;
 
-User *find_user(char *name)
+User *find_user(const char *name)
 {
     struct hashmap_entry *entry;
 
@@ -50,7 +50,7 @@ User *find_user(char *name)
     return HASHMAP_ENTRY_VALUE(get_core()->users, entry);
 }
 
-Nick *find_nick(char *name)
+Nick *find_nick(const char *name)
 {
     Nick *tmp;
     struct hashmap_entry *entry;
@@ -64,7 +64,7 @@ Nick *find_nick(char *name)
     return NULL;
 }
 
-Guest *find_guest(char *name)
+Guest *find_guest(const char *name)
 {
     struct hashmap_entry *entry;
 
@@ -522,95 +522,92 @@ void userdrop (User *uptr)
     DeleteAccount(uptr);
 }
 
-void sync_user (User *uptr)
+void sync_user(const User *uptr)
 {
     Cflag *cflag;
 
     LLIST_FOREACH_ENTRY(&uptr->cflags, cflag, user_head) {
-        sync_cflag(cflag, uptr);
+        sync_cflag(cflag);
     }
 }
 
-void sync_cflag (Cflag *cflag, User *uptr)
+void sync_cflag(const Cflag *cflag)
 {
-    Chan *chptr;
+    const char *chname = cflag->chan->channelname;
     Wchan *wchan;
     Member *member;
     Nick *nptr;
     char *bot;
 
-    if ((nptr = find_nick(uptr->nick)) == NULL)
+    if ((nptr = find_nick(cflag->user->nick)) == NULL)
         return;
 
-    if ((chptr = find_channel(cflag->channel)) == NULL)
+    if ((member = find_member(chname, cflag->user->nick)) == NULL)
         return;
 
-    if ((member = find_member(cflag->channel, uptr->nick)) == NULL)
+    if (HasOption(cflag->chan, COPT_NOAUTO))
         return;
 
-    if (HasOption(chptr, COPT_NOAUTO))
+    if ((wchan = find_wchan(chname)) == NULL)
         return;
 
-    if ((wchan = find_wchan(cflag->channel)) == NULL)
-        return;
-
-    if ((!HasOption(chptr, COPT_AXXFLAGS) && cflag->automode == CFLAG_AUTO_OFF) || cflag->suspended == 1)
+    if ((!HasOption(cflag->chan, COPT_AXXFLAGS) && cflag->automode == CFLAG_AUTO_OFF) || cflag->suspended == 1)
         return;
 
     bot = whatbot(wchan->chname);
     int hasaccess = 0;
 
-    if (HasOption(chptr, COPT_AXXFLAGS)) {
-        if (cflag->uflags & UFLAG_AUTOOWNER) SetStatus(nptr, cflag->channel, CHFL_OWNER, 1, bot);
-        if (cflag->uflags & UFLAG_AUTOPROTECT) SetStatus(nptr, cflag->channel, CHFL_PROTECT, 1, bot);
-        if (cflag->uflags & UFLAG_AUTOOP) SetStatus(nptr, cflag->channel, CHFL_OP, 1, bot);
-        if (cflag->uflags & UFLAG_AUTOHALFOP) SetStatus(nptr, cflag->channel, CHFL_HALFOP, 1, bot);
-        if (cflag->uflags & UFLAG_AUTOVOICE) SetStatus(nptr, cflag->channel, CHFL_VOICE, 1, bot);
-        if (cflag->uflags & UFLAG_NOOP) SetStatus(nptr, cflag->channel, member->flags, 0, bot);
-        if (cflag->uflags & UFLAG_AUTOKICK) KickUser(bot, nptr->nick, cflag->channel, "Get out of this chan !");
+    if (HasOption(cflag->chan, COPT_AXXFLAGS)) {
+        if (cflag->uflags & UFLAG_AUTOOWNER) SetStatus(nptr, chname, CHFL_OWNER, 1, bot);
+        if (cflag->uflags & UFLAG_AUTOPROTECT) SetStatus(nptr, chname, CHFL_PROTECT, 1, bot);
+        if (cflag->uflags & UFLAG_AUTOOP) SetStatus(nptr, chname, CHFL_OP, 1, bot);
+        if (cflag->uflags & UFLAG_AUTOHALFOP) SetStatus(nptr, chname, CHFL_HALFOP, 1, bot);
+        if (cflag->uflags & UFLAG_AUTOVOICE) SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
+        if (cflag->uflags & UFLAG_NOOP) SetStatus(nptr, chname, member->flags, 0, bot);
+        if (cflag->uflags & UFLAG_AUTOKICK) KickUser(bot, nptr->nick, chname, "Get out of this chan !");
         if (cflag->uflags & UFLAG_AUTOKICKBAN) {
             SendRaw(":%s MODE %s +b *!*@%s", bot, nptr->nick, nptr->hiddenhost);
-            KickUser(bot, nptr->nick, cflag->channel, "Get out of this chan !");
+            KickUser(bot, nptr->nick, chname, "Get out of this chan !");
         }
     } else {
     if ((cflag->flags == CHLEV_OWNER || cflag->flags == CHLEV_COOWNER)) {
         if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!IsOwner(nptr->nick, wchan) || !IsOp(nptr->nick, wchan)))
-            SetStatus(nptr, cflag->channel, CHFL_OWNER|CHFL_OP, 1, bot);
+            SetStatus(nptr, chname, CHFL_OWNER|CHFL_OP, 1, bot);
         else if (cflag->automode == CFLAG_AUTO_VOICE && !IsVoice(nptr->nick, wchan))
-            SetStatus(nptr, cflag->channel, CHFL_VOICE, 1, bot);
+            SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
 
         hasaccess = 1;
     } else if (!hasaccess && !(cflag->flags == CHLEV_OWNER) && cflag->flags >= me.chlev_admin) {
         if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!IsProtect(nptr->nick, wchan) || !IsOp(nptr->nick, wchan)))
-            SetStatus(nptr, cflag->channel, CHFL_PROTECT|CHFL_OP, 1, bot);
+            SetStatus(nptr, chname, CHFL_PROTECT|CHFL_OP, 1, bot);
         else if (cflag->automode == CFLAG_AUTO_VOICE && !IsVoice(nptr->nick, wchan))
-            SetStatus(nptr, cflag->channel, CHFL_VOICE, 1, bot);
+            SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
 
         hasaccess = 1;
     } else if (!hasaccess && cflag->flags >= me.chlev_op && cflag->flags < me.chlev_admin) {
         if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!IsOp(nptr->nick, wchan)))
-            SetStatus(nptr, cflag->channel, CHFL_OP, 1, bot);
+            SetStatus(nptr, chname, CHFL_OP, 1, bot);
         else if (cflag->automode == CFLAG_AUTO_VOICE && !IsVoice(nptr->nick, wchan))
-            SetStatus(nptr, cflag->channel, CHFL_VOICE, 1, bot);
+            SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
 
         hasaccess = 1;
     } else if (!hasaccess && cflag->flags >= me.chlev_halfop && cflag->flags < me.chlev_op) {
         if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!IsHalfop(nptr->nick, wchan)))
-            SetStatus(nptr, cflag->channel, CHFL_HALFOP, 1, bot);
+            SetStatus(nptr, chname, CHFL_HALFOP, 1, bot);
         else if (cflag->automode == CFLAG_AUTO_VOICE && !IsVoice(nptr->nick, wchan))
-            SetStatus(nptr, cflag->channel, CHFL_VOICE, 1, bot);
+            SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
 
         hasaccess = 1;
     } else if (!hasaccess && cflag->flags >= me.chlev_voice && cflag->flags < me.chlev_halfop && !IsVoice(nptr->nick, wchan)) {
-        SetStatus(nptr, cflag->channel, CHFL_VOICE, 1, bot);
+        SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
         hasaccess = 1;
     } else if (cflag->flags == me.chlev_akick) {
-        KickUser(bot, nptr->nick, cflag->channel, "Get out of this chan !");
+        KickUser(bot, nptr->nick, chname, "Get out of this chan !");
     } else if (cflag->flags == me.chlev_akb) {
         SendRaw(":%s MODE %s +b *!*@%s", bot, nptr->nick, nptr->hiddenhost);
-        KickUser(bot, nptr->nick, cflag->channel, "Get out of this chan !");
+        KickUser(bot, nptr->nick, chname, "Get out of this chan !");
     } else if (cflag->flags == me.chlev_nostatus)
-        SetStatus(nptr, cflag->channel, member->flags, 0, bot);
+        SetStatus(nptr, chname, member->flags, 0, bot);
     }
 }
 

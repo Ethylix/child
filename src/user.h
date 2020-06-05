@@ -181,9 +181,9 @@ typedef struct fakeuser {
     char host[HOSTLEN + 1];
 } Fake;
 
-User *find_user (char *);
-Nick *find_nick (char *);
-Guest *find_guest (char *);
+User *find_user(const char *);
+Nick *find_nick(const char *);
+Guest *find_guest(const char *);
 Link *find_link(const char *);
 Link *find_link2 (char *, char *);
 User *AddUser (char *, int);
@@ -211,7 +211,7 @@ void killallfakes (void);
 void loadallfakes (void);
 void userdrop (User *);
 Clone *find_clone (char *);
-void sync_user (User *);
+void sync_user(const User *);
 Fake *AddFake (char *, char *, char *);
 Fake *find_fake (char *);
 void DeleteFake (Fake *);

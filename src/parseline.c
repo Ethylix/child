@@ -211,15 +211,15 @@ void m_join (char *sender, char *tail)
 
         // TODO(target0): improve this (functions etc).
         if (!uptr || !uptr->authed || HasOption(chptr, COPT_NOAUTO))
-            goto check_mask_flags;
+            goto skip_flags;
 
-        member = find_cflag_from_user_links(uptr, str_ptr);
+        member = find_cflag_recursive(chptr, uptr);
         if (!member)
-            goto check_mask_flags;
+            goto skip_flags;
 
         if (HasOption(chptr, COPT_AXXFLAGS)) {
-            sync_cflag(member, uptr);
-            goto check_mask_flags;
+            sync_cflag(member);
+            goto skip_flags;
         }
 
         if (IsFounder(uptr,chptr)) {
@@ -265,33 +265,7 @@ void m_join (char *sender, char *tail)
                 SetStatus(nptr,str_ptr,CHFL_VOICE,1,bot);
         }
 
-check_mask_flags:
-        if (!HasOption(chptr, COPT_AXXFLAGS)) {
-        if (!HasOption(chptr, COPT_NOAUTO) && HasOption(chptr, COPT_ENABLEMASK) && !hasaccess) {
-            Cflag *cflag;
-            bzero(mask,256);
-            bzero(mask2,256);
-            snprintf(mask,256,"%s!%s@%s",nptr->nick,nptr->ident,nptr->hiddenhost);
-            snprintf(mask2,256,"%s!%s@%s",nptr->nick,nptr->ident,nptr->host);
-            LLIST_FOREACH_ENTRY(&chptr->cflags, cflag, chan_head) {
-                if (IsMask(cflag->nick) && (match_mask(cflag->nick,mask) || match_mask(cflag->nick,mask2))) {
-                    if (cflag->flags == me.chlev_op && !HasOption(chptr, COPT_AOP))
-                        SetStatus(nptr,str_ptr,CHFL_OP,1,bot);
-                    else if (cflag->flags == me.chlev_halfop)
-                        SetStatus(nptr,str_ptr,CHFL_HALFOP,1,bot);
-                    else if (cflag->flags == me.chlev_voice && !HasOption(chptr, COPT_AVOICE))
-                        SetStatus(nptr,str_ptr,CHFL_VOICE,1,bot);
-                    else if (cflag->flags == me.chlev_akick)
-                         KickUser(bot,nptr->nick,str_ptr,"Get out of this chan !");
-                    else if (cflag->flags == me.chlev_akb) {
-                        SendRaw(":%s MODE %s +b *!*@%s",bot,str_ptr,nptr->hiddenhost);
-                        KickUser(bot,nptr->nick,str_ptr,"Get out of this chan !");
-                    }
-                }
-            }
-        }
-        }
-
+skip_flags:
         if (uptr && uptr->authed == 1) {
             if (IsFounder(uptr,chptr) || GetFlag(uptr,chptr) > 0)
                 chptr->lastseen = time(NULL);

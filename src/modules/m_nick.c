@@ -535,13 +535,13 @@ void nick_info (Nick *nptr, User *uptr, char *all)
 
         NoticeToUser(nptr,"   Has access on :");
         LLIST_FOREACH_ENTRY(&user->cflags, cflag, user_head) {
-            chptr = find_channel(cflag->channel);
+            chptr = cflag->chan;
             if (HasOption(chptr, COPT_AXXFLAGS)) {
                 uflags_str = get_uflags_string(cflag->uflags);
-                NoticeToUser(nptr, "      %s (%s)", cflag->channel, uflags_str);
+                NoticeToUser(nptr, "      %s (%s)", chptr->channelname, uflags_str);
                 free(uflags_str);
             } else
-                NoticeToUser(nptr, "      %s (%d)", cflag->channel, cflag->flags);
+                NoticeToUser(nptr, "      %s (%d)", chptr->channelname, cflag->flags);
         }
     }
 }

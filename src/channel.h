@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define OPERCHAN "#opers"
 
 #define CHANLEN 35
-#define MASKLEN 93
+#define MASKLEN 255
 #define TOPICLEN 310
 
 #define CHLEV_OWNER 10000
@@ -70,7 +70,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define COPT_SECURE      0x0080
 #define COPT_SUSPENDED   0x0100
 #define COPT_NOEXPIRE    0x0200
-#define COPT_ENABLEMASK  0x0400
 #define COPT_PROTECTOPS  0x0800
 #define COPT_MASS        0x1000
 #define COPT_ENFTOPIC    0x2000
@@ -179,13 +178,12 @@ typedef struct member_ {
 } Member;
 
 typedef struct cflag {
-    char channel[CHANLEN + 1];
-    char nick[NICKLEN + MASKLEN + 1];
+    Chan *chan;
+    User *user;
     int flags; /* level */
     int automode;
     int suspended;
     int uflags; /* flags (really) */
-    bool is_mask;
     struct llist_head chan_head;
     struct llist_head user_head;
 } Cflag;
@@ -224,11 +222,10 @@ typedef struct {
     TB *lhead;
 } tblist;
 
-Chan *find_channel (char *);
-Wchan *find_wchan (char *);
-Cflag *find_cflag_from_user(const User *uptr, const char *chname);
-Cflag *find_cflag_from_chan(const Chan *chptr, const char *username);
-Cflag *find_cflag_from_user_links(const User *uptr, const char *chname);
+Chan *find_channel(const char *);
+Wchan *find_wchan(const char *);
+Cflag *find_cflag(const Chan *, const User *);
+Cflag *find_cflag_recursive(const Chan *, const User *);
 int GetFlag (User *, Chan *);
 Chan *CreateChannel (char *, char *, int);
 Wchan *CreateWchan(char *);
@@ -237,14 +234,12 @@ void DeleteWchan(Wchan *);
 void clear_wchans(void);
 Cflag *AddUserToChannel (User *, Chan *, int, int);
 void DeleteUserFromChannel (User *, Chan *);
-Cflag *AddMaskToChannel (char *, Chan *, int);
-void DeleteMaskFromChannel (char *, Chan *);
 Member *AddUserToWchan(Nick *, Wchan *);
 void DeleteUserFromWchan (Nick *, Wchan *);
-void KickUser(char *, char *, char *, char *, ...);
+void KickUser(const char *, const char *, const char *, const char *, ...);
 void JoinChannel(char *, char *);
-Member *find_member (char *, char *);
-void SetStatus (Nick *, char *, long int, int, char *);
+Member *find_member(const char *, const char *);
+void SetStatus(Nick *, const char *, long int, int, char *);
 void DeleteUserFromChannels (User *);
 void DeleteUsersFromChannel (Chan *);
 void DeleteUserFromWchans(Nick *);
@@ -267,7 +262,7 @@ void DeleteTB (TB *);
 void CheckTB (void);
 TB *find_tb (Chan *, char *);
 void acl_resync (Chan *);
-void sync_cflag (Cflag *, User *);
+void sync_cflag(const Cflag *);
 int IsAclOnChan (Chan *);
 int parse_uflags (char *);
 int GetUFlagsFromLevel (int);

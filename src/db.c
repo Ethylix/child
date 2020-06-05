@@ -102,7 +102,7 @@ void loadchandb()
     User *owner_ptr;
     User *user_ptr;
     Chan *chan_ptr;
-    char accname[NICKLEN+MASKLEN+1];
+    char accname[NICKLEN+1];
     int acclvl, automode, uflags;
     int options;
     char entrymsg[250];
@@ -159,7 +159,7 @@ void loadchandb()
     }
     while ((row = mysql_fetch_row(result))) {
         strncpy(channelname,row[0],CHANLEN);
-        strncpy(accname,row[1],NICKLEN+MASKLEN);
+        strncpy(accname,row[1],NICKLEN);
         acclvl = strtol(row[2],NULL,10);
         automode = strtol(row[3],NULL,10);
         chan_ptr = find_channel(channelname);
@@ -169,22 +169,20 @@ void loadchandb()
         }
 
         user_ptr = find_user(accname);
-        if (!user_ptr && !IsMask(accname)) {
+        if (!user_ptr) {
             fprintf(stderr,"ERROR: Cannot load access for user %s for channel %s : find_user returned NULL !!\n",accname,channelname);
             continue;
         }
 
-        if (find_cflag_from_user(user_ptr, channelname))
+        if (find_cflag(chan_ptr, user_ptr))
             continue;
         if (vv) printf("Adding user %s (%p) for channel %s with level %d\n",accname,user_ptr,channelname,acclvl);
-        if (acclvl < CHLEV_OWNER && !IsMask(accname)) {
+        if (acclvl < CHLEV_OWNER) {
             uflags = strtol(row[5], NULL, 10);
             cflag = AddUserToChannel(user_ptr,chan_ptr,acclvl,uflags);
             cflag->automode = automode;
             cflag->suspended = strtol(row[4], NULL, 10);
         }
-        if (IsMask(accname))
-            AddMaskToChannel(accname,chan_ptr,acclvl);
         if (vv) printf("User %s added for channel %s\n",accname,channelname);
     }
 
@@ -359,10 +357,11 @@ void savechandb()
         LLIST_FOREACH_ENTRY(&chptr->cflags, cflag, chan_head) {
             if (cflag->flags >= CHLEV_OWNER)
                 continue;
-            bzero(chname,CHANLEN);
-            strtosql(chname,cflag->channel,50);
 
-            snprintf(tmp,1024,"INSERT INTO `child_chan_access` VALUES ('%s','%s',%d,%d,%d,%d)",chname,strtosql(nick,cflag->nick,NICKLEN),cflag->flags,cflag->automode,cflag->suspended,cflag->uflags);
+            bzero(nick, NICKLEN);
+            strtosql(nick, cflag->user->nick, NICKLEN);
+
+            snprintf(tmp,1024,"INSERT INTO `child_chan_access` VALUES ('%s','%s',%d,%d,%d,%d)",chname,nick,cflag->flags,cflag->automode,cflag->suspended,cflag->uflags);
             mysql_query(&mysql,tmp);
         }
     }
