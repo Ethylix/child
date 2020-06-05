@@ -34,7 +34,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern cflaglist cflag_list;
 extern chanbotlist chanbot_list;
 extern limitlist limit_list;
 extern memberlist member_list;
@@ -62,26 +61,42 @@ Wchan *find_wchan (char *name)
     return HASHMAP_ENTRY_VALUE(get_core()->wchans, entry);
 }
 
-Cflag *find_cflag (char *nick, char *name)
+Cflag *find_cflag_from_user(const User *uptr, const char *chname)
 {
-    Cflag *tmp;
-    LIST_FOREACH(cflag_list, tmp, HASH(name)) {
-        if (!Strcmp(tmp->channel,name) && !Strcmp(tmp->nick,nick))
-            return tmp;
+    Cflag *cflag;
+
+    LLIST_FOREACH_ENTRY(&uptr->cflags, cflag, user_head) {
+        if (!Strcmp(cflag->channel, chname))
+            return cflag;
     }
 
     return NULL;
 }
 
-Cflag *find_cflag_r (char *nick, char *chname)
+Cflag *find_cflag_from_chan(const Chan *chptr, const char *username)
+{
+    Cflag *cflag;
+
+    LLIST_FOREACH_ENTRY(&chptr->cflags, cflag, chan_head) {
+        if (!Strcmp(cflag->nick, username))
+            return cflag;
+    }
+
+    return NULL;
+}
+
+Cflag *find_cflag_from_user_links(const User *uptr, const char *chname)
 {
     Cflag *cflag;
     Link *l;
+    User *uptr2;
 
-    if ((cflag = find_cflag(nick, chname)) == NULL) {
-        if ((l = find_link(nick)) == NULL)
+    if ((cflag = find_cflag_from_user(uptr, chname)) == NULL) {
+        if ((l = find_link(uptr->nick)) == NULL)
             return NULL;
-        return find_cflag_r(l->master, chname);
+        if ((uptr2 = find_user(l->master)) == NULL)
+            return NULL;
+        return find_cflag_from_user_links(uptr2, chname);
     }
 
     return cflag;
@@ -122,7 +137,7 @@ int GetFlag(User *uptr, Chan *chptr)
 
     if (!uptr || !chptr) return 0;
     if (IsChanSuspended(chptr)) return 0;
-    cflag = find_cflag(uptr->nick,chptr->channelname);
+    cflag = find_cflag_from_user(uptr, chptr->channelname);
 
 /*
     if no result is found, let's have a look in the access list of the user's
@@ -158,6 +173,8 @@ Chan *CreateChannel (char *name, char *owner, int lastseen)
         new_chan->lastseen = time(NULL);
     else
         new_chan->lastseen = lastseen;
+
+    LLIST_INIT(&new_chan->cflags);
 
     if (!HASHMAP_INSERT(get_core()->chans, new_chan->channelname, new_chan, NULL)) {
         fprintf(stderr, "Failed to insert new channel \"%s\" into hashmap (duplicate entry?)\n", new_chan->channelname);
@@ -238,12 +255,10 @@ TB *AddTB (Chan *chan, char *mask, int duration, char *reason)
 
 void DeleteUsersFromChannel (Chan *chan)
 {
-    Cflag *cflag, *next;
+    Cflag *cflag, *tmp_cflag;
 
-    for (cflag = cflag_list.table[HASH(chan->channelname)]; cflag; cflag = next) {
-        next = cflag->next;
-        if (!Strcmp(cflag->channel,chan->channelname))
-            DeleteCflag(cflag);
+    LLIST_FOREACH_ENTRY_SAFE(&chan->cflags, cflag, tmp_cflag, chan_head) {
+        DeleteCflag(cflag);
     }
 }
 
@@ -294,18 +309,19 @@ void DeleteTB (TB *tb)
     free(tb);
 }
 
-Cflag *AddMaskToChannel (char *mask, Chan *chan, int flags)
+Cflag *AddMaskToChannel (char *mask, Chan *chptr, int flags)
 {
     Cflag *new_cflag;
     new_cflag = (Cflag *)malloc(sizeof(Cflag));
 
-    strncpy(new_cflag->channel,chan->channelname,CHANLEN);
+    strncpy(new_cflag->channel,chptr->channelname,CHANLEN);
     strncpy(new_cflag->nick,mask,NICKLEN+MASKLEN);
     new_cflag->flags = flags;
     new_cflag->automode = 1;
     new_cflag->suspended = 0;
+    new_cflag->is_mask = true;
 
-    LIST_INSERT_HEAD(cflag_list, new_cflag, HASH(chan->channelname));
+    LLIST_INSERT_TAIL(&chptr->cflags, &new_cflag->chan_head);
 
     return new_cflag;
 }
@@ -314,10 +330,10 @@ void DeleteMaskFromChannel (char *mask, Chan *chan)
 {
     Cflag *cflag;
 
-    cflag = find_cflag(mask,chan->channelname);
+    cflag = find_cflag_from_chan(chan, mask);
     if (!cflag) return;
 
-    LIST_REMOVE(cflag_list, cflag, HASH(chan->channelname));
+    LLIST_REMOVE(&cflag->chan_head);
     free(cflag);
 }
 
@@ -331,27 +347,32 @@ Cflag *AddUserToChannel (User *user, Chan *chan, int level, int uflags)
     new_cflag->flags = level;
     new_cflag->automode = CFLAG_AUTO_ON;
     new_cflag->suspended = 0;
+    new_cflag->is_mask = false;
 
     if (uflags)
         new_cflag->uflags = uflags;
     else
         new_cflag->uflags = GetUFlagsFromLevel(level);
 
-    LIST_INSERT_HEAD(cflag_list, new_cflag, HASH(chan->channelname));
+    LLIST_INSERT_TAIL(&user->cflags, &new_cflag->user_head);
+    LLIST_INSERT_TAIL(&chan->cflags, &new_cflag->chan_head);
 
     return new_cflag;
 }
 
 void DeleteUserFromChannel (User *user, Chan *chan)
 {
-    Cflag *cflag = find_cflag(user->nick,chan->channelname);
+    Cflag *cflag = find_cflag_from_user(user, chan->channelname);
     if (!cflag) return;
     DeleteCflag(cflag);
 }
 
 void DeleteCflag (Cflag *cflag)
 {
-    LIST_REMOVE(cflag_list, cflag, HASH(cflag->channel));
+    LLIST_REMOVE(&cflag->chan_head);
+    if (!cflag->is_mask)
+        LLIST_REMOVE(&cflag->user_head);
+
     free(cflag);
 }
 
@@ -494,12 +515,10 @@ void SetStatus (Nick *nptr, char *chan, long int flag, int what, char *who)
 
 void DeleteUserFromChannels (User *user)
 {
-    Cflag *cflag, *next;
+    Cflag *cflag, *tmp_cflag;
 
-    for (cflag = LIST_HEAD(cflag_list); cflag; cflag = next) {
-        next = LIST_LNEXT(cflag);
-        if (!Strcmp(cflag->nick,user->nick))
-            DeleteCflag(cflag);
+    LLIST_FOREACH_ENTRY_SAFE(&user->cflags, cflag, tmp_cflag, user_head) {
+        DeleteCflag(cflag);
     }
 }
 
@@ -560,7 +579,7 @@ int IsAclOnChan (Chan *chptr)
         if (!IsAuthed(uptr))
             continue;
         if (HasOption(chptr, COPT_AXXFLAGS)) {
-            if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
+            if ((cflag = find_cflag_from_user(uptr, chptr->channelname)) == NULL)
                 continue;
             if (cflag->uflags & (UFLAG_NOOP | UFLAG_AUTOKICK | UFLAG_AUTOKICKBAN))
                 continue;
@@ -724,13 +743,13 @@ void acl_resync (Chan *chptr)
     LIST_FOREACH(member_list, member, HASH(chptr->channelname)) {
         if (!Strcmp(member->channel, chptr->channelname)) {
             if (((nptr = find_nick(member->nick)) != NULL) && ((uptr = find_user(member->nick)) != NULL)) {
-                cflag = find_cflag(member->nick, member->channel);
+                cflag = find_cflag_from_user(uptr, member->channel);
                 if (!cflag || uptr->authed == 0 || (cflag && cflag->suspended == 1)) {
                     SetStatus(nptr, chptr->channelname, member->flags, 0, whatbot(chptr->channelname));
                     continue;
                 }
 
-                sync_cflag(cflag, nptr);
+                sync_cflag(cflag, uptr);
             }
         }
     }
@@ -824,7 +843,7 @@ int IsFounder (User *uptr, Chan *chptr)
     if (!uptr || !chptr)
         return 0;
 
-    if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
+    if ((cflag = find_cflag_from_user(uptr, chptr->channelname)) == NULL)
         return IsFounder(get_link_master(uptr), chptr);
 
     if ((nptr = find_nick(uptr->nick)) != NULL) {
@@ -852,7 +871,7 @@ int IsTrueOwner (User *uptr, Chan *chptr)
     if (!uptr || !chptr)
         return 0;
 
-    if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
+    if ((cflag = find_cflag_from_user(uptr, chptr->channelname)) == NULL)
         return IsTrueOwner(get_link_master(uptr), chptr);
 
     if (HasOption(chptr, COPT_AXXFLAGS))
@@ -871,7 +890,7 @@ int ChannelCanProtect (User *uptr, Chan *chptr)
     if (IsSuperAdmin(uptr))
         return 1;
 
-    if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
+    if ((cflag = find_cflag_from_user(uptr, chptr->channelname)) == NULL)
         return ChannelCanProtect(get_link_master(uptr), chptr);
 
     if (cflag->suspended == 1)
@@ -893,7 +912,7 @@ int ChannelCanOp (User *uptr, Chan *chptr)
     if (IsSuperAdmin(uptr))
         return 1;
 
-    if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
+    if ((cflag = find_cflag_from_user(uptr, chptr->channelname)) == NULL)
         return ChannelCanOp(get_link_master(uptr), chptr);
 
     if (cflag->suspended == 1)
@@ -915,7 +934,7 @@ int ChannelCanHalfop (User *uptr, Chan *chptr)
     if (IsSuperAdmin(uptr))
         return 1;
 
-    if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
+    if ((cflag = find_cflag_from_user(uptr, chptr->channelname)) == NULL)
         return ChannelCanHalfop(get_link_master(uptr), chptr);
 
     if (cflag->suspended == 1)
@@ -937,7 +956,7 @@ int ChannelCanVoice (User *uptr, Chan *chptr)
     if (IsSuperAdmin(uptr))
         return 1;
 
-    if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
+    if ((cflag = find_cflag_from_user(uptr, chptr->channelname)) == NULL)
         return ChannelCanVoice(get_link_master(uptr), chptr);
 
     if (cflag->suspended == 1)
@@ -959,7 +978,7 @@ int ChannelCanInvite (User *uptr, Chan *chptr)
     if (IsSuperAdmin(uptr))
         return 1;
 
-    if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
+    if ((cflag = find_cflag_from_user(uptr, chptr->channelname)) == NULL)
         return ChannelCanInvite(get_link_master(uptr), chptr);
 
     if (cflag->suspended == 1)
@@ -981,7 +1000,7 @@ int ChannelCanSet (User *uptr, Chan *chptr)
     if (IsSuperAdmin(uptr))
         return 1;
 
-    if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
+    if ((cflag = find_cflag_from_user(uptr, chptr->channelname)) == NULL)
         return ChannelCanSet(get_link_master(uptr), chptr);
 
     if (cflag->suspended == 1)
@@ -1003,7 +1022,7 @@ int ChannelCanTopic (User *uptr, Chan *chptr)
     if (IsSuperAdmin(uptr))
         return 1;
 
-    if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
+    if ((cflag = find_cflag_from_user(uptr, chptr->channelname)) == NULL)
         return ChannelCanTopic(get_link_master(uptr), chptr);
 
     if (cflag->suspended == 1)
@@ -1025,7 +1044,7 @@ int ChannelCanACL (User *uptr, Chan *chptr)
     if (IsSuperAdmin(uptr))
         return 1;
 
-    if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
+    if ((cflag = find_cflag_from_user(uptr, chptr->channelname)) == NULL)
         return ChannelCanACL(get_link_master(uptr), chptr);
 
     if (cflag->suspended == 1)
@@ -1050,7 +1069,7 @@ int ChannelCanReadACL (User *uptr, Chan *chptr)
     if (IsAuthed(uptr) && uptr->level >= me.level_oper)
         return 1;
 
-    if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
+    if ((cflag = find_cflag_from_user(uptr, chptr->channelname)) == NULL)
         return ChannelCanReadACL(get_link_master(uptr), chptr);
 
     if (cflag->suspended == 1)
@@ -1076,7 +1095,7 @@ int ChannelCanWriteACL (User *source, User *target, Chan *chptr)
     if (IsSuperAdmin(source))
         return 1;
 
-    if ((cflag1 = find_cflag(source->nick, chptr->channelname)) == NULL)
+    if ((cflag1 = find_cflag_from_user(source, chptr->channelname)) == NULL)
         return ChannelCanWriteACL(get_link_master(source), target, chptr);
 
     if (cflag1->suspended == 1)
@@ -1088,7 +1107,7 @@ int ChannelCanWriteACL (User *source, User *target, Chan *chptr)
     if (!(cflag1->uflags & UFLAG_ACL))
         return 0;
 
-    if ((cflag2 = find_cflag(target->nick, chptr->channelname)) == NULL)
+    if ((cflag2 = find_cflag_from_user(target, chptr->channelname)) == NULL)
         return 1;
 
     if (cflag1->uflags & UFLAG_OWNER)
@@ -1106,9 +1125,6 @@ int ChannelCanWriteACL (User *source, User *target, Chan *chptr)
     if (cflag1 == cflag2)
         return 1;
 
-/*    if ((cflag1->uflags & UFLAG_COOWNER || cflag1->uflags & UFLAG_ACL) && !(cflag2->uflags & UFLAG_OWNER || cflag2->uflags & UFLAG_COOWNER))
-        return 1;*/
-
     return 0;
 }
 
@@ -1125,10 +1141,10 @@ int ChannelCanOverride (User *source, User *target, Chan *chptr)
     if (!IsAuthed(target))
         return 1;
 
-    if ((cflag1 = find_cflag(source->nick, chptr->channelname)) == NULL)
+    if ((cflag1 = find_cflag_from_user(source, chptr->channelname)) == NULL)
         return ChannelCanOverride(get_link_master(source), target, chptr);
 
-    if ((cflag2 = find_cflag(target->nick, chptr->channelname)) == NULL)
+    if ((cflag2 = find_cflag_from_user(target, chptr->channelname)) == NULL)
         return 1;
 
     if (cflag1->suspended == 1)
@@ -1191,7 +1207,7 @@ int can_modify_uflag (User *uptr, Chan *chptr, int uflag)
     if (IsSuperAdmin(uptr))
         return 2;
 
-    if ((cflag = find_cflag(uptr->nick, chptr->channelname)) == NULL)
+    if ((cflag = find_cflag_from_user(uptr, chptr->channelname)) == NULL)
         return 0;
 
     /*
@@ -1234,8 +1250,9 @@ int can_modify_uflag (User *uptr, Chan *chptr, int uflag)
 User *get_coowner (Chan *chptr)
 {
     Cflag *cflag;
-    LIST_FOREACH(cflag_list, cflag, HASH(chptr->channelname)) {
-        if (!Strcmp(cflag->channel, chptr->channelname) && (cflag->uflags & UFLAG_COOWNER || cflag->flags == CHLEV_COOWNER))
+
+    LLIST_FOREACH_ENTRY(&chptr->cflags, cflag, chan_head) {
+        if (cflag->uflags & UFLAG_COOWNER || cflag->flags == CHLEV_COOWNER)
             return find_user(cflag->nick);
     }
 

@@ -33,7 +33,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern cflaglist cflag_list;
 extern commandlist command_list;
 
 void do_nick (Nick *, User *, char *);
@@ -355,7 +354,7 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
     if (HasOption(user, UOPT_PROTECT)) DeleteGuest(nptr->nick);
     if (HasOption(user, UOPT_NOAUTO)) return;
 
-    sync_user(nptr);       
+    sync_user(user);
 }
 
 void nick_register (Nick *nptr, User *uptr, char *all)
@@ -535,16 +534,14 @@ void nick_info (Nick *nptr, User *uptr, char *all)
         }
 
         NoticeToUser(nptr,"   Has access on :");
-        LIST_FOREACH_ALL(cflag_list, cflag) {
-            if (!Strcmp(cflag->nick, user->nick)) {
-                chptr = find_channel(cflag->channel);
-                if (HasOption(chptr, COPT_AXXFLAGS)) {
-                    uflags_str = get_uflags_string(cflag->uflags);
-                    NoticeToUser(nptr, "      %s (%s)", cflag->channel, uflags_str);
-                    free(uflags_str);
-                } else
-                    NoticeToUser(nptr, "      %s (%d)", cflag->channel, cflag->flags);
-            }
+        LLIST_FOREACH_ENTRY(&user->cflags, cflag, user_head) {
+            chptr = find_channel(cflag->channel);
+            if (HasOption(chptr, COPT_AXXFLAGS)) {
+                uflags_str = get_uflags_string(cflag->uflags);
+                NoticeToUser(nptr, "      %s (%s)", cflag->channel, uflags_str);
+                free(uflags_str);
+            } else
+                NoticeToUser(nptr, "      %s (%d)", cflag->channel, cflag->flags);
         }
     }
 }

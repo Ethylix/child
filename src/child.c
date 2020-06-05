@@ -49,7 +49,6 @@ int startuptime;
 int verbose, vv, raws, eos;
 MYSQL mysql;
 
-cflaglist cflag_list;
 memberlist member_list;
 limitlist limit_list;
 chanbotlist chanbot_list;

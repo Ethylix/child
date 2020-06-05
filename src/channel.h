@@ -162,6 +162,7 @@ typedef struct chan {
     char mlock[50+1];
     char topic[TOPICLEN + 1];
     int autolimit, lastseen, regtime;
+    struct llist_head cflags;
 } Chan;
 
 typedef struct wchan {
@@ -178,14 +179,15 @@ typedef struct member_ {
 } Member;
 
 typedef struct cflag {
-    char channel[CHANLEN + 1]; /* hash key */
+    char channel[CHANLEN + 1];
     char nick[NICKLEN + MASKLEN + 1];
     int flags; /* level */
     int automode;
     int suspended;
     int uflags; /* flags (really) */
-    struct cflag *next,*prev;
-    struct cflag *lnext,*lprev;
+    bool is_mask;
+    struct llist_head chan_head;
+    struct llist_head user_head;
 } Cflag;
 
 typedef struct limit_ {
@@ -212,12 +214,6 @@ typedef struct {
 
 typedef struct {
     int size;
-    TABLE(Cflag);
-    Cflag *lhead;
-} cflaglist;
-
-typedef struct {
-    int size;
     TABLE(Limit);
     Limit *lhead;
 } limitlist;
@@ -230,7 +226,9 @@ typedef struct {
 
 Chan *find_channel (char *);
 Wchan *find_wchan (char *);
-Cflag *find_cflag (char *, char *);
+Cflag *find_cflag_from_user(const User *uptr, const char *chname);
+Cflag *find_cflag_from_chan(const Chan *chptr, const char *username);
+Cflag *find_cflag_from_user_links(const User *uptr, const char *chname);
 int GetFlag (User *, Chan *);
 Chan *CreateChannel (char *, char *, int);
 Wchan *CreateWchan(char *);
@@ -269,7 +267,7 @@ void DeleteTB (TB *);
 void CheckTB (void);
 TB *find_tb (Chan *, char *);
 void acl_resync (Chan *);
-void sync_cflag (Cflag *, Nick *);
+void sync_cflag (Cflag *, User *);
 int IsAclOnChan (Chan *);
 int parse_uflags (char *);
 int GetUFlagsFromLevel (int);

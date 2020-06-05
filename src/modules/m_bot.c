@@ -141,7 +141,7 @@ void bot_god (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan)
     Cflag *cflag;
     if (!IsAuthed(uptr)) return;
 
-    cflag = find_cflag(uptr->nick,wchan->chname);
+    cflag = find_cflag_from_user(uptr, wchan->chname);
     if (!cflag && !IsFounder(uptr,chptr)) return;
     FakeMsg(whatbot(wchan->chname),wchan->chname,"stfu %s",nptr->nick);
 }

@@ -35,7 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern cflaglist cflag_list;
 extern chanbotlist chanbot_list;
 extern commandlist command_list;
 extern memberlist member_list;
@@ -209,58 +208,64 @@ void m_join (char *sender, char *tail)
         }
 
         int hasaccess=0, flagged=0;
-        member = find_cflag_r(nptr->nick, str_ptr);
-        if (member) {
-        if (uptr && uptr->authed == 1 && !HasOption(chptr, COPT_NOAUTO)) {
-            if (HasOption(chptr, COPT_AXXFLAGS))
-               sync_cflag(member, nptr);
-            else {
-            if (IsFounder(uptr,chptr)) {
-                if (member->automode == CFLAG_AUTO_ON || member->automode == CFLAG_AUTO_OP) {
-                    SetStatus(nptr,str_ptr,CHFL_OWNER|CHFL_OP,1,bot);
-                    flagged = 1;
-                }
-                hasaccess = 1;
-            } else if (GetFlag(uptr,chptr) >= me.chlev_admin) {
-                if (member->automode == CFLAG_AUTO_ON || member->automode == CFLAG_AUTO_OP) {
-                    SetStatus(nptr,str_ptr,CHFL_PROTECT|CHFL_OP,1,bot);
-                    flagged = 1;
-                }
-                hasaccess = 1;
-            } else if (GetFlag(uptr,chptr) >= me.chlev_op) {
-                if (member->automode == CFLAG_AUTO_ON || member->automode == CFLAG_AUTO_OP) {
-                    SetStatus(nptr,str_ptr,CHFL_OP,1,bot);
-                    flagged = 1;
-                }
-                hasaccess = 1;
-            } else if (GetFlag(uptr,chptr) >= me.chlev_halfop) {
-                if (member->automode == CFLAG_AUTO_ON || member->automode == CFLAG_AUTO_OP) {
-                    SetStatus(nptr,str_ptr,CHFL_HALFOP,1,bot);
-                    flagged = 1;
-                }
-                hasaccess = 1;
-            } else if (GetFlag(uptr,chptr) >= me.chlev_voice) {
-                if (member->automode != CFLAG_AUTO_OFF) {
-                    SetStatus(nptr,str_ptr,CHFL_VOICE,1,bot);
-                    flagged = 1;
-                }
-                hasaccess = 1;
-            } else if (GetFlag(uptr,chptr) == me.chlev_akick) {
-                KickUser(bot,uptr->nick,str_ptr,"Get out of this chan !"); hasaccess = 1;
-            } else if (GetFlag(uptr,chptr) == me.chlev_akb) {
-                SendRaw(":%s MODE %s +b *!*@%s",bot,str_ptr,nptr->hiddenhost);
-                KickUser(bot,uptr->nick,str_ptr,"Get out of this chan !"); hasaccess = 1;
-            } else if (GetFlag(uptr,chptr) == me.chlev_nostatus)
-                hasaccess = 1;
 
-            if (hasaccess && !flagged && GetFlag(uptr,chptr) >= me.chlev_voice && member->automode != CFLAG_AUTO_OFF) {
-                if (member->automode == CFLAG_AUTO_VOICE)
-                    SetStatus(nptr,str_ptr,CHFL_VOICE,1,bot);
-            }
-            }
-        }
+        // TODO(target0): improve this (functions etc).
+        if (!uptr || !uptr->authed || HasOption(chptr, COPT_NOAUTO))
+            goto check_mask_flags;
+
+        member = find_cflag_from_user_links(uptr, str_ptr);
+        if (!member)
+            goto check_mask_flags;
+
+        if (HasOption(chptr, COPT_AXXFLAGS)) {
+            sync_cflag(member, uptr);
+            goto check_mask_flags;
         }
 
+        if (IsFounder(uptr,chptr)) {
+            if (member->automode == CFLAG_AUTO_ON || member->automode == CFLAG_AUTO_OP) {
+                SetStatus(nptr,str_ptr,CHFL_OWNER|CHFL_OP,1,bot);
+                flagged = 1;
+            }
+            hasaccess = 1;
+        } else if (GetFlag(uptr,chptr) >= me.chlev_admin) {
+            if (member->automode == CFLAG_AUTO_ON || member->automode == CFLAG_AUTO_OP) {
+                SetStatus(nptr,str_ptr,CHFL_PROTECT|CHFL_OP,1,bot);
+                flagged = 1;
+            }
+            hasaccess = 1;
+        } else if (GetFlag(uptr,chptr) >= me.chlev_op) {
+            if (member->automode == CFLAG_AUTO_ON || member->automode == CFLAG_AUTO_OP) {
+                SetStatus(nptr,str_ptr,CHFL_OP,1,bot);
+                flagged = 1;
+            }
+            hasaccess = 1;
+        } else if (GetFlag(uptr,chptr) >= me.chlev_halfop) {
+            if (member->automode == CFLAG_AUTO_ON || member->automode == CFLAG_AUTO_OP) {
+                SetStatus(nptr,str_ptr,CHFL_HALFOP,1,bot);
+                flagged = 1;
+            }
+            hasaccess = 1;
+        } else if (GetFlag(uptr,chptr) >= me.chlev_voice) {
+            if (member->automode != CFLAG_AUTO_OFF) {
+                SetStatus(nptr,str_ptr,CHFL_VOICE,1,bot);
+                flagged = 1;
+            }
+            hasaccess = 1;
+        } else if (GetFlag(uptr,chptr) == me.chlev_akick) {
+            KickUser(bot,uptr->nick,str_ptr,"Get out of this chan !"); hasaccess = 1;
+        } else if (GetFlag(uptr,chptr) == me.chlev_akb) {
+            SendRaw(":%s MODE %s +b *!*@%s",bot,str_ptr,nptr->hiddenhost);
+            KickUser(bot,uptr->nick,str_ptr,"Get out of this chan !"); hasaccess = 1;
+        } else if (GetFlag(uptr,chptr) == me.chlev_nostatus)
+            hasaccess = 1;
+
+        if (hasaccess && !flagged && GetFlag(uptr,chptr) >= me.chlev_voice && member->automode != CFLAG_AUTO_OFF) {
+            if (member->automode == CFLAG_AUTO_VOICE)
+                SetStatus(nptr,str_ptr,CHFL_VOICE,1,bot);
+        }
+
+check_mask_flags:
         if (!HasOption(chptr, COPT_AXXFLAGS)) {
         if (!HasOption(chptr, COPT_NOAUTO) && HasOption(chptr, COPT_ENABLEMASK) && !hasaccess) {
             Cflag *cflag;
@@ -268,8 +273,8 @@ void m_join (char *sender, char *tail)
             bzero(mask2,256);
             snprintf(mask,256,"%s!%s@%s",nptr->nick,nptr->ident,nptr->hiddenhost);
             snprintf(mask2,256,"%s!%s@%s",nptr->nick,nptr->ident,nptr->host);
-            LIST_FOREACH(cflag_list, cflag, HASH(str_ptr)) {
-                if (!Strcmp(cflag->channel,str_ptr) && IsMask(cflag->nick) && (match_mask(cflag->nick,mask) || match_mask(cflag->nick,mask2))) {
+            LLIST_FOREACH_ENTRY(&chptr->cflags, cflag, chan_head) {
+                if (IsMask(cflag->nick) && (match_mask(cflag->nick,mask) || match_mask(cflag->nick,mask2))) {
                     if (cflag->flags == me.chlev_op && !HasOption(chptr, COPT_AOP))
                         SetStatus(nptr,str_ptr,CHFL_OP,1,bot);
                     else if (cflag->flags == me.chlev_halfop)

@@ -32,7 +32,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern cflaglist cflag_list;
 extern chanbotlist chanbot_list;
 extern commandlist command_list;
 extern memberlist member_list;
@@ -373,8 +372,8 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
         }
 
         if (newlevel == CHLEV_COOWNER) {
-            LIST_FOREACH(cflag_list, cflag, HASH(chptr->channelname)) {
-                if (!Strcmp(cflag->channel, chptr->channelname) && cflag->flags == CHLEV_COOWNER) {
+            LLIST_FOREACH_ENTRY(&chptr->cflags, cflag, chan_head) {
+                if (cflag->flags == CHLEV_COOWNER) {
                     NoticeToUser(nptr, "There is already a co-owner for this channel.");
                     return;
                 }
@@ -401,7 +400,7 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
         }
         
         if (!Strcmp(arg5,nptr->nick) || (GetFlag(uptr,chptr) >= 10 && GetFlag(uptr2,chptr) < GetFlag(uptr,chptr))) {
-            cflag = find_cflag(uptr2->nick, chptr->channelname);
+            cflag = find_cflag_from_user(uptr2, chptr->channelname);
             if (!cflag)
                 return;
             if (!Strcmp(arg6, "op"))
@@ -439,7 +438,7 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
             return;
         }
 
-        if (IsMask(arg5) && HasOption(chptr, COPT_ENABLEMASK) && find_cflag(arg5,arg3)) {
+        if (IsMask(arg5) && HasOption(chptr, COPT_ENABLEMASK) && find_cflag_from_chan(chptr, arg5)) {
             DeleteMaskFromChannel(arg5,chptr);
             NoticeToUser(nptr,"Mask \2%s\2 removed from channel \2%s\2",arg5,arg3);
             return;
@@ -480,8 +479,8 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
 
         char autom[12];
         char stat[12];
-        LIST_FOREACH(cflag_list, cflag, HASH(arg3)) {
-            if (!Strcmp(cflag->channel,arg3) && cflag->flags < CHLEV_OWNER) {
+        LLIST_FOREACH_ENTRY(&chptr->cflags, cflag, chan_head) {
+            if (cflag->flags < CHLEV_OWNER) {
                 switch(cflag->automode) {
                     case CFLAG_AUTO_ON:
                         strcpy(autom,"default");
@@ -1562,7 +1561,7 @@ void chan_suspend (Nick *nptr, User *uptr, Chan *chptr, char *all)
     }
 
     if (HasOption(chptr, COPT_AXXFLAGS)) {
-        if ((find_cflag(uptr2->nick, chptr->channelname)) == NULL) {
+        if ((find_cflag_from_user(uptr2, chptr->channelname)) == NULL) {
             NoticeToUser(nptr, "User %s is not on channel access list.", arg1);
             return;
         }
@@ -1583,7 +1582,7 @@ void chan_suspend (Nick *nptr, User *uptr, Chan *chptr, char *all)
         }
     }
 
-    cflag = find_cflag(arg1, chptr->channelname);
+    cflag = find_cflag_from_chan(chptr, arg1);
     if (!cflag) {
         NoticeToUser(nptr, "An error occured.");
         return;
@@ -1629,7 +1628,7 @@ void chan_unsuspend (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }   
 
-    cflag = find_cflag(arg1, chptr->channelname);
+    cflag = find_cflag_from_chan(chptr, arg1);
 
     if (!cflag) {
         NoticeToUser(nptr, "User %s is not on channel access list.", arg1);
@@ -1805,23 +1804,21 @@ void chan_flags (Nick *nptr, User *uptr, Chan *chptr, char *all)
 
         char stat[12];
         char *uflags_str;
-        LIST_FOREACH(cflag_list, cflag, HASH(arg1)) {
-            if (!Strcmp(cflag->channel, arg1)) {
-                switch (cflag->suspended) {
-                    case 0:
-                        strcpy(stat, "Normal");
-                        break;
-                    case 1:
-                        strcpy(stat, "Suspended");
-                        break;
-                    default:
-                        strcpy(stat, "Unknown");
-                }
-
-                uflags_str = get_uflags_string(cflag->uflags);
-                NoticeToUser(nptr, "%s   %s    %s", stat, uflags_str, cflag->nick);
-                free(uflags_str);
+        LLIST_FOREACH_ENTRY(&chptr->cflags, cflag, chan_head) {
+            switch (cflag->suspended) {
+                case 0:
+                    strcpy(stat, "Normal");
+                    break;
+                case 1:
+                    strcpy(stat, "Suspended");
+                    break;
+                default:
+                    strcpy(stat, "Unknown");
             }
+
+            uflags_str = get_uflags_string(cflag->uflags);
+            NoticeToUser(nptr, "%s   %s    %s", stat, uflags_str, cflag->nick);
+            free(uflags_str);
         }
 
         NoticeToUser(nptr, "End of access list.");
@@ -1876,12 +1873,12 @@ void chan_flags (Nick *nptr, User *uptr, Chan *chptr, char *all)
             NoticeToUser(nptr, "You are already the owner of this channel. Why the hell do you want to be co-owner ?");
             return;
         }
-        if ((cflag = find_cflag(arg2, arg1)) == NULL)
+        if ((cflag = find_cflag_from_user(uptr2, arg1)) == NULL)
             AddUserToChannel(uptr2, chptr, 0, flags);
         else
             cflag->uflags |= flags;
     } else {
-        if ((cflag = find_cflag(arg2, arg1)) == NULL) {
+        if ((cflag = find_cflag_from_user(uptr2, arg1)) == NULL) {
             NoticeToUser(nptr, "Cannot remove flags from a non existent user");
             return;
         }

@@ -38,8 +38,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 #include <unistd.h>
 
-extern cflaglist cflag_list;
-
 extern int eos;
 
 User *find_user(char *name)
@@ -78,7 +76,7 @@ Guest *find_guest(char *name)
 
 /* A nickname has only one master but can have several slaves */
 
-Link *find_link (char *slave)
+Link *find_link(const char *slave)
 {
     struct hashmap_entry *entry;
 
@@ -127,6 +125,8 @@ User *AddUser (char *nick, int level)
     bzero(new_user->email,EMAILLEN);
     new_user->regtime = 0;
     new_user->lastseen = 0;
+
+    LLIST_INIT(&new_user->cflags);
 
     if (!HASHMAP_INSERT(get_core()->users, new_user->nick, new_user, NULL)) {
         fprintf(stderr, "Failed to insert new user \"%s\" into hashmap (duplicate entry?)\n", new_user->nick);
@@ -522,25 +522,24 @@ void userdrop (User *uptr)
     DeleteAccount(uptr);
 }
 
-void sync_user (Nick *nptr)
+void sync_user (User *uptr)
 {
     Cflag *cflag;
 
-    LIST_FOREACH_ALL(cflag_list, cflag) {
-        if (!Strcmp(cflag->nick, nptr->nick))
-            sync_cflag(cflag, nptr);
+    LLIST_FOREACH_ENTRY(&uptr->cflags, cflag, user_head) {
+        sync_cflag(cflag, uptr);
     }
 }
 
-void sync_cflag (Cflag *cflag, Nick *nptr)
+void sync_cflag (Cflag *cflag, User *uptr)
 {
     Chan *chptr;
     Wchan *wchan;
-    User *uptr;
     Member *member;
+    Nick *nptr;
     char *bot;
 
-    if ((uptr = find_user(nptr->nick)) == NULL)
+    if ((nptr = find_nick(uptr->nick)) == NULL)
         return;
 
     if ((chptr = find_channel(cflag->channel)) == NULL)

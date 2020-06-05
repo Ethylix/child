@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _USER_H
 #define _USER_H
 
+#include "llist.h"
 #include "mem.h"
 #include "net.h"
 
@@ -142,6 +143,7 @@ typedef struct user_ {
     char vhost[HOSTLEN + 1];
     char email[EMAILLEN + 1];
     int regtime;
+    struct llist_head cflags;
 } User;
 
 typedef struct clone {
@@ -182,7 +184,7 @@ typedef struct fakeuser {
 User *find_user (char *);
 Nick *find_nick (char *);
 Guest *find_guest (char *);
-Link *find_link (char *);
+Link *find_link(const char *);
 Link *find_link2 (char *, char *);
 User *AddUser (char *, int);
 Nick *AddNick (char *, char *, char *, char *, char *, long int, char *);
@@ -209,7 +211,7 @@ void killallfakes (void);
 void loadallfakes (void);
 void userdrop (User *);
 Clone *find_clone (char *);
-void sync_user (Nick *);
+void sync_user (User *);
 Fake *AddFake (char *, char *, char *);
 Fake *find_fake (char *);
 void DeleteFake (Fake *);

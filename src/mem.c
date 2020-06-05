@@ -32,7 +32,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdio.h>
 #include <string.h>
 
-extern cflaglist cflag_list;
 extern memberlist member_list;
 extern limitlist limit_list;
 extern chanbotlist chanbot_list;
@@ -44,8 +43,6 @@ extern tblist tb_list;
 
 void FreeAllMem()
 {
-    while (!LIST_EMPTY(cflag_list))
-        DeleteCflag(LIST_HEAD(cflag_list));
     while (!LIST_EMPTY(member_list))
         DeleteMember(LIST_HEAD(member_list));
     while (!LIST_EMPTY(limit_list))
@@ -116,7 +113,6 @@ long get_mem(int which)
 
 void InitMem()
 {
-    LIST_INIT(cflag_list);
     LIST_INIT(member_list);
     LIST_INIT(limit_list);
     LIST_INIT(chanbot_list);

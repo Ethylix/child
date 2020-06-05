@@ -35,7 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern cflaglist cflag_list;
 extern chanbotlist chanbot_list;
 
 extern MYSQL mysql;
@@ -175,7 +174,7 @@ void loadchandb()
             continue;
         }
 
-        if (find_cflag(accname,channelname))
+        if (find_cflag_from_user(user_ptr, channelname))
             continue;
         if (vv) printf("Adding user %s (%p) for channel %s with level %d\n",accname,user_ptr,channelname,acclvl);
         if (acclvl < CHLEV_OWNER && !IsMask(accname)) {
@@ -356,16 +355,16 @@ void savechandb()
 
         snprintf(tmp,1024,"INSERT INTO `child_chans` VALUES ('%s','%s','%s',%ld,'%s',%d,%d,%d,'%s')",chname,strtosql(owner,chptr->owner,NICKLEN),strtosql(entrymsg,chptr->entrymsg,250),chptr->options,chptr->mlock,chptr->autolimit,chptr->lastseen, chptr->regtime, topic);
         mysql_query(&mysql,tmp);
-    }
 
-    LIST_FOREACH_ALL(cflag_list, cflag) {
-        if (cflag->flags >= CHLEV_OWNER)
-            continue;
-        bzero(chname,CHANLEN);
-        strtosql(chname,cflag->channel,50);
+        LLIST_FOREACH_ENTRY(&chptr->cflags, cflag, chan_head) {
+            if (cflag->flags >= CHLEV_OWNER)
+                continue;
+            bzero(chname,CHANLEN);
+            strtosql(chname,cflag->channel,50);
 
-        snprintf(tmp,1024,"INSERT INTO `child_chan_access` VALUES ('%s','%s',%d,%d,%d,%d)",chname,strtosql(nick,cflag->nick,NICKLEN),cflag->flags,cflag->automode,cflag->suspended,cflag->uflags);
-        mysql_query(&mysql,tmp);
+            snprintf(tmp,1024,"INSERT INTO `child_chan_access` VALUES ('%s','%s',%d,%d,%d,%d)",chname,strtosql(nick,cflag->nick,NICKLEN),cflag->flags,cflag->automode,cflag->suspended,cflag->uflags);
+            mysql_query(&mysql,tmp);
+        }
     }
 
     mysql_close(&mysql);
