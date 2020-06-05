@@ -88,11 +88,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #define IsCoOwner(x,y) (GetFlag(x,y) == CHLEV_COOWNER)
 
-#define IsOwner(a,b) IsChanFlag(a,b,CHFL_OWNER)
-#define IsProtect(a,b) IsChanFlag(a,b,CHFL_PROTECT)
-#define IsOp(a,b) IsChanFlag(a,b,CHFL_OP)
-#define IsHalfop(a,b) IsChanFlag(a,b,CHFL_HALFOP)
-#define IsVoice(a,b) IsChanFlag(a,b,CHFL_VOICE)
+#define HasOwner(a) HasChanFlag(a,CHFL_OWNER)
+#define HasProtect(a) HasChanFlag(a,CHFL_PROTECT)
+#define HasOp(a) HasChanFlag(a,CHFL_OP)
+#define HasHalfop(a) HasChanFlag(a,CHFL_HALFOP)
+#define HasVoice(a) HasChanFlag(a,CHFL_VOICE)
 
 #define MsgToChan(a,b,...) FakeMsg(me.nick,a,b,##__VA_ARGS__)
 
@@ -167,14 +167,15 @@ typedef struct chan {
 typedef struct wchan {
     char chname[CHANLEN + 1]; /* hash key */
     char topic[TOPICLEN + 1];
+    struct llist_head members;
 } Wchan;
 
 typedef struct member_ {
-    char nick[NICKLEN + 1];
-    char channel[CHANLEN + 1]; /* hash key */
+    Wchan *wchan;
+    Nick *nick;
     long int flags;
-    struct member_ *next,*prev;
-    struct member_ *lnext,*lprev;
+    struct llist_head wchan_head;
+    struct llist_head nick_head;
 } Member;
 
 typedef struct cflag {
@@ -206,12 +207,6 @@ typedef struct timeban {
 
 typedef struct {
     int size;
-    TABLE(Member);
-    Member *lhead;
-} memberlist;
-
-typedef struct {
-    int size;
     TABLE(Limit);
     Limit *lhead;
 } limitlist;
@@ -238,18 +233,16 @@ Member *AddUserToWchan(Nick *, Wchan *);
 void DeleteUserFromWchan (Nick *, Wchan *);
 void KickUser(const char *, const char *, const char *, const char *, ...);
 void JoinChannel(char *, char *);
-Member *find_member(const char *, const char *);
+Member *find_member(const Wchan *, const Nick *);
 void SetStatus(Nick *, const char *, long int, int, char *);
 void DeleteUserFromChannels (User *);
 void DeleteUsersFromChannel (Chan *);
 void DeleteUserFromWchans(Nick *);
-int member_exists (Wchan *);
+bool member_exists (Wchan *);
 int members_num (Wchan *);
 void checkexpired (void);
-int IsChanFlag (char *, Wchan *, int);
 void CheckLimits (void);
 Limit *AddLimit (char *);
-int IsMember(char *, char *);
 int chansreg (char *);
 char *whatbot (char *);
 void joinallchans (void);

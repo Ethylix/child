@@ -32,7 +32,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdio.h>
 #include <string.h>
 
-extern memberlist member_list;
 extern limitlist limit_list;
 extern chanbotlist chanbot_list;
 extern commandlist command_list;
@@ -43,8 +42,6 @@ extern tblist tb_list;
 
 void FreeAllMem()
 {
-    while (!LIST_EMPTY(member_list))
-        DeleteMember(LIST_HEAD(member_list));
     while (!LIST_EMPTY(limit_list))
         DeleteLimit(LIST_HEAD(limit_list));
 #ifdef USE_FILTER
@@ -57,9 +54,6 @@ void FreeAllMem()
 
 void cleanup_reconnect()
 {
-    while (!LIST_EMPTY(member_list))
-        DeleteMember(LIST_HEAD(member_list));
-
     clear_wchans();
 
     while (!LIST_EMPTY(limit_list))
@@ -113,7 +107,6 @@ long get_mem(int which)
 
 void InitMem()
 {
-    LIST_INIT(member_list);
     LIST_INIT(limit_list);
     LIST_INIT(chanbot_list);
     LIST_INIT(command_list);

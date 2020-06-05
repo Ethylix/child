@@ -34,7 +34,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 extern chanbotlist chanbot_list;
 extern commandlist command_list;
-extern memberlist member_list;
 extern tblist tb_list;
 
 void do_chan (Nick *, User *, char *);
@@ -227,6 +226,7 @@ void chan_register (Nick *nptr, User *uptr, Chan *chptr, char *all)
     arg3 = all;
     SeperateWord(arg3);
     Chan *nchptr;
+    Member *member;
 
     if (!arg3 || *arg3 == '\0' || *arg3 != '#') {
         NoticeToUser(nptr,"Syntax: \2CHAN REGISTER \037#channel\037\2");
@@ -250,7 +250,9 @@ void chan_register (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
 
-    if (!IsOp(nptr->nick,wchan)) {
+    member = find_member(wchan, nptr);
+
+    if (!member || !HasOp(member)) {
         NoticeToUser(nptr,"You must be a channel operator to register a channel");
         return;
     }
@@ -1287,16 +1289,18 @@ void chan_kick (Nick *nptr, User *uptr, Chan *chptr, char *all)
         }
 
         if (!Strcmp(arg4,"*")) {
-            Member *member,*next;
-            Nick *blah;
-            for (member = member_list.table[HASH(chptr->channelname)]; member; member = next) {
-                next = member->next;
-                if (Strcmp(member->nick,nptr->nick) && !Strcmp(member->channel,chptr->channelname)) {
-                    blah = find_nick(member->nick);
-                    if (!blah) return;
-                    if (!IsOper(blah))
-                        KickUser(bot,member->nick,chptr->channelname,"(%s) Kicking all users", nptr->nick);
-                }
+            Member *member, *tmp_member;
+            Wchan *wchan;
+
+            if ((wchan = find_wchan(chptr->channelname)) == NULL)
+                return;
+
+            LLIST_FOREACH_ENTRY_SAFE(&wchan->members, member, tmp_member, wchan_head) {
+                if (member->nick == nptr)
+                    continue;
+
+                if (!IsOper(member->nick))
+                    KickUser(bot,member->nick->nick,chptr->channelname,"(%s) Kicking all users", nptr->nick);
             }
             return;
         }

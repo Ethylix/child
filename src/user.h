@@ -162,6 +162,7 @@ typedef struct nick {
     int msgtime,msgnb;
     int ignored,ignoretime;
     int loginattempts,lasttry;
+    struct llist_head wchans;
 } Nick;
 
 typedef struct guest {

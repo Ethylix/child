@@ -36,7 +36,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 extern chanbotlist chanbot_list;
 extern limitlist limit_list;
-extern memberlist member_list;
 extern tblist tb_list;
 
 extern int eos;
@@ -194,6 +193,7 @@ Wchan *CreateWchan(char *name)
 
     strncpy(new_chan->chname,name,CHANLEN);
     bzero(new_chan->topic, TOPICLEN);
+    LLIST_INIT(&new_chan->members);
 
     if (!HASHMAP_INSERT(get_core()->wchans, new_chan->chname, new_chan, NULL)) {
         fprintf(stderr, "Failed to insert new wchan \"%s\" into hashmap (duplicate entry?)\n", new_chan->chname);
@@ -278,9 +278,13 @@ void DeleteWchan (Wchan *wchan)
 void clear_wchans(void)
 {
     struct hashmap_entry *entry, *tmp_entry;
+    Member *member, *tmp_member;
     Wchan *wchan;
 
     HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->wchans, entry, tmp_entry, wchan) {
+        LLIST_FOREACH_ENTRY_SAFE(&wchan->members, member, tmp_member, wchan_head) {
+            DeleteMember(member);
+        }
         DeleteWchan(wchan);
     }
 }
@@ -339,11 +343,12 @@ Member *AddUserToWchan (Nick *nptr, Wchan *chan)
     Member *member;
     member = (Member *)malloc(sizeof(Member));
 
-    strncpy(member->nick,nptr->nick,NICKLEN);
-    strncpy(member->channel,chan->chname,CHANLEN);
+    member->wchan = chan;
+    member->nick = nptr;
     member->flags = 0;
 
-    LIST_INSERT_HEAD(member_list, member, HASH(chan->chname));
+    LLIST_INSERT_TAIL(&nptr->wchans, &member->nick_head);
+    LLIST_INSERT_TAIL(&chan->members, &member->wchan_head);
 
     Chan *chptr = find_channel(chan->chname);
     if (chptr && chptr->autolimit > 0)
@@ -354,7 +359,7 @@ Member *AddUserToWchan (Nick *nptr, Wchan *chan)
 
 void DeleteUserFromWchan (Nick *nptr, Wchan *chan)
 {
-    Member *member = find_member(chan->chname,nptr->nick);
+    Member *member = find_member(chan, nptr);
     if (!member) return;
 
     DeleteMember(member);
@@ -368,7 +373,8 @@ void DeleteUserFromWchan (Nick *nptr, Wchan *chan)
 
 void DeleteMember (Member *member)
 {
-    LIST_REMOVE(member_list, member, HASH(member->channel));
+    LLIST_REMOVE(&member->nick_head);
+    LLIST_REMOVE(&member->wchan_head);
     free(member);
 }
 
@@ -405,11 +411,12 @@ void JoinChannel (char *who, char *name)
     SendRaw(":%s MODE %s +ao %s %s",who,name,who,who);
 }
 
-Member *find_member(const char *chname, const char *name)
+Member *find_member(const Wchan *wchan, const Nick *nptr)
 {
     Member *tmp;
-    LIST_FOREACH(member_list, tmp, HASH(chname)) {
-        if (!Strcmp(tmp->nick,name) && !Strcmp(tmp->channel,chname))
+
+    LLIST_FOREACH_ENTRY(&wchan->members, tmp, wchan_head) {
+        if (tmp->nick == nptr)
             return tmp;
     }
 
@@ -419,8 +426,11 @@ Member *find_member(const char *chname, const char *name)
 void SetStatus (Nick *nptr, const char *chan, long int flag, int what, char *who)
 {
     Member *member;
+    Wchan *wchan;
 
     if (!nptr) return;
+    if ((wchan = find_wchan(chan)) == NULL)
+        return;
 
     char modes[50];
     bzero(modes,50);
@@ -459,7 +469,7 @@ void SetStatus (Nick *nptr, const char *chan, long int flag, int what, char *who
         strcat(targ," ");
     }
 
-    member = find_member(chan,nptr->nick);
+    member = find_member(wchan, nptr);
     if (!member) return;
 
     if (!what) {
@@ -482,43 +492,30 @@ void DeleteUserFromChannels (User *user)
 
 void DeleteUserFromWchans (Nick *nptr)
 {
-    Member *member, *next;
-    Wchan *wchan;
+    Member *member, *tmp_member;
 
-    for (member = LIST_HEAD(member_list); member; member = next) {
-        next = LIST_LNEXT(member);
-        if (!Strcmp(member->nick,nptr->nick)) {
-            wchan = find_wchan(member->channel);
-            DeleteMember(member);
-            if (wchan) {
-                if (!member_exists(wchan))
-                    DeleteWchan(wchan);
-            }
-        }
+    LLIST_FOREACH_ENTRY_SAFE(&nptr->wchans, member, tmp_member, nick_head) {
+        DeleteMember(member);
+        if (!member_exists(member->wchan))
+            DeleteWchan(member->wchan);
     }
 }
 
-int member_exists (Wchan *chan)
+bool member_exists (Wchan *chan)
 {
-    Member *tmp;
-    LIST_FOREACH(member_list, tmp, HASH(chan->chname)) {
-        if (!Strcmp(tmp->channel,chan->chname))
-            return 1;
-    }
-
-    return 0;
+    return !LLIST_EMPTY(&chan->members);
 }
 
 int members_num (Wchan *wchan)
 {
-    int i=0;
+    int count = 0;
     Member *tmp;
-    LIST_FOREACH(member_list, tmp, HASH(wchan->chname)) {
-        if (!Strcmp(tmp->channel,wchan->chname))
-            i++;
+
+    LLIST_FOREACH_ENTRY(&wchan->members, tmp, wchan_head) {
+            count++;
     }
 
-    return i;
+    return count;
 }
 
 int IsAclOnChan (Chan *chptr)
@@ -531,8 +528,8 @@ int IsAclOnChan (Chan *chptr)
     if ((wchan = find_wchan(chptr->channelname)) == NULL)
         return 0;
 
-    LIST_FOREACH(member_list, member, HASH(wchan->chname)) {
-        if ((uptr = find_user(member->nick)) == NULL)
+    LLIST_FOREACH_ENTRY(&wchan->members, member, wchan_head) {
+        if ((uptr = find_user(member->nick->nick)) == NULL)
             continue;
         if (!IsAuthed(uptr))
             continue;
@@ -593,34 +590,6 @@ void CheckLimits()
             DeleteLimit(limit);
         }
     }
-}
-
-int IsChanFlag (char *nick, Wchan *wchan, int flag)
-{
-    Member *member;
-
-    if (!find_nick(nick))
-        return 0;
-
-    member = find_member(wchan->chname,nick);
-    if (!member)
-        return 0;
-
-    if (HasChanFlag(member, flag))
-        return 1;
-
-    return 0;
-}
-
-int IsMember (char *nick, char *chan)
-{
-    Member *member;
-    LIST_FOREACH(member_list, member, HASH(chan)) {
-        if (!Strcmp(member->nick,nick) && !Strcmp(member->channel,chan))
-            return 1;
-    }
-
-    return 0;
 }
 
 int chansreg (char *nick)
@@ -688,28 +657,32 @@ void CheckTB()
     }
 }
 
-void acl_resync (Chan *chptr)
+void acl_resync(Chan *chptr)
 {
     Cflag *cflag;
     Member *member;
     Nick *nptr;
     User *uptr;
+    Wchan *wchan;
 
     if (chptr->options & COPT_NOAUTO)
         return;
 
-    LIST_FOREACH(member_list, member, HASH(chptr->channelname)) {
-        if (!Strcmp(member->channel, chptr->channelname)) {
-            if (((nptr = find_nick(member->nick)) != NULL) && ((uptr = find_user(member->nick)) != NULL)) {
-                cflag = find_cflag(chptr, uptr);
-                if (!cflag || uptr->authed == 0 || (cflag && cflag->suspended == 1)) {
-                    SetStatus(nptr, chptr->channelname, member->flags, 0, whatbot(chptr->channelname));
-                    continue;
-                }
+    if ((wchan = find_wchan(chptr->channelname)) == NULL)
+        return;
 
-                sync_cflag(cflag);
-            }
+    LLIST_FOREACH_ENTRY(&wchan->members, member, wchan_head) {
+        nptr = member->nick;
+        if ((uptr = find_user(nptr->nick)) == NULL)
+            continue;
+
+        cflag = find_cflag(chptr, uptr);
+        if (!cflag || uptr->authed == 0 || (cflag && cflag->suspended == 1)) {
+            SetStatus(nptr, chptr->channelname, member->flags, 0, whatbot(chptr->channelname));
+            continue;
         }
+
+        sync_cflag(cflag);
     }
 }
 

@@ -37,7 +37,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 extern chanbotlist chanbot_list;
 extern commandlist command_list;
-extern memberlist member_list;
 extern tblist tb_list;
 
 extern int eos;
@@ -614,7 +613,7 @@ void m_mode (char *sender, char *tail)
                     if (*modes == 'q' || *modes == 'a' || *modes == 'o' || *modes == 'h' || *modes == 'v') {
                         nptr2 = find_nick(args[warg]);
                         if (!nptr2) { warg++; continue; }
-                        member = find_member(wchan->chname,args[warg]);
+                        member = find_member(wchan, nptr2);
                         if (!member) { warg++; continue; }
                         uptr = find_user(nptr2->nick);
                         if (GetFlag(uptr,channel) == me.chlev_nostatus && IsAuthed(uptr)) {
@@ -718,8 +717,9 @@ void m_mode (char *sender, char *tail)
                 len = strlen(modes);
                 for (i=0; *modes && i<=len; i++,modes++) {
                     if (*modes == 'q' || *modes == 'a' || *modes == 'o' || *modes == 'h' || *modes == 'v') {
+                        // TODO(target0): add error handling.
                         nptr2 = find_nick(args[warg]);
-                        member = find_member(wchan->chname,args[warg]);
+                        member = find_member(wchan, nptr2);
                         uptr = find_user(nptr2->nick);
                     }
 
@@ -850,12 +850,6 @@ void m_nick (char *sender, char *tail)
 
     uptr = find_user(oldnick);
 
-    Member *member;
-    LIST_FOREACH_ALL(member_list, member) {
-        if (!Strcmp(member->nick,oldnick))
-            strncpy(member->nick,newnick,NICKLEN - 1);
-    }
-
     if (!Strcmp(newnick,oldnick)) return;
 
     uptr2 = find_user(newnick);
@@ -900,8 +894,6 @@ void m_part (char *sender, char *tail)
     wchan = find_wchan(chan);
     if (!wchan) return;
     DeleteUserFromWchan(nptr,wchan);
-/*    if (!member_exists(wchan) && find_channel(wchan->chname))
-        PartChannel(wchan->chname);*/
 }
 
 void m_ping (char *command)

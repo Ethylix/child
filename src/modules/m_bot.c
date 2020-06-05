@@ -35,8 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern memberlist member_list;
-
 void bot_god (Nick *, User *, Chan *, Wchan *);
 void bot_owner (Nick *, User *, Chan *, Wchan *);
 void bot_deowner (Nick *, User *, Chan *, Wchan *);
@@ -148,184 +146,252 @@ void bot_god (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan)
 
 void bot_owner (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan)
 {
+    Member *member;
     if (!IsAuthed(uptr)) return;
 
+    if ((member = find_member(wchan, nptr)) == NULL)
+        return;
+
     if (!IsFounder(uptr,chptr)) return;
-    if (!IsOwner(nptr->nick,wchan)) SetStatus(nptr,wchan->chname,CHFL_OWNER,1,whatbot(wchan->chname));
+    if (!HasOwner(member)) SetStatus(nptr,wchan->chname,CHFL_OWNER,1,whatbot(wchan->chname));
 }
 
 void bot_deowner (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan)
 {
+    Member *member;
     if (!IsAuthed(uptr)) return;
 
+    if ((member = find_member(wchan, nptr)) == NULL)
+        return;
+
     if (!IsFounder(uptr,chptr)) return;
-    if (IsOwner(nptr->nick,wchan)) SetStatus(nptr,wchan->chname,CHFL_OWNER,0,whatbot(wchan->chname));
+    if (HasOwner(member)) SetStatus(nptr,wchan->chname,CHFL_OWNER,0,whatbot(wchan->chname));
 }
 
 void bot_protect (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 {
+    Member *member;
     char *arg2 = all;
     SeperateWord(arg2);
     Nick *nptr2;
 
     if (!IsAuthed(uptr)) return;
 
+    if ((member = find_member(wchan, nptr)) == NULL)
+        return;
+
     if (!ChannelCanProtect(uptr, chptr) && !IsFounder(uptr, chptr)) return;
     if (!arg2 || *arg2 == '\0') {
-        if (!IsProtect(nptr->nick,wchan)) SetStatus(nptr,wchan->chname,CHFL_PROTECT,1,whatbot(wchan->chname));
+        if (!HasProtect(member)) SetStatus(nptr,wchan->chname,CHFL_PROTECT,1,whatbot(wchan->chname));
     } else {
         nptr2 = find_nick(arg2);
         if (!nptr2) return;
+
+        if ((member = find_member(wchan, nptr2)) == NULL)
+            return;
+
         if (!IsFounder(uptr,chptr)) return;
-        if (!IsProtect(nptr2->nick,wchan)) SetStatus(nptr2,wchan->chname,CHFL_PROTECT,1,whatbot(wchan->chname));
+        if (!HasProtect(member)) SetStatus(nptr2,wchan->chname,CHFL_PROTECT,1,whatbot(wchan->chname));
     }
 }
 
 void bot_deprotect (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 {
+    Member *member;
     char *arg2 = all;
     SeperateWord(arg2);
     Nick *nptr2;
     
     if (!IsAuthed(uptr)) return;
 
+    if ((member = find_member(wchan, nptr)) == NULL)
+        return;
+
     if (!ChannelCanProtect(uptr, chptr) && !IsFounder(uptr, chptr)) return;
     if (!arg2 || *arg2 == '\0') {
-        if (IsProtect(nptr->nick,wchan)) SetStatus(nptr,wchan->chname,CHFL_PROTECT,0,whatbot(wchan->chname));
+        if (HasProtect(member)) SetStatus(nptr,wchan->chname,CHFL_PROTECT,0,whatbot(wchan->chname));
     } else {
         nptr2 = find_nick(arg2);
         if (!nptr2) return;
+
+        if ((member = find_member(wchan, nptr2)) == NULL)
+            return;
+
         if (!IsFounder(uptr,chptr)) return;
-        if (IsProtect(nptr2->nick,wchan)) SetStatus(nptr2,wchan->chname,CHFL_PROTECT,0,whatbot(wchan->chname));
+        if (HasProtect(member)) SetStatus(nptr2,wchan->chname,CHFL_PROTECT,0,whatbot(wchan->chname));
     }
 }
 
 void bot_op (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 {
+    Member *member;
     char *arg2 = all;
     SeperateWord(arg2);
     Nick *nptr2;
 
     if (!IsAuthed(uptr)) return;
 
+    if ((member = find_member(wchan, nptr)) == NULL)
+        return;
+
     if (!ChannelCanOp(uptr, chptr) && !IsFounder(uptr, chptr)) return;
     if (!arg2 || *arg2 == '\0') { 
-        if (!IsOp(nptr->nick,wchan)) SetStatus(nptr,wchan->chname,CHFL_OP,1,whatbot(wchan->chname));
+        if (!HasOp(member)) SetStatus(nptr,wchan->chname,CHFL_OP,1,whatbot(wchan->chname));
     } else {
         nptr2 = find_nick(arg2);
         if (!nptr2) return;
-        if (!IsOp(nptr2->nick,wchan)) SetStatus(nptr2,wchan->chname,CHFL_OP,1,whatbot(wchan->chname));
+
+        if ((member = find_member(wchan, nptr2)) == NULL)
+            return;
+
+        if (!HasOp(member)) SetStatus(nptr2,wchan->chname,CHFL_OP,1,whatbot(wchan->chname));
     }
 }
 
 void bot_deop (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 {
+    Member *member;
     char *arg2 = all;
     SeperateWord(arg2);
     Nick *nptr2; 
 
     if (!IsAuthed(uptr)) return;
 
+    if ((member = find_member(wchan, nptr)) == NULL)
+        return;
+
     if (!ChannelCanOp(uptr, chptr) && !IsFounder(uptr, chptr)) return;
     if (!arg2 || *arg2 == '\0') { 
-        if (IsOp(nptr->nick,wchan)) SetStatus(nptr,wchan->chname,CHFL_OP,0,whatbot(wchan->chname));
+        if (HasOp(member)) SetStatus(nptr,wchan->chname,CHFL_OP,0,whatbot(wchan->chname));
     } else {
         nptr2 = find_nick(arg2);
         if (!nptr2) return;
-        if (IsOp(nptr2->nick,wchan)) SetStatus(nptr2,wchan->chname,CHFL_OP,0,whatbot(wchan->chname));
+
+       if ((member = find_member(wchan, nptr2)) == NULL)
+            return;
+
+        if (HasOp(member)) SetStatus(nptr2,wchan->chname,CHFL_OP,0,whatbot(wchan->chname));
     }
 }
 
 void bot_halfop (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 {
+    Member *member;
     char *arg2 = all;
     SeperateWord(arg2);
     Nick *nptr2; 
     
     if (!IsAuthed(uptr)) return;
 
+    if ((member = find_member(wchan, nptr)) == NULL)
+        return;
+
     if (!arg2 || *arg2 == '\0') {
         if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
-        if (!IsHalfop(nptr->nick,wchan)) SetStatus(nptr,wchan->chname,CHFL_HALFOP,1,whatbot(wchan->chname));
+        if (!HasHalfop(member)) SetStatus(nptr,wchan->chname,CHFL_HALFOP,1,whatbot(wchan->chname));
     } else {
         if (!ChannelCanOp(uptr, chptr) && !IsFounder(uptr, chptr)) return;
         nptr2 = find_nick(arg2);
         if (!nptr2) return;
-        if (!IsHalfop(nptr2->nick,wchan)) SetStatus(nptr2,wchan->chname,CHFL_HALFOP,1,whatbot(wchan->chname));
+
+        if ((member = find_member(wchan, nptr2)) == NULL)
+            return;
+
+        if (!HasHalfop(member)) SetStatus(nptr2,wchan->chname,CHFL_HALFOP,1,whatbot(wchan->chname));
     }
 }
 
 void bot_dehalfop (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 {
+    Member *member;
     char *arg2 = all;
     SeperateWord(arg2);
     Nick *nptr2; 
     
     if (!IsAuthed(uptr)) return;
 
+    if ((member = find_member(wchan, nptr)) == NULL)
+        return;
+
     if (!arg2 || *arg2 == '\0') {
         if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
-        if (IsHalfop(nptr->nick,wchan)) SetStatus(nptr,wchan->chname,CHFL_HALFOP,0,whatbot(wchan->chname));
+        if (HasHalfop(member)) SetStatus(nptr,wchan->chname,CHFL_HALFOP,0,whatbot(wchan->chname));
     } else {
         if (!ChannelCanOp(uptr, chptr) && !IsFounder(uptr, chptr)) return;
         nptr2 = find_nick(arg2);
         if (!nptr2) return;
-        if (IsHalfop(nptr2->nick,wchan)) SetStatus(nptr2,wchan->chname,CHFL_HALFOP,0,whatbot(wchan->chname));
+
+        if ((member = find_member(wchan, nptr2)) == NULL)
+            return;
+
+        if (HasHalfop(member)) SetStatus(nptr2,wchan->chname,CHFL_HALFOP,0,whatbot(wchan->chname));
     }
 }
 
 void bot_voice (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 {
+    Member *member;
     char *arg2 = all; 
     SeperateWord(arg2);
     Nick *nptr2; 
     
     if (!IsAuthed(uptr)) return;
 
+    if ((member = find_member(wchan, nptr)) == NULL)
+        return;
+
     if (!arg2 || *arg2 == '\0') {
         if (!ChannelCanVoice(uptr, chptr) && !IsFounder(uptr, chptr)) return;
-        if (!IsVoice(nptr->nick,wchan)) SetStatus(nptr,wchan->chname,CHFL_VOICE,1,whatbot(wchan->chname));
+        if (!HasVoice(member)) SetStatus(nptr,wchan->chname,CHFL_VOICE,1,whatbot(wchan->chname));
     } else {
         if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
         nptr2 = find_nick(arg2);
         if (!nptr2) return;
-        if (!IsVoice(nptr2->nick,wchan)) SetStatus(nptr2,wchan->chname,CHFL_VOICE,1,whatbot(wchan->chname));
+
+        if ((member = find_member(wchan, nptr2)) == NULL)
+            return;
+
+        if (!HasVoice(member)) SetStatus(nptr2,wchan->chname,CHFL_VOICE,1,whatbot(wchan->chname));
     }
 }
 
 void bot_devoice (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 {
+    Member *member;
     char *arg2 = all;
     SeperateWord(arg2);
     Nick *nptr2;
 
     if (!IsAuthed(uptr)) return;
 
+    if ((member = find_member(wchan, nptr)) == NULL)
+        return;
+
     if (!arg2 || *arg2 == '\0') {
         if (!ChannelCanVoice(uptr, chptr) && !IsFounder(uptr, chptr)) return;
-        if (IsVoice(nptr->nick,wchan)) SetStatus(nptr,wchan->chname,CHFL_VOICE,0,whatbot(wchan->chname));
+        if (HasVoice(member)) SetStatus(nptr,wchan->chname,CHFL_VOICE,0,whatbot(wchan->chname));
     } else {
         if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
         nptr2 = find_nick(arg2);
         if (!nptr2) return;
-        if (IsVoice(nptr2->nick,wchan)) SetStatus(nptr2,wchan->chname,CHFL_VOICE,0,whatbot(wchan->chname));
+
+        if ((member = find_member(wchan, nptr2)) == NULL)
+            return;
+
+        if (HasVoice(member)) SetStatus(nptr2,wchan->chname,CHFL_VOICE,0,whatbot(wchan->chname));
     }
 }
 
 void bot_opall (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan)
 {
     Member *member;
-    Nick *nptr2;
 
     if (!IsAuthed(uptr)) return;
     if (!ChannelCanOp(uptr, chptr) && !IsFounder(uptr, chptr)) return;
 
-    LIST_FOREACH(member_list, member, HASH(wchan->chname)) {
-        if (!IsOp(member->nick,wchan) && !Strcmp(member->channel,wchan->chname)) {
-            nptr2 = find_nick(member->nick);
-            if (!nptr2) return;
-            SetStatus(nptr2,chptr->channelname,CHFL_OP,1,whatbot(wchan->chname));
-        }
+    LLIST_FOREACH_ENTRY(&wchan->members, member, wchan_head) {
+        if (!HasOp(member))
+            SetStatus(member->nick,chptr->channelname,CHFL_OP,1,whatbot(wchan->chname));
     }
 }
 
@@ -340,17 +406,13 @@ void bot_deopall (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan)
 void bot_halfopall (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan)
 {
     Member *member;
-    Nick *nptr2;
     
     if (!IsAuthed(uptr)) return;
     if (!ChannelCanOp(uptr, chptr) && !IsFounder(uptr, chptr)) return;
 
-    LIST_FOREACH(member_list, member, HASH(wchan->chname)) {
-        if (!IsHalfop(member->nick,wchan) && !Strcmp(member->channel,wchan->chname)) {
-            nptr2 = find_nick(member->nick);
-            if (!nptr2) return;
-            SetStatus(nptr2,chptr->channelname,CHFL_HALFOP,1,whatbot(wchan->chname));
-        }
+    LLIST_FOREACH_ENTRY(&wchan->members, member, wchan_head) {
+        if (!HasHalfop(member))
+            SetStatus(member->nick,chptr->channelname,CHFL_HALFOP,1,whatbot(wchan->chname));
     }
 }
 
@@ -365,17 +427,13 @@ void bot_dehalfopall (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan
 void bot_voiceall (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan)
 {
     Member *member;
-    Nick *nptr2;
     
     if (!IsAuthed(uptr)) return;
     if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
- 
-    LIST_FOREACH(member_list, member, HASH(wchan->chname)) {
-        if (!IsVoice(member->nick,wchan) && !Strcmp(member->channel,wchan->chname)) {
-            nptr2 = find_nick(member->nick);
-            if (!nptr2) return;
-            SetStatus(nptr2,chptr->channelname,CHFL_VOICE,1,whatbot(wchan->chname));
-        }
+
+    LLIST_FOREACH_ENTRY(&wchan->members, member, wchan_head) {
+        if (!HasVoice(member))
+            SetStatus(member->nick,chptr->channelname,CHFL_VOICE,1,whatbot(wchan->chname));
     }
 }
 
@@ -411,16 +469,11 @@ void bot_kick (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         }   
             
         if (!Strcmp(arg2,"*") && HasOption(chptr, COPT_MASS)) {
-            Member *member,*next;
-            Nick *blah;
-            for (member = member_list.table[HASH(wchan->chname)]; member; member = next) {
-                next = member->next;
-                if (Strcmp(member->nick,nptr->nick) && !Strcmp(member->channel,wchan->chname)) {
-                    blah = find_nick(member->nick);
-                    if (!blah) return;
-                    if (!IsOper(blah))
-                        KickUser(bot,member->nick,wchan->chname,"Kicking all users");
-                }
+            Member *member, *tmp_member;
+            LLIST_FOREACH_ENTRY_SAFE(&wchan->members, member, tmp_member, wchan_head) {
+                if (member->nick == nptr || IsOper(member->nick))
+                    continue;
+                KickUser(bot,member->nick->nick,wchan->chname,"Kicking all users");
             }
             return;
         }
@@ -456,13 +509,12 @@ void bot_rkick (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
     if (!arg2 || *arg2 == '\0')
         KickUser(bot, nptr->nick, wchan->chname, "Requested");
     else {
-        Member *member, *next;
+        Member *member, *tmp_member;
 
-        for (member = member_list.table[HASH(wchan->chname)]; member; member = next) {
-            next = member->next;
-            if (!Strcmp(member->nick, nptr->nick))
+        LLIST_FOREACH_ENTRY_SAFE(&wchan->members, member, tmp_member, wchan_head) {
+            if (member->nick == nptr)
                 continue;
-            uptr2 = find_user(member->nick);
+            uptr2 = find_user(member->nick->nick);
             if (uptr2 && IsAuthed(uptr2)) {
                 if (HasOption(chptr, COPT_AXXFLAGS)) {
                     if (!ChannelCanOverride(uptr, uptr2, chptr)) continue;
@@ -470,8 +522,8 @@ void bot_rkick (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
                     if (GetFlag(uptr,chptr) < GetFlag(uptr2,chptr)) continue;
                 }
             }
-            if (__match_regex(arg2, member->nick, REG_EXTENDED|REG_NOSUB|REG_ICASE))
-                KickUser(bot, member->nick, wchan->chname, "regexp kick matching nick");
+            if (__match_regex(arg2, member->nick->nick, REG_EXTENDED|REG_NOSUB|REG_ICASE))
+                KickUser(bot, member->nick->nick, wchan->chname, "regexp kick matching nick");
         }
     }
 }
@@ -492,17 +544,13 @@ void bot_rkb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname,nptr->hiddenhost);
         KickUser(bot,nptr->nick,wchan->chname,"Requested");
     } else {
-        Member *member, *next;
-        Nick *blah;
+        Member *member, *tmp_member;
 
-        for (member = member_list.table[HASH(wchan->chname)]; member; member = next) {
-            next = member->next;
-            if (!Strcmp(member->nick, nptr->nick))
+        LLIST_FOREACH_ENTRY_SAFE(&wchan->members, member, tmp_member, wchan_head) {
+            if (member->nick == nptr)
                 continue;
-            if (__match_regex(arg2, member->nick, REG_EXTENDED|REG_NOSUB|REG_ICASE)) {
-                blah = find_nick(member->nick);
-                if (!blah) return;
-                uptr2 = find_user(member->nick);
+            if (__match_regex(arg2, member->nick->nick, REG_EXTENDED|REG_NOSUB|REG_ICASE)) {
+                uptr2 = find_user(member->nick->nick);
                 if (uptr2 && IsAuthed(uptr2)) {
                     if (HasOption(chptr, COPT_AXXFLAGS)) {
                         if (!ChannelCanOverride(uptr, uptr2, chptr)) continue;
@@ -511,8 +559,8 @@ void bot_rkb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
                             continue;
                     }
                 }
-                SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname,blah->hiddenhost);
-                KickUser(bot, member->nick, wchan->chname, "regexp kickban matching nick");
+                SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname, member->nick->hiddenhost);
+                KickUser(bot, member->nick->nick, wchan->chname, "regexp kickban matching nick");
             }
         }
     }
@@ -522,8 +570,8 @@ void bot_kb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 {
     char *arg2 = all;
     all = SeperateWord(arg2);
-    Nick *blah;
     User *uptr2;
+    Nick *nptr2;
 
     char *bot = whatbot(wchan->chname);
 
@@ -540,23 +588,19 @@ void bot_kb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         }
 
         if (!Strcmp(arg2,"*") && HasOption(chptr, COPT_MASS)) {
-            Member *member,*next;
-            for (member = member_list.table[HASH(wchan->chname)]; member; member = next) {
-                next = member->next;
-                if (Strcmp(member->nick,nptr->nick) && !Strcmp(member->channel,wchan->chname)) {
-                    blah = find_nick(member->nick);
-                    if (!blah) return;
-                    if (!IsOper(blah)) {
-                        SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname,blah->hiddenhost);
-                        KickUser(bot,member->nick,wchan->chname,"Kickbanning all users");
-                    }
-                }
+            Member *member, *tmp_member;
+
+            LLIST_FOREACH_ENTRY_SAFE(&wchan->members, member, tmp_member, wchan_head) {
+                if (member->nick == nptr || IsOper(member->nick))
+                    continue;
+                SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname,member->nick->hiddenhost);
+                KickUser(bot,member->nick->nick,wchan->chname,"Kickbanning all users");
             }
             return;
         }
 
-        blah = find_nick(arg2);
-        if (!blah) return;
+        nptr2 = find_nick(arg2);
+        if (!nptr2) return;
 
         uptr2 = find_user(arg2);
         if (uptr2 && IsAuthed(uptr2)) {
@@ -568,7 +612,7 @@ void bot_kb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
             }
         }
 
-        SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname,blah->hiddenhost);
+        SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname,nptr2->hiddenhost);
         if (!all || *all == '\0')
             KickUser(bot,arg2,wchan->chname,"Requested");
         else
@@ -770,7 +814,7 @@ void bot_tb (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan __unused
     char effective_mask[256];
     char blah[256], blah2[256];
     Nick *nptr2 = NULL;
-    Member *member, *next;
+    Member *member, *tmp_member;
     User *uptr2;
     char reason[256];
 
@@ -832,15 +876,14 @@ void bot_tb (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan __unused
         }
         KickUser(whatbot(wchan->chname), nptr2->nick, wchan->chname, "%s", reason);
     } else {
-        for (member = member_list.table[HASH(wchan->chname)]; member; member = next) {
-            next = member->next;
-            nptr2 = find_nick(member->nick);
+        LLIST_FOREACH_ENTRY_SAFE(&wchan->members, member, tmp_member, wchan_head) {
+            nptr2 = member->nick;
             bzero(blah, 256);
             bzero(blah2, 256);
             snprintf(blah, 256, "%s!%s@%s", nptr2->nick, nptr2->ident, nptr2->hiddenhost);
             snprintf(blah2, 256, "%s!%s@%s", nptr2->nick, nptr2->ident, nptr2->host);
 
-            if ((uptr2 = find_user(member->nick)) != NULL) {
+            if ((uptr2 = find_user(member->nick->nick)) != NULL) {
                 if (HasOption(chptr, COPT_AXXFLAGS)) {
                     if (!ChannelCanOverride(uptr, uptr2, chptr)) continue;
                 } else {

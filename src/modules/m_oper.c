@@ -36,7 +36,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 
 extern commandlist command_list;
-extern memberlist member_list;
 #ifdef USE_FILTER
 extern rulelist rule_list;
 #endif
@@ -417,7 +416,7 @@ void oper_glineall (Nick *nptr, User *uptr __unused, char *all)
 
 void oper_glinechan (Nick *nptr, User *uptr __unused, char *all)
 {
-    Nick *nptr2;
+    Wchan *wchan;
     Member *member;
     char *chname, *duration, *reason;
     chname = all;
@@ -429,17 +428,14 @@ void oper_glinechan (Nick *nptr, User *uptr __unused, char *all)
         return;
     }
 
-    if ((find_wchan(chname)) == NULL) {
+    if ((wchan = find_wchan(chname)) == NULL) {
         NoticeToUser(nptr, "This channel does not exist.");
         return;
     }
 
-    LIST_FOREACH(member_list, member, HASH(chname)) {
-        if ((nptr2 = find_nick(member->nick)) == NULL)
-            continue;
-        if (!IsOper(nptr2)) {
-            glineuser("*", nptr2->host, atoi(duration), reason);
-        }
+    LLIST_FOREACH_ENTRY(&wchan->members, member, wchan_head) {
+        if (!IsOper(member->nick))
+            glineuser("*", member->nick->host, atoi(duration), reason);
     }
 
     NoticeToUser(nptr, "Done.");

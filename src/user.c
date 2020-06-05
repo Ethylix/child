@@ -156,6 +156,7 @@ Nick *AddNick(char *nick, char *ident, char *host, char *uid, char *hiddenhost, 
     new_nick->ignoretime = 0;
     new_nick->loginattempts = 0;
     new_nick->lasttry = 0;
+    LLIST_INIT(&new_nick->wchans);
 
     if (!HASHMAP_INSERT(get_core()->nicks, new_nick->nick, new_nick, NULL)) {
         fprintf(stderr, "Failed to insert new nick \"%s\" into hashmap (duplicate entry?)\n", new_nick->nick);
@@ -542,13 +543,13 @@ void sync_cflag(const Cflag *cflag)
     if ((nptr = find_nick(cflag->user->nick)) == NULL)
         return;
 
-    if ((member = find_member(chname, cflag->user->nick)) == NULL)
+    if ((wchan = find_wchan(chname)) == NULL)
+        return;
+
+    if ((member = find_member(wchan, nptr)) == NULL)
         return;
 
     if (HasOption(cflag->chan, COPT_NOAUTO))
-        return;
-
-    if ((wchan = find_wchan(chname)) == NULL)
         return;
 
     if ((!HasOption(cflag->chan, COPT_AXXFLAGS) && cflag->automode == CFLAG_AUTO_OFF) || cflag->suspended == 1)
@@ -571,34 +572,34 @@ void sync_cflag(const Cflag *cflag)
         }
     } else {
     if ((cflag->flags == CHLEV_OWNER || cflag->flags == CHLEV_COOWNER)) {
-        if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!IsOwner(nptr->nick, wchan) || !IsOp(nptr->nick, wchan)))
+        if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!HasOwner(member) || !HasOp(member)))
             SetStatus(nptr, chname, CHFL_OWNER|CHFL_OP, 1, bot);
-        else if (cflag->automode == CFLAG_AUTO_VOICE && !IsVoice(nptr->nick, wchan))
+        else if (cflag->automode == CFLAG_AUTO_VOICE && !HasVoice(member))
             SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
 
         hasaccess = 1;
     } else if (!hasaccess && !(cflag->flags == CHLEV_OWNER) && cflag->flags >= me.chlev_admin) {
-        if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!IsProtect(nptr->nick, wchan) || !IsOp(nptr->nick, wchan)))
+        if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!HasProtect(member) || !HasOp(member)))
             SetStatus(nptr, chname, CHFL_PROTECT|CHFL_OP, 1, bot);
-        else if (cflag->automode == CFLAG_AUTO_VOICE && !IsVoice(nptr->nick, wchan))
+        else if (cflag->automode == CFLAG_AUTO_VOICE && !HasVoice(member))
             SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
 
         hasaccess = 1;
     } else if (!hasaccess && cflag->flags >= me.chlev_op && cflag->flags < me.chlev_admin) {
-        if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!IsOp(nptr->nick, wchan)))
+        if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!HasOp(member)))
             SetStatus(nptr, chname, CHFL_OP, 1, bot);
-        else if (cflag->automode == CFLAG_AUTO_VOICE && !IsVoice(nptr->nick, wchan))
+        else if (cflag->automode == CFLAG_AUTO_VOICE && !HasVoice(member))
             SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
 
         hasaccess = 1;
     } else if (!hasaccess && cflag->flags >= me.chlev_halfop && cflag->flags < me.chlev_op) {
-        if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!IsHalfop(nptr->nick, wchan)))
+        if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!HasHalfop(member)))
             SetStatus(nptr, chname, CHFL_HALFOP, 1, bot);
-        else if (cflag->automode == CFLAG_AUTO_VOICE && !IsVoice(nptr->nick, wchan))
+        else if (cflag->automode == CFLAG_AUTO_VOICE && !HasVoice(member))
             SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
 
         hasaccess = 1;
-    } else if (!hasaccess && cflag->flags >= me.chlev_voice && cflag->flags < me.chlev_halfop && !IsVoice(nptr->nick, wchan)) {
+    } else if (!hasaccess && cflag->flags >= me.chlev_voice && cflag->flags < me.chlev_halfop && !HasVoice(member)) {
         SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
         hasaccess = 1;
     } else if (cflag->flags == me.chlev_akick) {
