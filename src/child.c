@@ -323,7 +323,7 @@ int main(int argc, char **argv)
     if (verbose) printf("Connected to server\n");
 
     if (!connect_to_db()) {
-        fprintf(stderr,"Cannot connect to mysql\n");
+        fprintf(stderr,"Cannot connect to mysql: %s\n", mysql_error(&mysql));
         operlog("Cannot connect to mysql db");
         child_clean();
     }
