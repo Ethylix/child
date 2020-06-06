@@ -91,8 +91,6 @@ void loaduserdb()
         memset(uptr->md5_pass,'\0',34);
         strncpy(uptr->md5_pass,md5_pass,32);
     }
-
-    mysql_close(&mysql);
 }
 
 void loadchandb()
@@ -185,8 +183,6 @@ void loadchandb()
         }
         if (vv) printf("User %s added for channel %s\n",accname,channelname);
     }
-
-    mysql_close(&mysql);
 }
 
 void loadtrustdb()
@@ -214,8 +210,6 @@ void loadtrustdb()
         AddTrust(host,limit);
         if (vv) printf("Trust on %s added (limit: %d)\n",host,limit);
     }
-
-    mysql_close(&mysql);
 }
 
 void loadlinkdb()
@@ -243,8 +237,6 @@ void loadlinkdb()
         AddLink(master,slave);
         if (vv) printf("Link added with master %s and slave %s\n",master,slave);
     }
-
-    mysql_close(&mysql);
 }
 
 /* loadbotservdb *MUST* be executed *AFTER* loadchandb. Otherwise all data regarding assigned bots will be lost */
@@ -292,8 +284,6 @@ void loadbotservdb()
         addChanbot(chan,nick);
         if (vv) printf("Chanbot %s added with bot %s\n",chan,nick);
     }
-
-    mysql_close(&mysql);
 }
 
 void saveuserdb()
@@ -317,8 +307,6 @@ void saveuserdb()
         snprintf(tmp,1024,"INSERT INTO child_users VALUES ('%s',%d,%d,'%s','%s',%ld,%d,'%s',%d)",strtosql(buf,uptr->nick,512),uptr->level,uptr->lastseen,uptr->vhost,uptr->md5_pass,uptr->options,uptr->timeout,uptr->email,uptr->regtime);
         mysql_query(&mysql,tmp);
     }
-
-    mysql_close(&mysql);
 }
 
 void savechandb()
@@ -365,8 +353,6 @@ void savechandb()
             mysql_query(&mysql,tmp);
         }
     }
-
-    mysql_close(&mysql);
 }
 
 void savetrustdb()
@@ -387,8 +373,6 @@ void savetrustdb()
         snprintf(tmp,1024,"INSERT INTO child_trusts VALUES ('%s',%d)",trust->host,trust->limit);
         mysql_query(&mysql,tmp);
     }
-
-    mysql_close(&mysql);
 }
 
 void savelinkdb()
@@ -414,8 +398,6 @@ void savelinkdb()
         snprintf(tmp,1024,"INSERT INTO child_links VALUES ('%s','%s')",strtosql(master,link->master,NICKLEN),strtosql(slave,link->slave,NICKLEN));
         mysql_query(&mysql,tmp);
     }
-
-    mysql_close(&mysql);
 }
 
 void savebotservdb()
@@ -444,8 +426,6 @@ void savebotservdb()
         snprintf(tmp,1024,"INSERT INTO child_botserv_chans VALUES ('%s','%s')",chanbot->name,chanbot->bot);
         mysql_query(&mysql,tmp);
     }
-
-    mysql_close(&mysql);
 }
 
 void savealldb()
@@ -475,13 +455,15 @@ void loadalldb()
 
 int connect_to_db()
 {
+    bool reconnect = true;
+
     mysql_init(&mysql);
+    mysql_options(&mysql, MYSQL_OPT_RECONNECT, &reconnect);
     if (!mysql_real_connect(&mysql,me.mysql_host,me.mysql_login,me.mysql_passwd,me.mysql_db,0,NULL,0)) return 0;
     return 1;
 }
 
 int reconnect_to_db()
 {
-    mysql_close(&mysql);
-    return connect_to_db();
+    return mysql_ping(&mysql) == 0;
 }

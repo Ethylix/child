@@ -145,6 +145,7 @@ void child_clean()
 void child_die(int save)
 {
     if (save) savealldb();
+    mysql_close(&mysql);
     killallfakes();
     unloadallmod();
     DisconnectFromServer();
@@ -158,6 +159,7 @@ void child_die(int save)
 void child_restart(int save)
 {
     if (save) savealldb();
+    mysql_close(&mysql);
     killallfakes();
     unloadallmod();
     DisconnectFromServer();
@@ -329,7 +331,6 @@ int main(int argc, char **argv)
 
     if (verbose) printf("Connected to mysql DB\n");
     loadalldb();
-    mysql_close(&mysql);
     if (verbose) printf("Logging in to server\n");
     SendInitToServer();
     me.connected = 1;
