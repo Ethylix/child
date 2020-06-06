@@ -921,7 +921,7 @@ void chan_set_autolimit (Nick *nptr, User *uptr, Chan *chptr, char *all)
     if (autolimit > 0) { 
         chptr->autolimit = autolimit;
         NoticeToUser(nptr,"The autolimit for \2%s\2 set to \2%d\2",chptr->channelname,autolimit);
-        AddLimit(chptr->channelname);
+        AddLimit(chptr);
     } else {
         chptr->autolimit = 0;
         NoticeToUser(nptr,"The autolimit for \2%s\2 disabled.",chptr->channelname);

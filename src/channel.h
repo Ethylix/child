@@ -153,6 +153,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define UFLAG_CHANHALFOP (UFLAG_VOICE|UFLAG_INVITE|UFLAG_TOPIC|UFLAG_HALFOP|UFLAG_AUTOHALFOP)
 #define UFLAG_CHANVOICE (UFLAG_VOICE|UFLAG_AUTOVOICE|UFLAG_INVITE)
 
+struct limit_;
+
 typedef struct chan {
     char channelname[CHANLEN + 1]; /* hash key */
     char owner[NICKLEN + 1];
@@ -161,6 +163,7 @@ typedef struct chan {
     char mlock[50+1];
     char topic[TOPICLEN + 1];
     int autolimit, lastseen, regtime;
+    struct limit_ *active_autolimit;
     struct llist_head cflags;
 } Chan;
 
@@ -190,10 +193,9 @@ typedef struct cflag {
 } Cflag;
 
 typedef struct limit_ {
-    char channel[CHANLEN + 1]; /* hash key */
+    Chan *chan;
     int time;
-    struct limit_ *next,*prev;
-    struct limit_ *lnext,*lprev;
+    struct llist_head list_head;
 } Limit;
 
 typedef struct timeban {
@@ -242,13 +244,14 @@ bool member_exists (Wchan *);
 int members_num (Wchan *);
 void checkexpired (void);
 void CheckLimits (void);
-Limit *AddLimit (char *);
+Limit *AddLimit(Chan *);
 int chansreg (char *);
 char *whatbot (char *);
 void joinallchans (void);
 void DeleteCflag (Cflag *);
 void DeleteMember (Member *);
 void DeleteLimit (Limit *);
+void clear_limits(void);
 void chandrop (Chan *);
 TB *AddTB (Chan *, char *, int, char *);
 void DeleteTB (TB *);

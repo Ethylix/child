@@ -77,6 +77,8 @@ void init_core(void) {
     ASSIGN_OR_DIE_IF_NULL(core->chans, (void *)hashmap_new(&desc));
     ASSIGN_OR_DIE_IF_NULL(core->wchans, (void *)hashmap_new(&desc));
     ASSIGN_OR_DIE_IF_NULL(core->fakeusers, (void *)hashmap_new(&desc));
+
+    LLIST_INIT(&core->limits);
 }
 
 void free_core(void) {

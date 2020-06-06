@@ -35,7 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 
 extern chanbotlist chanbot_list;
-extern limitlist limit_list;
 extern tblist tb_list;
 
 extern int eos;
@@ -87,17 +86,6 @@ Cflag *find_cflag_recursive(const Chan *chptr, const User *uptr)
     }
 
     return cflag;
-}
-
-Limit *find_limit (char *channel)
-{
-    Limit *tmp;
-    LIST_FOREACH(limit_list, tmp, HASH(channel)) {
-        if (!Strcmp(tmp->channel,channel))
-            return tmp;
-    }
-
-    return NULL;
 }
 
 TB *find_tb (Chan *chptr, char *mask)
@@ -162,6 +150,7 @@ Chan *CreateChannel (char *name, char *owner, int lastseen)
         new_chan->lastseen = lastseen;
 
     LLIST_INIT(&new_chan->cflags);
+    new_chan->active_autolimit = NULL;
 
     if (!HASHMAP_INSERT(get_core()->chans, new_chan->channelname, new_chan, NULL)) {
         fprintf(stderr, "Failed to insert new channel \"%s\" into hashmap (duplicate entry?)\n", new_chan->channelname);
@@ -204,25 +193,24 @@ Wchan *CreateWchan(char *name)
     return new_chan;
 }
 
-Limit *AddLimit (char *name)
+Limit *AddLimit(Chan *chptr)
 {
-    Limit *new_limit;
-    Limit *limit;
+    Limit *limit = chptr->active_autolimit;
 
-    limit = find_limit(name);
     if (limit) {
         limit->time = time(NULL)+me.limittime;
         return limit;
     }
 
-    new_limit = (Limit *)malloc(sizeof(Limit));
+    limit = (Limit *)malloc(sizeof(Limit));
 
-    strncpy(new_limit->channel,name,CHANLEN);
-    new_limit->time = time(NULL)+me.limittime;
+    limit->chan = chptr;
+    limit->time = time(NULL)+me.limittime;
+    chptr->active_autolimit = limit;
 
-    LIST_INSERT_HEAD(limit_list, new_limit, HASH(name));
+    LLIST_INSERT_TAIL(&get_core()->limits, &limit->list_head);
 
-    return new_limit;
+    return limit;
 }
 
 TB *AddTB (Chan *chan, char *mask, int duration, char *reason)
@@ -289,10 +277,20 @@ void clear_wchans(void)
     }
 }
 
-void DeleteLimit (Limit *limit)
+void DeleteLimit(Limit *limit)
 {
-    LIST_REMOVE(limit_list, limit, HASH(limit->channel));
+    limit->chan->active_autolimit = NULL;
+    LLIST_REMOVE(&limit->list_head);
     free(limit);
+}
+
+void clear_limits(void)
+{
+    Limit *limit, *tmp_limit;
+
+    LLIST_FOREACH_ENTRY_SAFE(&get_core()->limits, limit, tmp_limit, list_head) {
+        DeleteLimit(limit);
+    }
 }
 
 void DeleteTB (TB *tb)
@@ -352,7 +350,7 @@ Member *AddUserToWchan (Nick *nptr, Wchan *chan)
 
     Chan *chptr = find_channel(chan->chname);
     if (chptr && chptr->autolimit > 0)
-        AddLimit(chan->chname);
+        AddLimit(chptr);
 
     return member;
 }
@@ -368,7 +366,7 @@ void DeleteUserFromWchan (Nick *nptr, Wchan *chan)
 
     Chan *chptr = find_channel(chan->chname);
     if (chptr && chptr->autolimit > 0)
-        AddLimit(chan->chname);
+        AddLimit(chptr);
 }
 
 void DeleteMember (Member *member)
@@ -568,25 +566,20 @@ void checkexpired()
 
 void CheckLimits()
 {
-    Limit *limit, *next;
+    Limit *limit, *tmp_limit;
     Wchan *wchan;
     Chan *chptr;
 
-    for (limit = LIST_HEAD(limit_list); limit; limit = next) {
-        next = LIST_LNEXT(limit);
+    LLIST_FOREACH_ENTRY_SAFE(&get_core()->limits, limit, tmp_limit, list_head) {
         if (time(NULL) >= limit->time) {
-            wchan = find_wchan(limit->channel);
+            wchan = find_wchan(limit->chan->channelname);
             if (!wchan) {
                 DeleteLimit(limit);
                 continue;
             }
-            chptr = find_channel(limit->channel);
-            if (!chptr) {
-                DeleteLimit(limit);
-                continue;
-            }
+            chptr = limit->chan;
             int ag = HasOption(chptr, COPT_NOJOIN) ? 0 : 1;
-            SendRaw(":%s MODE %s +l %d",whatbot(limit->channel),limit->channel,members_num(wchan)+chptr->autolimit+ag);
+            SendRaw(":%s MODE %s +l %d",whatbot(limit->chan->channelname),limit->chan->channelname,members_num(wchan)+chptr->autolimit+ag);
             DeleteLimit(limit);
         }
     }

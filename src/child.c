@@ -49,7 +49,6 @@ int startuptime;
 int verbose, vv, raws, eos;
 MYSQL mysql;
 
-limitlist limit_list;
 chanbotlist chanbot_list;
 commandlist command_list;
 #ifdef USE_FILTER
