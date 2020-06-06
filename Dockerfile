@@ -1,23 +1,31 @@
-FROM ubuntu:18.04 as build
+FROM gcc:7.5 as build
 
-RUN apt-get update && \
-    apt-get -y install --no-install-recommends gcc make cmake libc-dev libssl-dev pkg-config check libmysqlclient-dev
+RUN apt-get update \
+    && apt-get -y install cmake check \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-ADD --chown=1000:1000 . /opt/
+ADD . /opt/
+RUN mkdir -p /opt/build
 WORKDIR /opt/build
-
-USER 1000
 
 RUN cmake /opt 
 RUN make
 
 FROM ubuntu:18.04
 
-RUN apt-get update && \
-    apt-get -y install libssl-dev libmysqlclient-dev libc-dev
+RUN apt-get update \
+    && apt-get -y install libssl1.1 libmariadb3 libc6 netcat \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY --from=build /opt/build/src/child /
+COPY --from=build --chown=1000:1000 /opt/build/src/child /opt/child/
+COPY --from=build --chown=1000:1000 /opt/build/src/modules /opt/child/src/modules
+COPY --chown=1000:1000 docker/entrypoint.sh /
+RUN chmod +x /entrypoint.sh
 
 USER 1000
 
-CMD ["./child"]
+WORKDIR /opt/child
+
+CMD ["/entrypoint.sh"]

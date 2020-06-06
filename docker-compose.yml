@@ -1,12 +1,25 @@
 version: "3.7"
 services:
   mysql:
-    image: mysql
+    image: mysql:5.7
     environment:
       MYSQL_ROOT_PASSWORD: child
       MYSQL_DATABASE: child
+    volumes:
+      - ./doc/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      
   child:
     build: ./
+    volumes:
+      - ./docker/child.conf:/opt/child/child.conf
+    depends_on:
+      - unrealircd
+      - mysql
+
   unrealircd:
     image: bbriggs/unrealircd:4.2.4.1
-    
+    ports:
+      - 6667:6667
+      - 6999
+    volumes:
+      - ./docker/unrealircd.conf:/data/unrealircd/conf/unrealircd.conf
