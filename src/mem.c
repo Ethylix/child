@@ -32,12 +32,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdio.h>
 #include <string.h>
 
-extern chanbotlist chanbot_list;
 extern commandlist command_list;
 #ifdef USE_FILTER
 extern rulelist rule_list;
 #endif
-extern tblist tb_list;
 
 void FreeAllMem()
 {
@@ -45,8 +43,6 @@ void FreeAllMem()
     while (!LIST_EMPTY(rule_list))
         remove_rule(LIST_HEAD(rule_list));
 #endif
-    while (!LIST_EMPTY(tb_list))
-        DeleteTB(LIST_HEAD(tb_list));
 }
 
 void cleanup_reconnect()
@@ -101,12 +97,10 @@ long get_mem(int which)
 
 void InitMem()
 {
-    LIST_INIT(chanbot_list);
     LIST_INIT(command_list);
 #ifdef USE_FILTER
     LIST_INIT(rule_list);
 #endif
-    LIST_INIT(tb_list);
     memset(&indata, 0, sizeof(indata));
     memset(&outdata, 0, sizeof(outdata));
 }

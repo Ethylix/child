@@ -1142,12 +1142,12 @@ void oper_suspend (Nick *nptr, User *uptr, char *all)
             
         if (!Strcmp(arg4,"on")) {
             SetOption(chptr, COPT_SUSPENDED);
-            SendRaw(":%s PART %s :Channel suspended",whatbot(chptr->channelname),chptr->channelname);
+            SendRaw(":%s PART %s :Channel suspended",channel_botname(chptr),chptr->channelname);
             NoticeToUser(nptr,"Channel %s suspended.",chptr->channelname);
             return;
         } else if (!Strcmp(arg4,"off")) {
             ClearOption(chptr, COPT_SUSPENDED);
-            JoinChannel(whatbot(chptr->channelname),chptr->channelname);
+            JoinChannel(channel_botname(chptr),chptr->channelname);
             NoticeToUser(nptr,"Channel %s unsuspended.",chptr->channelname);
             return;
         } else {

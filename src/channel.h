@@ -80,7 +80,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define CFLAG_AUTO_VOICE    2
 #define CFLAG_AUTO_OP       3
 
-#define PartChannel(x) SendRaw(":%s PART %s",whatbot(x),x)
+#define PartChannel(x) SendRaw(":%s PART %s",channel_botname(x),x)
 #define InviteUser(x,y) SendRaw(":%s INVITE %s :%s",me.nick,x,y)
 
 #define IsChanSuspended(x) HasOption(x, COPT_SUSPENDED)
@@ -153,6 +153,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define UFLAG_CHANHALFOP (UFLAG_VOICE|UFLAG_INVITE|UFLAG_TOPIC|UFLAG_HALFOP|UFLAG_AUTOHALFOP)
 #define UFLAG_CHANVOICE (UFLAG_VOICE|UFLAG_AUTOVOICE|UFLAG_INVITE)
 
+struct bot;
 struct limit_;
 
 typedef struct chan {
@@ -165,6 +166,8 @@ typedef struct chan {
     int autolimit, lastseen, regtime;
     struct limit_ *active_autolimit;
     struct llist_head cflags;
+    struct bot *chanbot;
+    struct llist_head timebans;
 } Chan;
 
 typedef struct wchan {
@@ -199,25 +202,13 @@ typedef struct limit_ {
 } Limit;
 
 typedef struct timeban {
-    char channel[CHANLEN + 1];
+    Chan *chan;
     char mask[MASKLEN + 1];
     char reason[256+1];
     int duration, setat;
-    struct timeban *next, *prev;
-    struct timeban *lnext, *lprev;
-} TB;
-
-typedef struct {
-    int size;
-    TABLE(Limit);
-    Limit *lhead;
-} limitlist;
-
-typedef struct {
-    int size;
-    TABLE(TB);
-    TB *lhead;
-} tblist;
+    struct llist_head core_head;
+    struct llist_head chan_head;
+} Timeban;
 
 Chan *find_channel(const char *);
 Wchan *find_wchan(const char *);
@@ -234,9 +225,9 @@ void DeleteUserFromChannel (User *, Chan *);
 Member *AddUserToWchan(Nick *, Wchan *);
 void DeleteUserFromWchan (Nick *, Wchan *);
 void KickUser(const char *, const char *, const char *, const char *, ...);
-void JoinChannel(char *, char *);
+void JoinChannel(const char *, const char *);
 Member *find_member(const Wchan *, const Nick *);
-void SetStatus(Nick *, const char *, long int, int, char *);
+void SetStatus(Nick *, const char *, long int, int, const char *);
 void DeleteUserFromChannels (User *);
 void DeleteUsersFromChannel (Chan *);
 void DeleteUserFromWchans(Nick *);
@@ -246,17 +237,17 @@ void checkexpired (void);
 void CheckLimits (void);
 Limit *AddLimit(Chan *);
 int chansreg (char *);
-char *whatbot (char *);
+const char *channel_botname(const Chan *);
 void joinallchans (void);
 void DeleteCflag (Cflag *);
 void DeleteMember (Member *);
 void DeleteLimit (Limit *);
 void clear_limits(void);
 void chandrop (Chan *);
-TB *AddTB (Chan *, char *, int, char *);
-void DeleteTB (TB *);
-void CheckTB (void);
-TB *find_tb (Chan *, char *);
+Timeban *AddTimeban (Chan *, const char *, int, const char *);
+void DeleteTimeban (Timeban *);
+void CheckTimebans(void);
+Timeban *find_timeban (const Chan *, const char *);
 void acl_resync (Chan *);
 void sync_cflag(const Cflag *);
 int IsAclOnChan (Chan *);

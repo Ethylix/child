@@ -79,6 +79,7 @@ void init_core(void) {
     ASSIGN_OR_DIE_IF_NULL(core->fakeusers, (void *)hashmap_new(&desc));
 
     LLIST_INIT(&core->limits);
+    LLIST_INIT(&core->timebans);
 }
 
 void free_core(void) {

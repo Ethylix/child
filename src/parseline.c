@@ -35,9 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern chanbotlist chanbot_list;
 extern commandlist command_list;
-extern tblist tb_list;
 
 extern int eos;
 extern int vv;
@@ -162,9 +160,9 @@ void m_join (char *sender, char *tail)
     User *uptr;
     char *chanjoined;
     Chan *chptr;
-    char *bot;
+    const char *bot;
     Cflag *member;
-    TB *tb;
+    Timeban *tb;
     char mask[256], mask2[256];
 
     sender++;
@@ -195,7 +193,6 @@ void m_join (char *sender, char *tail)
         AddUserToWchan(nptr,wchan);
 
         chptr = find_channel(str_ptr);
-        bot = whatbot(str_ptr);
 
         char *parv[1];
         parv[0] = str_ptr;
@@ -205,6 +202,8 @@ void m_join (char *sender, char *tail)
             str_ptr = strtok(NULL,",");
             continue;
         }
+
+        bot = channel_botname(chptr);
 
         int hasaccess=0, flagged=0;
 
@@ -282,17 +281,14 @@ skip_flags:
         if (chptr->entrymsg != NULL && chptr->entrymsg[0] != '\0')
             FakeNotice(bot,nptr,"[%s] %s",chptr->channelname,chptr->entrymsg);
 
-/*        if (members_num(wchan) == 1)
-            JoinChannel(whatbot(wchan->chname),wchan->chname);*/
-
         RunHooks(HOOK_JOIN,nptr,uptr,chptr,NULL);
 
         bzero(mask,256);
         bzero(mask2,256);
         snprintf(mask, 256, "%s!%s@%s", nptr->nick, nptr->ident, nptr->hiddenhost);
         snprintf(mask2, 256, "%s!%s@%s", nptr->nick, nptr->ident, nptr->host);
-        LIST_FOREACH(tb_list, tb, HASH(str_ptr)) {
-            if (!Strcmp(tb->channel, str_ptr) && (match_mask(tb->mask, mask) || match_mask(tb->mask, mask2))) {
+        LLIST_FOREACH_ENTRY(&chptr->timebans, tb, chan_head) {
+            if (match_mask(tb->mask, mask) || match_mask(tb->mask, mask2)) {
                 SendRaw(":%s MODE %s +b *!*@%s", bot, str_ptr, nptr->hiddenhost);
                 KickUser(bot, nptr->nick, str_ptr, "%s", tb->reason);
                 break;
@@ -307,6 +303,7 @@ void m_kick (char *sender, char *tail)
 {
     char *chan;
     char *nick;
+    Chan *chptr;
 
     chan = tail;
     nick = SeperateWord(chan);
@@ -320,10 +317,13 @@ void m_kick (char *sender, char *tail)
     wchan = find_wchan(chan);
     if (!wchan) return;
 
-    char *bot = whatbot(chan);
+    if ((chptr = find_channel(chan)) != NULL) {
+        const char *bot = channel_botname(chptr);
 
-    if (!Strcmp(nick,bot)) {
-        JoinChannel(bot,chan);
+        if (Strcmp(nick, bot))
+            goto skip_rejoin;
+
+        JoinChannel(bot, chan);
         KickUser(bot,sender,chan,"are you mad ?");
         nptr = find_nick(sender);
         if (!nptr) return;
@@ -331,6 +331,7 @@ void m_kick (char *sender, char *tail)
         return;
     }
 
+skip_rejoin:
     nptr = find_nick(nick);
     if (!nptr) return;
 
@@ -341,10 +342,10 @@ void m_kill (char *sender, char *tail)
 {
     struct hashmap_entry *entry;
     char *nick;
+    Chan *chptr;
     Nick *nptr;
     User *uptr;
     Bot *bot;
-    Chanbot *chanbot;
 
     sender++;
     nick = tail;
@@ -358,26 +359,21 @@ void m_kill (char *sender, char *tail)
     if (!nptr) {
         if (!Strcmp(nick, me.nick)) {
             fakeuser(me.nick,me.ident,me.host,MY_UMODES);
-            Chan *chptr;
-            HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chptr) {
-                if (!HasOption(chptr, COPT_NOJOIN))
-                    JoinChannel(me.nick,chptr->channelname);
-            }
-            killuser(sender,"That is something not recommended...",me.nick);
+        } else if ((bot = find_bot(nick)) != NULL) {
+            fakeuser(bot->nick, bot->ident, bot->host, BOTSERV_UMODES);
+        } else {
             return;
         }
 
-        HASHMAP_FOREACH_ENTRY_VALUE(get_core()->bots, entry, bot) {
-            if (!Strcmp(nick,bot->nick)) {
-                fakeuser(bot->nick,bot->ident,bot->host,BOTSERV_UMODES);
-                LIST_FOREACH_ALL(chanbot_list, chanbot) {
-                    if (!Strcmp(chanbot->bot,bot->nick))
-                        JoinChannel(bot->nick,chanbot->name);
-                }
-                killuser(sender,"That is something not recommended...",bot->nick);
-                return;
-            }
+        HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chptr) {
+            if (Strcmp(channel_botname(chptr), nick))
+                continue;
+
+            if (!HasOption(chptr, COPT_NOJOIN) || chptr->chanbot != NULL)
+                JoinChannel(channel_botname(chptr), chptr->channelname);
         }
+        killuser(sender,"That is something not recommended...",me.nick);
+        return;
     }
 
     uptr = find_user(nick);
@@ -445,7 +441,7 @@ void m_mode (char *sender, char *tail)
     User *uptr = NULL;
     Member *member = NULL;
     Wchan *wchan;
-    Chan *channel;
+    Chan *chptr;
     int i=0;
 
     /* This basically checks if the MODE command is applied to a user.
@@ -506,7 +502,7 @@ void m_mode (char *sender, char *tail)
 
         sender++;
 
-        char *bot;
+        const char *bot;
         char modesbis[33];
         char *modesm,*modesm2,*modesm3 = NULL,*modesm4,*modesm5;
         char modesbis2[33];
@@ -514,15 +510,15 @@ void m_mode (char *sender, char *tail)
 
         wchan = find_wchan(chan);
         if (!wchan) return;
-        channel = find_channel(chan);
+        chptr = find_channel(chan);
 
         /* Let's check for mlocks */
 
-        if (channel) {
-            bot = whatbot(channel->channelname);
+        if (chptr) {
+            bot = channel_botname(chptr);
             unsigned int k;
-            if (channel->mlock[0] != '\0') {
-                strncpy(modesbis2,channel->mlock,32);
+            if (chptr->mlock[0] != '\0') {
+                strncpy(modesbis2,chptr->mlock,32);
                 switch(*modesbis) {
                     case '+':
                         modesm = strstr(modesbis,"-");
@@ -537,7 +533,7 @@ void m_mode (char *sender, char *tail)
 
                         for (k=0;k<strlen(modesbis);k++) {
                             if (IsCharInString(*(modesbis+k),modesm2))
-                                SendRaw(":%s MODE %s %s",bot,channel->channelname,channel->mlock);
+                                SendRaw(":%s MODE %s %s",bot,chptr->channelname,chptr->mlock);
                         }
 
                         nextp:
@@ -555,7 +551,7 @@ void m_mode (char *sender, char *tail)
 
                         for (k=0;k<strlen(modesm);k++) {
                             if (IsCharInString(*(modesm+k),modesm4))
-                                SendRaw(":%s MODE %s %s",bot,channel->channelname,channel->mlock);
+                                SendRaw(":%s MODE %s %s",bot,chptr->channelname,chptr->mlock);
                         }
 
                         break;
@@ -572,7 +568,7 @@ void m_mode (char *sender, char *tail)
 
                         for (k=0;k<strlen(modesbis);k++) {
                             if (IsCharInString(*(modesbis+k),modesm2))
-                                SendRaw(":%s MODE %s %s",bot,channel->channelname,channel->mlock);
+                                SendRaw(":%s MODE %s %s",bot,chptr->channelname,chptr->mlock);
                         }
 
                         nextm:
@@ -590,7 +586,7 @@ void m_mode (char *sender, char *tail)
 
                         for (k=0;k<strlen(modesm);k++) {
                             if (IsCharInString(*(modesm+k),modesm4))
-                                SendRaw(":%s MODE %s %s",bot,channel->channelname,channel->mlock);
+                                SendRaw(":%s MODE %s %s",bot,chptr->channelname,chptr->mlock);
                         }
 
                         break;
@@ -600,9 +596,10 @@ void m_mode (char *sender, char *tail)
 
         /* End of mlocks checking */
 
-        bot = whatbot(chan);
+        bot = NULL;
+        if (chptr)
+            bot = channel_botname(chptr);
 
-        Chanbot *chanbot;
         int warg=0,len;
         switch(*modes) {
             case '+':
@@ -616,7 +613,7 @@ void m_mode (char *sender, char *tail)
                         member = find_member(wchan, nptr2);
                         if (!member) { warg++; continue; }
                         uptr = find_user(nptr2->nick);
-                        if (GetFlag(uptr,channel) == me.chlev_nostatus && IsAuthed(uptr)) {
+                        if (GetFlag(uptr,chptr) == me.chlev_nostatus && IsAuthed(uptr)) {
                             int w = 0;
                             switch (*modes) {
                                 case 'q':
@@ -643,8 +640,8 @@ void m_mode (char *sender, char *tail)
 
                     switch(*modes) {
                         case 'q':
-                            if (channel) {
-                                if ((!IsFounder(uptr,channel) || !IsAuthed(uptr)) && HasOption(channel, COPT_STRICTOP)) {
+                            if (chptr) {
+                                if ((!IsFounder(uptr,chptr) || !IsAuthed(uptr)) && HasOption(chptr, COPT_STRICTOP)) {
                                     SetStatus(nptr2,chan,CHFL_OWNER,0,bot);
                                     warg++;
                                     break;
@@ -655,8 +652,8 @@ void m_mode (char *sender, char *tail)
                             warg++;
                             break;
                         case 'a':
-                            if (channel) {
-                                if ((GetFlag(uptr,channel) < me.chlev_admin || !IsAuthed(uptr)) && HasOption(channel, COPT_STRICTOP)) {
+                            if (chptr) {
+                                if ((GetFlag(uptr,chptr) < me.chlev_admin || !IsAuthed(uptr)) && HasOption(chptr, COPT_STRICTOP)) {
                                     SetStatus(nptr2,chan,CHFL_PROTECT,0,bot);
                                     warg++;
                                     break;
@@ -667,10 +664,10 @@ void m_mode (char *sender, char *tail)
                             warg++;
                             break;
                         case 'o':
-                            if (channel) {
-                                if ((members_num(wchan) == 1 && (GetFlag(uptr,channel) < me.chlev_op || !IsAuthed(uptr))) ||
-                                    ((GetFlag(uptr,channel) < me.chlev_op || !IsAuthed(uptr)) &&
-                                    channel->options & HasOption(channel, COPT_STRICTOP))) {
+                            if (chptr) {
+                                if ((members_num(wchan) == 1 && (GetFlag(uptr,chptr) < me.chlev_op || !IsAuthed(uptr))) ||
+                                    ((GetFlag(uptr,chptr) < me.chlev_op || !IsAuthed(uptr)) &&
+                                    chptr->options & HasOption(chptr, COPT_STRICTOP))) {
                                     SetStatus(nptr2,chan,CHFL_OP,0,bot);
                                     warg++;
                                     break;
@@ -681,8 +678,8 @@ void m_mode (char *sender, char *tail)
                             warg++;
                             break;
                         case 'h':
-                            if (channel) {
-                                if ((GetFlag(uptr,channel) < me.chlev_halfop || !IsAuthed(uptr)) && HasOption(channel, COPT_STRICTOP)) {
+                            if (chptr) {
+                                if ((GetFlag(uptr,chptr) < me.chlev_halfop || !IsAuthed(uptr)) && HasOption(chptr, COPT_STRICTOP)) {
                                     SetStatus(nptr2,chan,CHFL_HALFOP,0,bot);
                                     warg++;
                                     break;
@@ -726,8 +723,8 @@ void m_mode (char *sender, char *tail)
                     switch(*modes) {
                         case 'q':
                             if (!member) { warg++; break; }
-                            if (channel) {
-                                if (Strcmp(uptr->nick, sender) && IsFounder(uptr,channel) && IsAuthed(uptr) && HasOption(channel, COPT_PROTECTOPS)) {
+                            if (chptr) {
+                                if (Strcmp(uptr->nick, sender) && IsFounder(uptr,chptr) && IsAuthed(uptr) && HasOption(chptr, COPT_PROTECTOPS)) {
                                     SetStatus(nptr2,chan,CHFL_OWNER,1,bot);
                                     warg++;
                                     break;
@@ -738,21 +735,15 @@ void m_mode (char *sender, char *tail)
                             warg++;
                             break;
                         case 'a':
-                            if (!Strcmp(args[warg],me.nick)) {
-                                SendRaw(":%s MODE %s +a %s",bot,chan,bot);
+                            if (chptr && !Strcmp(channel_botname(chptr), args[warg])) {
+                                SendRaw(":%s MODE %s +a %s", channel_botname(chptr), chan, bot);
                                 warg++;
                                 break;
                             }
-                            if ((chanbot = find_chanbot(chan)) != NULL) {
-                                if (!Strcmp(args[warg],chanbot->bot)) {
-                                    SendRaw(":%s MODE %s +a %s",chanbot->bot,chan,chanbot->bot);
-                                    warg++;
-                                    break;
-                                }
-                            }
+
                             if (!member) { warg++; break; }
-                            if (channel) {
-                                if (Strcmp(uptr->nick, sender) && GetFlag(uptr,channel) >= me.chlev_admin && IsAuthed(uptr) && HasOption(channel, COPT_PROTECTOPS)) {
+                            if (chptr) {
+                                if (Strcmp(uptr->nick, sender) && GetFlag(uptr,chptr) >= me.chlev_admin && IsAuthed(uptr) && HasOption(chptr, COPT_PROTECTOPS)) {
                                     SetStatus(nptr2,chan,CHFL_PROTECT,1,bot);
                                     warg++;
                                     break;
@@ -763,21 +754,15 @@ void m_mode (char *sender, char *tail)
                             warg++;
                             break;
                         case 'o':
-                            if (!Strcmp(args[warg],me.nick)) {
-                                SendRaw(":%s MODE %s +o %s",bot,chan,bot);
+                            if (chptr && !Strcmp(channel_botname(chptr), args[warg])) {
+                                SendRaw(":%s MODE %s +o %s", channel_botname(chptr), chan, bot);
                                 warg++;
                                 break;
                             }
-                            if ((chanbot = find_chanbot(chan)) != NULL) {
-                                if (!Strcmp(args[warg],chanbot->bot)) {
-                                    SendRaw(":%s MODE %s +o %s",chanbot->bot,chan,chanbot->bot);
-                                    warg++;
-                                    break;
-                                }
-                            }
+
                             if (!member) { warg++; break; }
-                            if (channel) {
-                                if (Strcmp(uptr->nick, sender) && GetFlag(uptr,channel) >= me.chlev_op && IsAuthed(uptr) && HasOption(channel, COPT_PROTECTOPS)) {
+                            if (chptr) {
+                                if (Strcmp(uptr->nick, sender) && GetFlag(uptr,chptr) >= me.chlev_op && IsAuthed(uptr) && HasOption(chptr, COPT_PROTECTOPS)) {
                                     SetStatus(nptr2,chan,CHFL_OP,1,bot);
                                     warg++;
                                     break;
@@ -1259,7 +1244,7 @@ void m_topic (char *sender, char *tail)
         return;
 
     if (chptr->options & COPT_ENFTOPIC)
-        SendRaw(":%s TOPIC %s :%s", whatbot(chan), chan, chptr->topic);
+        SendRaw(":%s TOPIC %s :%s", channel_botname(chptr), chan, chptr->topic);
     else
         strncpy(chptr->topic, topic, TOPICLEN);
 }

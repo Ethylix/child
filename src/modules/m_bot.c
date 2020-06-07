@@ -141,7 +141,7 @@ void bot_god (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan)
 
     cflag = find_cflag(chptr, uptr);
     if (!cflag && !IsFounder(uptr,chptr)) return;
-    FakeMsg(whatbot(wchan->chname),wchan->chname,"stfu %s",nptr->nick);
+    FakeMsg(channel_botname(chptr),wchan->chname,"stfu %s",nptr->nick);
 }
 
 void bot_owner (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan)
@@ -153,7 +153,7 @@ void bot_owner (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan)
         return;
 
     if (!IsFounder(uptr,chptr)) return;
-    if (!HasOwner(member)) SetStatus(nptr,wchan->chname,CHFL_OWNER,1,whatbot(wchan->chname));
+    if (!HasOwner(member)) SetStatus(nptr,wchan->chname,CHFL_OWNER,1,channel_botname(chptr));
 }
 
 void bot_deowner (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan)
@@ -165,7 +165,7 @@ void bot_deowner (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan)
         return;
 
     if (!IsFounder(uptr,chptr)) return;
-    if (HasOwner(member)) SetStatus(nptr,wchan->chname,CHFL_OWNER,0,whatbot(wchan->chname));
+    if (HasOwner(member)) SetStatus(nptr,wchan->chname,CHFL_OWNER,0,channel_botname(chptr));
 }
 
 void bot_protect (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
@@ -182,7 +182,7 @@ void bot_protect (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 
     if (!ChannelCanProtect(uptr, chptr) && !IsFounder(uptr, chptr)) return;
     if (!arg2 || *arg2 == '\0') {
-        if (!HasProtect(member)) SetStatus(nptr,wchan->chname,CHFL_PROTECT,1,whatbot(wchan->chname));
+        if (!HasProtect(member)) SetStatus(nptr,wchan->chname,CHFL_PROTECT,1,channel_botname(chptr));
     } else {
         nptr2 = find_nick(arg2);
         if (!nptr2) return;
@@ -191,7 +191,7 @@ void bot_protect (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
             return;
 
         if (!IsFounder(uptr,chptr)) return;
-        if (!HasProtect(member)) SetStatus(nptr2,wchan->chname,CHFL_PROTECT,1,whatbot(wchan->chname));
+        if (!HasProtect(member)) SetStatus(nptr2,wchan->chname,CHFL_PROTECT,1,channel_botname(chptr));
     }
 }
 
@@ -209,7 +209,7 @@ void bot_deprotect (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all
 
     if (!ChannelCanProtect(uptr, chptr) && !IsFounder(uptr, chptr)) return;
     if (!arg2 || *arg2 == '\0') {
-        if (HasProtect(member)) SetStatus(nptr,wchan->chname,CHFL_PROTECT,0,whatbot(wchan->chname));
+        if (HasProtect(member)) SetStatus(nptr,wchan->chname,CHFL_PROTECT,0,channel_botname(chptr));
     } else {
         nptr2 = find_nick(arg2);
         if (!nptr2) return;
@@ -218,7 +218,7 @@ void bot_deprotect (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all
             return;
 
         if (!IsFounder(uptr,chptr)) return;
-        if (HasProtect(member)) SetStatus(nptr2,wchan->chname,CHFL_PROTECT,0,whatbot(wchan->chname));
+        if (HasProtect(member)) SetStatus(nptr2,wchan->chname,CHFL_PROTECT,0,channel_botname(chptr));
     }
 }
 
@@ -236,7 +236,7 @@ void bot_op (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 
     if (!ChannelCanOp(uptr, chptr) && !IsFounder(uptr, chptr)) return;
     if (!arg2 || *arg2 == '\0') { 
-        if (!HasOp(member)) SetStatus(nptr,wchan->chname,CHFL_OP,1,whatbot(wchan->chname));
+        if (!HasOp(member)) SetStatus(nptr,wchan->chname,CHFL_OP,1,channel_botname(chptr));
     } else {
         nptr2 = find_nick(arg2);
         if (!nptr2) return;
@@ -244,7 +244,7 @@ void bot_op (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         if ((member = find_member(wchan, nptr2)) == NULL)
             return;
 
-        if (!HasOp(member)) SetStatus(nptr2,wchan->chname,CHFL_OP,1,whatbot(wchan->chname));
+        if (!HasOp(member)) SetStatus(nptr2,wchan->chname,CHFL_OP,1,channel_botname(chptr));
     }
 }
 
@@ -262,7 +262,7 @@ void bot_deop (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 
     if (!ChannelCanOp(uptr, chptr) && !IsFounder(uptr, chptr)) return;
     if (!arg2 || *arg2 == '\0') { 
-        if (HasOp(member)) SetStatus(nptr,wchan->chname,CHFL_OP,0,whatbot(wchan->chname));
+        if (HasOp(member)) SetStatus(nptr,wchan->chname,CHFL_OP,0,channel_botname(chptr));
     } else {
         nptr2 = find_nick(arg2);
         if (!nptr2) return;
@@ -270,7 +270,7 @@ void bot_deop (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
        if ((member = find_member(wchan, nptr2)) == NULL)
             return;
 
-        if (HasOp(member)) SetStatus(nptr2,wchan->chname,CHFL_OP,0,whatbot(wchan->chname));
+        if (HasOp(member)) SetStatus(nptr2,wchan->chname,CHFL_OP,0,channel_botname(chptr));
     }
 }
 
@@ -288,7 +288,7 @@ void bot_halfop (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 
     if (!arg2 || *arg2 == '\0') {
         if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
-        if (!HasHalfop(member)) SetStatus(nptr,wchan->chname,CHFL_HALFOP,1,whatbot(wchan->chname));
+        if (!HasHalfop(member)) SetStatus(nptr,wchan->chname,CHFL_HALFOP,1,channel_botname(chptr));
     } else {
         if (!ChannelCanOp(uptr, chptr) && !IsFounder(uptr, chptr)) return;
         nptr2 = find_nick(arg2);
@@ -297,7 +297,7 @@ void bot_halfop (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         if ((member = find_member(wchan, nptr2)) == NULL)
             return;
 
-        if (!HasHalfop(member)) SetStatus(nptr2,wchan->chname,CHFL_HALFOP,1,whatbot(wchan->chname));
+        if (!HasHalfop(member)) SetStatus(nptr2,wchan->chname,CHFL_HALFOP,1,channel_botname(chptr));
     }
 }
 
@@ -315,7 +315,7 @@ void bot_dehalfop (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 
     if (!arg2 || *arg2 == '\0') {
         if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
-        if (HasHalfop(member)) SetStatus(nptr,wchan->chname,CHFL_HALFOP,0,whatbot(wchan->chname));
+        if (HasHalfop(member)) SetStatus(nptr,wchan->chname,CHFL_HALFOP,0,channel_botname(chptr));
     } else {
         if (!ChannelCanOp(uptr, chptr) && !IsFounder(uptr, chptr)) return;
         nptr2 = find_nick(arg2);
@@ -324,7 +324,7 @@ void bot_dehalfop (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         if ((member = find_member(wchan, nptr2)) == NULL)
             return;
 
-        if (HasHalfop(member)) SetStatus(nptr2,wchan->chname,CHFL_HALFOP,0,whatbot(wchan->chname));
+        if (HasHalfop(member)) SetStatus(nptr2,wchan->chname,CHFL_HALFOP,0,channel_botname(chptr));
     }
 }
 
@@ -342,7 +342,7 @@ void bot_voice (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 
     if (!arg2 || *arg2 == '\0') {
         if (!ChannelCanVoice(uptr, chptr) && !IsFounder(uptr, chptr)) return;
-        if (!HasVoice(member)) SetStatus(nptr,wchan->chname,CHFL_VOICE,1,whatbot(wchan->chname));
+        if (!HasVoice(member)) SetStatus(nptr,wchan->chname,CHFL_VOICE,1,channel_botname(chptr));
     } else {
         if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
         nptr2 = find_nick(arg2);
@@ -351,7 +351,7 @@ void bot_voice (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         if ((member = find_member(wchan, nptr2)) == NULL)
             return;
 
-        if (!HasVoice(member)) SetStatus(nptr2,wchan->chname,CHFL_VOICE,1,whatbot(wchan->chname));
+        if (!HasVoice(member)) SetStatus(nptr2,wchan->chname,CHFL_VOICE,1,channel_botname(chptr));
     }
 }
 
@@ -369,7 +369,7 @@ void bot_devoice (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 
     if (!arg2 || *arg2 == '\0') {
         if (!ChannelCanVoice(uptr, chptr) && !IsFounder(uptr, chptr)) return;
-        if (HasVoice(member)) SetStatus(nptr,wchan->chname,CHFL_VOICE,0,whatbot(wchan->chname));
+        if (HasVoice(member)) SetStatus(nptr,wchan->chname,CHFL_VOICE,0,channel_botname(chptr));
     } else {
         if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
         nptr2 = find_nick(arg2);
@@ -378,7 +378,7 @@ void bot_devoice (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         if ((member = find_member(wchan, nptr2)) == NULL)
             return;
 
-        if (HasVoice(member)) SetStatus(nptr2,wchan->chname,CHFL_VOICE,0,whatbot(wchan->chname));
+        if (HasVoice(member)) SetStatus(nptr2,wchan->chname,CHFL_VOICE,0,channel_botname(chptr));
     }
 }
 
@@ -391,7 +391,7 @@ void bot_opall (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan)
 
     LLIST_FOREACH_ENTRY(&wchan->members, member, wchan_head) {
         if (!HasOp(member))
-            SetStatus(member->nick,chptr->channelname,CHFL_OP,1,whatbot(wchan->chname));
+            SetStatus(member->nick,chptr->channelname,CHFL_OP,1,channel_botname(chptr));
     }
 }
 
@@ -412,7 +412,7 @@ void bot_halfopall (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan)
 
     LLIST_FOREACH_ENTRY(&wchan->members, member, wchan_head) {
         if (!HasHalfop(member))
-            SetStatus(member->nick,chptr->channelname,CHFL_HALFOP,1,whatbot(wchan->chname));
+            SetStatus(member->nick,chptr->channelname,CHFL_HALFOP,1,channel_botname(chptr));
     }
 }
 
@@ -433,7 +433,7 @@ void bot_voiceall (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan)
 
     LLIST_FOREACH_ENTRY(&wchan->members, member, wchan_head) {
         if (!HasVoice(member))
-            SetStatus(member->nick,chptr->channelname,CHFL_VOICE,1,whatbot(wchan->chname));
+            SetStatus(member->nick,chptr->channelname,CHFL_VOICE,1,channel_botname(chptr));
     }
 }
 
@@ -447,7 +447,7 @@ void bot_devoiceall (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan)
 
 void bot_opopop (Nick *nptr, User *uptr __unused, Chan *chptr __unused, Wchan *wchan)
 {
-    KickUser(whatbot(wchan->chname),nptr->nick,wchan->chname,"Hey, keep quiet !");
+    KickUser(channel_botname(chptr),nptr->nick,wchan->chname,"Hey, keep quiet !");
 }
 
 void bot_kick (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
@@ -455,7 +455,7 @@ void bot_kick (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
     char *arg2;
     arg2 = all;
     all = SeperateWord(arg2);
-    char *bot = whatbot(wchan->chname);
+    const char *bot = channel_botname(chptr);
     User *uptr2;
 
     if (!IsAuthed(uptr)) return;
@@ -463,7 +463,7 @@ void bot_kick (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
     if (!arg2 || *arg2 == '\0') { 
         KickUser(bot,nptr->nick,wchan->chname,"Requested");
     } else {
-        if (!Strcmp(arg2,whatbot(wchan->chname))) {
+        if (!Strcmp(arg2,channel_botname(chptr))) {
             KickUser(bot,nptr->nick,wchan->chname,"Don't touch !");
             return;
         }   
@@ -499,7 +499,7 @@ void bot_rkick (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
     char *arg2;
     arg2 = all;
     all = SeperateWord(arg2);
-    char *bot = whatbot(wchan->chname);
+    const char *bot = channel_botname(chptr);
     User *uptr2;
 
     if (!IsAuthed(uptr)) return;
@@ -533,7 +533,7 @@ void bot_rkb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
     char *arg2;
     arg2 = all;
     all = SeperateWord(arg2);
-    char *bot = whatbot(wchan->chname);
+    const char *bot = channel_botname(chptr);
     User *uptr2;
 
     if (!IsAuthed(uptr)) return;
@@ -573,7 +573,7 @@ void bot_kb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
     User *uptr2;
     Nick *nptr2;
 
-    char *bot = whatbot(wchan->chname);
+    const char *bot = channel_botname(chptr);
 
     if (!IsAuthed(uptr)) return;
     if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
@@ -622,19 +622,19 @@ void bot_kb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 
 void bot_unban (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan, char *all)
 {
-    TB *tb;
+    Timeban *tb;
     char *arg2 = all;
     SeperateWord(arg2);
 
-    char *bot = whatbot(wchan->chname);
+    const char *bot = channel_botname(chptr);
     if (!IsAuthed(uptr)) return;
     if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
     if (!arg2 || *arg2 == '\0') return;
     SendRaw(":%s MODE %s -b %s",bot,wchan->chname,arg2);
 
-    tb = find_tb(chptr, arg2);
+    tb = find_timeban(chptr, arg2);
     if (tb)
-        DeleteTB(tb);
+        DeleteTimeban(tb);
 }
 
 void bot_ban (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
@@ -645,7 +645,7 @@ void bot_ban (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
     arg3 = SeperateWord(arg2);
     SeperateWord(arg3);
 
-    char *bot = whatbot(wchan->chname);
+    const char *bot = channel_botname(chptr);
     if (!IsAuthed(uptr)) return;
     if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
     if (!arg2 || *arg2 == '\0') { 
@@ -680,7 +680,7 @@ void bot_topic (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan, char
     if (!IsTrueOwner(uptr, chptr)) return;
     if (!all || *all == '\0') return;
 //    SendRaw("TOPIC %s %s %ld :%s", wchan->chname, nptr->nick, time(NULL), all);
-    SendRaw(":%s TOPIC %s :%s", whatbot(wchan->chname), wchan->chname, all);
+    SendRaw(":%s TOPIC %s :%s", channel_botname(chptr), wchan->chname, all);
 }
 
 void bot_moo (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
@@ -691,9 +691,9 @@ void bot_moo (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
     if (!IsAuthed(uptr)) return;
     if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
     if (!arg2 || *arg2 == '\0')
-        FakeMsg(whatbot(wchan->chname),wchan->chname,"\1ACTION m00s loudly at %s\1",nptr->nick);
+        FakeMsg(channel_botname(chptr),wchan->chname,"\1ACTION m00s loudly at %s\1",nptr->nick);
     else
-        FakeMsg(whatbot(wchan->chname),wchan->chname,"\1ACTION m00s loudly at %s\1",arg2);
+        FakeMsg(channel_botname(chptr),wchan->chname,"\1ACTION m00s loudly at %s\1",arg2);
 }
 
 void bot_seen (Nick *nptr __unused, User *uptr __unused, Chan *chptr __unused, Wchan *wchan, char *all)
@@ -706,7 +706,7 @@ void bot_seen (Nick *nptr __unused, User *uptr __unused, Chan *chptr __unused, W
 
     if (!arg2 || *arg2 == '\0') return;
 
-    char *bot = whatbot(wchan->chname);
+    const char *bot = channel_botname(chptr);
 
     if (!Strcmp(arg2,bot)) {
         FakeMsg(bot,wchan->chname,"I'm in a place that you will never guess !");
@@ -771,13 +771,13 @@ void bot_seen (Nick *nptr __unused, User *uptr __unused, Chan *chptr __unused, W
     }
 }
 
-void bot_admin (Nick *nptr, User *uptr __unused, Chan *chptr __unused, Wchan *wchan)
+void bot_admin (Nick *nptr, User *uptr __unused, Chan *chptr __unused, Wchan *wchan __unused)
 {
     User *uptr2;
     Nick *nptr2;
     struct hashmap_entry *entry;
 
-    char *bot = whatbot(wchan->chname);
+    const char *bot = channel_botname(chptr);
 
     HASHMAP_FOREACH_ENTRY_VALUE(get_core()->users, entry, uptr2) {
         nptr2 = find_nick(uptr2->nick);
@@ -810,7 +810,7 @@ void bot_tb (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan __unused
     char *mask;
     int duration = 0;
     char *tc;
-    TB *tb;
+    Timeban *tb;
     char effective_mask[256];
     char blah[256], blah2[256];
     Nick *nptr2 = NULL;
@@ -859,11 +859,11 @@ void bot_tb (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan __unused
     else
         strncpy(reason, arg3, 255);
 
-    if ((tb = find_tb(chptr, effective_mask)) != NULL) {
+    if ((tb = find_timeban(chptr, effective_mask)) != NULL) {
         tb->duration = duration;
         tb->setat = time(NULL);
     } else
-        tb = AddTB(chptr, effective_mask, duration, reason);
+        tb = AddTimeban(chptr, effective_mask, duration, reason);
 
     if (nptr2) {
         if ((uptr2 = find_user(nptr2->nick)) != NULL) {
@@ -874,7 +874,7 @@ void bot_tb (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan __unused
                     return;
             }
         }
-        KickUser(whatbot(wchan->chname), nptr2->nick, wchan->chname, "%s", reason);
+        KickUser(channel_botname(chptr), nptr2->nick, wchan->chname, "%s", reason);
     } else {
         LLIST_FOREACH_ENTRY_SAFE(&wchan->members, member, tmp_member, wchan_head) {
             nptr2 = member->nick;
@@ -893,9 +893,9 @@ void bot_tb (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan __unused
             }
 
             if (match_mask(tb->mask, blah) || match_mask(tb->mask, blah2))
-                KickUser(whatbot(wchan->chname), nptr2->nick, wchan->chname, "%s", reason);
+                KickUser(channel_botname(chptr), nptr2->nick, wchan->chname, "%s", reason);
         }
     }
 
-    SendRaw(":%s MODE %s +b %s", whatbot(wchan->chname), wchan->chname, effective_mask);
+    SendRaw(":%s MODE %s +b %s", channel_botname(chptr), wchan->chname, effective_mask);
 }

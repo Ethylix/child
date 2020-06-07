@@ -35,8 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern chanbotlist chanbot_list;
-
 extern MYSQL mysql;
 extern int verbose, vv;
 
@@ -247,6 +245,8 @@ void loadbotservdb()
     char ident[NICKLEN+1];
     char host[HOSTLEN+1];
     char chan[CHANLEN+1];
+    Chan *chptr;
+    Bot *bot;
     MYSQL_RES *result;
     MYSQL_ROW row;
 
@@ -278,10 +278,19 @@ void loadbotservdb()
     while ((row = mysql_fetch_row(result))) {
         strncpy(chan,row[0],CHANLEN);
         strncpy(nick,row[1],NICKLEN);
-        if (find_chanbot(chan)) continue;
-        if (!find_bot(nick)) continue;
-        if (!find_channel(chan)) continue;
-        addChanbot(chan,nick);
+        if ((bot = find_bot(nick)) == NULL) {
+            fprintf(stderr, "Warning: child_botserv_chans entry with non-existent bot \"%s\".\n", nick);
+            continue;
+        }
+        if ((chptr = find_channel(chan)) == NULL) {
+            fprintf(stderr, "Warning: child_botserv_chans entry with non-existent channel \"%s\".\n", chan);
+            continue;
+        }
+        if (chptr->chanbot != NULL) {
+            fprintf(stderr, "Warning: trying to add bot \"%s\" for channel \"%s\" but has bot \"%s\" already assigned.\n", nick, chan, chptr->chanbot->nick);
+            continue;
+        }
+        chptr->chanbot = bot;
         if (vv) printf("Chanbot %s added with bot %s\n",chan,nick);
     }
 }
@@ -402,10 +411,10 @@ void savelinkdb()
 
 void savebotservdb()
 {
-    char tmp[1024];
-    Bot *bot;
-    Chanbot *chanbot;
     struct hashmap_entry *entry;
+    char tmp[1024];
+    Chan *chptr;
+    Bot *bot;
 
     if (!reconnect_to_db()) {
         fprintf(stderr,"Cannot connect to db: %s\n", mysql_error(&mysql));
@@ -422,8 +431,10 @@ void savebotservdb()
 
     mysql_query(&mysql,"DELETE FROM child_botserv_chans");
 
-    LIST_FOREACH_ALL(chanbot_list, chanbot) {
-        snprintf(tmp,1024,"INSERT INTO child_botserv_chans VALUES ('%s','%s')",chanbot->name,chanbot->bot);
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chptr) {
+        if (chptr->chanbot == NULL)
+            continue;
+        snprintf(tmp,1024,"INSERT INTO child_botserv_chans VALUES ('%s','%s')",chptr->channelname, chptr->chanbot->nick);
         mysql_query(&mysql,tmp);
     }
 }

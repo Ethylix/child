@@ -326,7 +326,7 @@ void clear_fakes(void)
     }
 }
 
-void FakeMsg (char *who, char *chan, char *msg, ...)
+void FakeMsg(const char *who, const char *chan, const char *msg, ...)
 {
     char buf[512];
     va_list val;
@@ -335,7 +335,7 @@ void FakeMsg (char *who, char *chan, char *msg, ...)
     SendRaw(":%s PRIVMSG %s :%s",who,chan,buf);
 }
 
-void FakeNotice (char *who, Nick *nptr, char *msg, ...)
+void FakeNotice(const char *who, const Nick *nptr, const char *msg, ...)
 {
     char buf[512];
     va_list val;
@@ -538,7 +538,7 @@ void sync_cflag(const Cflag *cflag)
     Wchan *wchan;
     Member *member;
     Nick *nptr;
-    char *bot;
+    const char *bot;
 
     if ((nptr = find_nick(cflag->user->nick)) == NULL)
         return;
@@ -555,7 +555,7 @@ void sync_cflag(const Cflag *cflag)
     if ((!HasOption(cflag->chan, COPT_AXXFLAGS) && cflag->automode == CFLAG_AUTO_OFF) || cflag->suspended == 1)
         return;
 
-    bot = whatbot(wchan->chname);
+    bot = channel_botname(cflag->chan);
     int hasaccess = 0;
 
     if (HasOption(cflag->chan, COPT_AXXFLAGS)) {

@@ -34,9 +34,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern chanbotlist chanbot_list;
-extern tblist tb_list;
-
 extern int eos;
 
 Chan *find_channel(const char *name)
@@ -88,10 +85,11 @@ Cflag *find_cflag_recursive(const Chan *chptr, const User *uptr)
     return cflag;
 }
 
-TB *find_tb (Chan *chptr, char *mask)
+Timeban *find_timeban(const Chan *chptr, const char *mask)
 {
-    TB *tmp;
-    LIST_FOREACH(tb_list, tmp, HASH(chptr->channelname)) {
+    Timeban *tmp;
+
+    LLIST_FOREACH_ENTRY(&chptr->timebans, tmp, chan_head) {
         if (!Strcmp(tmp->mask, mask))
             return tmp;
     }
@@ -151,6 +149,8 @@ Chan *CreateChannel (char *name, char *owner, int lastseen)
 
     LLIST_INIT(&new_chan->cflags);
     new_chan->active_autolimit = NULL;
+    new_chan->chanbot = NULL;
+    LLIST_INIT(&new_chan->timebans);
 
     if (!HASHMAP_INSERT(get_core()->chans, new_chan->channelname, new_chan, NULL)) {
         fprintf(stderr, "Failed to insert new channel \"%s\" into hashmap (duplicate entry?)\n", new_chan->channelname);
@@ -213,18 +213,19 @@ Limit *AddLimit(Chan *chptr)
     return limit;
 }
 
-TB *AddTB (Chan *chan, char *mask, int duration, char *reason)
+Timeban *AddTimeban(Chan *chan, const char *mask, int duration, const char *reason)
 {
-    TB *new_tb;
+    Timeban *new_tb;
 
-    new_tb = (TB *)malloc(sizeof(TB));
-    strncpy(new_tb->channel, chan->channelname, CHANLEN);
+    new_tb = (Timeban *)malloc(sizeof(Timeban));
+    new_tb->chan = chan;
     strncpy(new_tb->mask, mask, MASKLEN);
     strncpy(new_tb->reason, reason, 256);
     new_tb->duration = duration;
     new_tb->setat = time(NULL);
 
-    LIST_INSERT_HEAD(tb_list, new_tb, HASH(chan->channelname));
+    LLIST_INSERT_TAIL(&chan->timebans, &new_tb->chan_head);
+    LLIST_INSERT_TAIL(&get_core()->timebans, &new_tb->core_head);
 
     return new_tb;
 }
@@ -240,19 +241,10 @@ void DeleteUsersFromChannel (Chan *chan)
 
 void DeleteChannel (Chan *chan)
 {
-    Chanbot *chanbot;
-
     HASHMAP_ERASE(get_core()->chans, chan->channelname);
 
-    chanbot = find_chanbot(chan->channelname);
-    if (!chanbot) {
-        if (eos)
-            PartChannel(chan->channelname);
-    } else {
-        if (eos)
-            SendRaw(":%s PART %s",chanbot->bot,chanbot->name);
-        delChanbot(chanbot);
-    }
+    if (eos)
+        PartChannel(chan);
 
     free(chan);
 }
@@ -293,9 +285,10 @@ void clear_limits(void)
     }
 }
 
-void DeleteTB (TB *tb)
+void DeleteTimeban(Timeban *tb)
 {
-    LIST_REMOVE(tb_list, tb, HASH(tb->channel));
+    LLIST_REMOVE(&tb->chan_head);
+    LLIST_REMOVE(&tb->core_head);
     free(tb);
 }
 
@@ -396,13 +389,13 @@ void KickUser (const char *who, const char *nick, const char *chan, const char *
         DeleteUserFromWchan(nptr,wchan);
 }
 
-void JoinChannel (char *who, char *name)
+void JoinChannel(const char *who, const char *name)
 {
     Chan *chptr = find_channel(name);
     if (!chptr) return;
     if (chptr->mlock[0] != '\0')
         SendRaw(":%s MODE %s %s", who, name, chptr->mlock);
-    if (!Strcmp(whatbot(name),me.nick) && HasOption(chptr, COPT_NOJOIN))
+    if (!Strcmp(channel_botname(chptr),me.nick) && HasOption(chptr, COPT_NOJOIN))
         return;
 
     SendRaw(":%s JOIN %s",who,name);
@@ -421,7 +414,7 @@ Member *find_member(const Wchan *wchan, const Nick *nptr)
     return NULL;
 }
 
-void SetStatus (Nick *nptr, const char *chan, long int flag, int what, char *who)
+void SetStatus (Nick *nptr, const char *chan, long int flag, int what, const char *who)
 {
     Member *member;
     Wchan *wchan;
@@ -579,7 +572,7 @@ void CheckLimits()
             }
             chptr = limit->chan;
             int ag = HasOption(chptr, COPT_NOJOIN) ? 0 : 1;
-            SendRaw(":%s MODE %s +l %d",whatbot(limit->chan->channelname),limit->chan->channelname,members_num(wchan)+chptr->autolimit+ag);
+            SendRaw(":%s MODE %s +l %d",channel_botname(limit->chan),limit->chan->channelname,members_num(wchan)+chptr->autolimit+ag);
             DeleteLimit(limit);
         }
     }
@@ -599,54 +592,50 @@ int chansreg (char *nick)
     return count;
 }
 
-char *whatbot (char *name)
+const char *channel_botname(const Chan *chan)
 {
-    Chanbot *chanbot;
-    if ((chanbot = find_chanbot(name)) != NULL)
-        return chanbot->bot;
+    if (chan->chanbot != NULL)
+        return chan->chanbot->nick;
+
     return me.nick;
 }
 
 void joinallchans()
 {
-    Chanbot *chanbot;
+    struct hashmap_entry *entry;
     Chan *chptr;
     Wchan *wchan;
-    struct hashmap_entry *entry;
-
-    LIST_FOREACH_ALL(chanbot_list, chanbot)
-        JoinChannel(chanbot->bot,chanbot->name);
 
     HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chptr) {
         wchan = find_wchan(chptr->channelname);
-        if (!HasOption(chptr, COPT_NOJOIN))
-            JoinChannel(me.nick,chptr->channelname);
+        if (!HasOption(chptr, COPT_NOJOIN) || chptr->chanbot != NULL)
+            JoinChannel(channel_botname(chptr), chptr->channelname);
+
         if (chptr->mlock[0] != '\0')
-            SendRaw(":%s MODE %s %s",whatbot(chptr->channelname),chptr->channelname,chptr->mlock);
+            SendRaw(":%s MODE %s %s",channel_botname(chptr),chptr->channelname,chptr->mlock);
         if (chptr->topic[0] != '\0' && (wchan && strcmp(chptr->topic, wchan->topic)))
-            SendRaw(":%s TOPIC %s :%s", whatbot(chptr->channelname), chptr->channelname, chptr->topic);
+            SendRaw(":%s TOPIC %s :%s", channel_botname(chptr), chptr->channelname, chptr->topic);
     }
 }
 
 void chandrop (Chan *chptr)
 {
     if (eos)
-        PartChannel(chptr->channelname);
+        PartChannel(chptr);
     DeleteUsersFromChannel(chptr);
     DeleteChannel(chptr);
 }
 
-void CheckTB()
+void CheckTimebans()
 {
-    TB *tb, *next;
+    Timeban *tb, *tmp_tb;
 
-    for (tb = LIST_HEAD(tb_list); tb; tb = next) {
-        next = LIST_LNEXT(tb);
+    LLIST_FOREACH_ENTRY_SAFE(&get_core()->timebans, tb, tmp_tb, core_head) {
         if (tb->duration == -1 || time(NULL) < tb->setat + tb->duration)
             continue;
 
-        SendRaw(":%s MODE %s -b %s", whatbot(tb->channel), tb->channel, tb->mask);
-        DeleteTB(tb);
+        SendRaw(":%s MODE %s -b %s", channel_botname(tb->chan), tb->chan->channelname, tb->mask);
+        DeleteTimeban(tb);
     }
 }
 
@@ -671,7 +660,7 @@ void acl_resync(Chan *chptr)
 
         cflag = find_cflag(chptr, uptr);
         if (!cflag || uptr->authed == 0 || (cflag && cflag->suspended == 1)) {
-            SetStatus(nptr, chptr->channelname, member->flags, 0, whatbot(chptr->channelname));
+            SetStatus(nptr, chptr->channelname, member->flags, 0, channel_botname(chptr));
             continue;
         }
 

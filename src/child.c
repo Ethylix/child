@@ -50,12 +50,10 @@ int startuptime;
 int verbose, vv, raws, eos;
 MYSQL mysql;
 
-chanbotlist chanbot_list;
 commandlist command_list;
 #ifdef USE_FILTER
 rulelist rule_list;
 #endif
-tblist tb_list;
 
 #ifdef USE_GNUTLS
 gnutls_session_t session;
@@ -431,7 +429,7 @@ try_reconnect:
         if (timenow - lastcheck >= 1) {
             CheckGuests();
             CheckLimits();
-            CheckTB();
+            CheckTimebans();
             lastcheck = timenow;
         }
 

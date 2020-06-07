@@ -105,15 +105,14 @@ struct core {
     DECLARE_HASHMAP(chans, const char *, struct chan *);
     DECLARE_HASHMAP(wchans, const char *, struct wchan *);
     DECLARE_HASHMAP(bots, const char *, struct bot *);
-    struct hashmap *chanbots;
     struct hashmap *commands;
 #ifdef USE_FILTER
     struct hashmap *rules;
 #endif  // USE_FILTER
-    struct hashmap *timebans;
     DECLARE_HASHMAP(fakeusers, const char *, struct fakeuser *);
 
     struct llist_head limits;
+    struct llist_head timebans;
 
     struct config config;
 

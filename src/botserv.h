@@ -30,27 +30,11 @@ typedef struct bot {
     char nick[NICKLEN+1]; /* hash key */
     char ident[NICKLEN+1];
     char host[HOSTLEN+1];
+    struct llist_head chans;
 } Bot;
     
-typedef struct chanbot {
-    char name[CHANLEN+1]; /* hash key */
-    char bot[NICKLEN+1];
-    struct chanbot *next,*prev;
-    struct chanbot *lnext,*lprev;
-} Chanbot;
-
-typedef struct {
-    int size;
-    TABLE(Chanbot);
-    Chanbot *lhead;
-} chanbotlist;
-
 Bot *add_bot(const char *nick, const char *ident, const char *host);
 void remove_bot(Bot *);
 Bot *find_bot(const char *nick);
-
-Chanbot *addChanbot (char *, char *);
-void delChanbot (Chanbot *);
-Chanbot *find_chanbot (char *);
 
 #endif

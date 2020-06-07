@@ -32,9 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern chanbotlist chanbot_list;
 extern commandlist command_list;
-extern tblist tb_list;
 
 void do_chan (Nick *, User *, char *);
 void do_help (Nick *, User *, char *);
@@ -535,11 +533,11 @@ void chan_op (Nick *nptr, User *uptr, Chan *chptr, char *all)
     }   
         
     if (!arg4 || *arg4 == '\0')
-        SetStatus(nptr,arg3,CHFL_OP,1,whatbot(arg3));
+        SetStatus(nptr,arg3,CHFL_OP,1,channel_botname(chptr));
     else {
         nptr2 = find_nick(arg4);
         if (!nptr2) return;
-        SetStatus(nptr2,arg3,CHFL_OP,1,whatbot(arg3));
+        SetStatus(nptr2,arg3,CHFL_OP,1,channel_botname(chptr));
     }   
 }
 
@@ -567,11 +565,11 @@ void chan_deop (Nick *nptr, User *uptr, Chan *chptr, char *all)
     }
 
     if (!arg4 || *arg4 == '\0')
-        SetStatus(nptr,arg3,CHFL_OP,0,whatbot(arg3));
+        SetStatus(nptr,arg3,CHFL_OP,0,channel_botname(chptr));
     else {
         nptr2 = find_nick(arg4);
         if (!nptr2) return;
-        SetStatus(nptr2,arg3,CHFL_OP,0,whatbot(arg3));
+        SetStatus(nptr2,arg3,CHFL_OP,0,channel_botname(chptr));
     }
 }
 
@@ -599,7 +597,7 @@ void chan_voice (Nick *nptr, User *uptr, Chan *chptr, char *all)
     }
 
     if (!arg4 || *arg4 == '\0')
-        SetStatus(nptr,arg3,CHFL_VOICE,1,whatbot(arg3));
+        SetStatus(nptr,arg3,CHFL_VOICE,1,channel_botname(chptr));
     else {
         if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) {
             NoticeToUser(nptr, "Access denied");
@@ -607,7 +605,7 @@ void chan_voice (Nick *nptr, User *uptr, Chan *chptr, char *all)
         }
         nptr2 = find_nick(arg4);
         if (!nptr2) return;
-        SetStatus(nptr2,arg3,CHFL_VOICE,1,whatbot(arg3));
+        SetStatus(nptr2,arg3,CHFL_VOICE,1,channel_botname(chptr));
     }
 }
 
@@ -635,7 +633,7 @@ void chan_halfop (Nick *nptr, User *uptr, Chan *chptr, char *all)
     }   
         
     if (!arg4 || *arg4 == '\0')
-        SetStatus(nptr,arg3,CHFL_HALFOP,1,whatbot(arg3));
+        SetStatus(nptr,arg3,CHFL_HALFOP,1,channel_botname(chptr));
     else {
         if (!ChannelCanOp(uptr, chptr) && !IsFounder(uptr, chptr)) {
             NoticeToUser(nptr, "Access denied");
@@ -643,7 +641,7 @@ void chan_halfop (Nick *nptr, User *uptr, Chan *chptr, char *all)
         }
         nptr2 = find_nick(arg4);
         if (!nptr2) return;
-        SetStatus(nptr2,arg3,CHFL_HALFOP,1,whatbot(arg3));
+        SetStatus(nptr2,arg3,CHFL_HALFOP,1,channel_botname(chptr));
     }   
 }
 
@@ -671,7 +669,7 @@ void chan_dehalfop (Nick *nptr, User *uptr, Chan *chptr, char *all)
     }   
         
     if (!arg4 || *arg4 == '\0')
-        SetStatus(nptr,arg3,CHFL_HALFOP,0,whatbot(arg3));
+        SetStatus(nptr,arg3,CHFL_HALFOP,0,channel_botname(chptr));
     else {
         if (!ChannelCanOp(uptr, chptr) && !IsFounder(uptr, chptr)) {
             NoticeToUser(nptr, "Access denied");
@@ -679,7 +677,7 @@ void chan_dehalfop (Nick *nptr, User *uptr, Chan *chptr, char *all)
         }
         nptr2 = find_nick(arg4);
         if (!nptr2) return;
-        SetStatus(nptr2,arg3,CHFL_HALFOP,0,whatbot(arg3));
+        SetStatus(nptr2,arg3,CHFL_HALFOP,0,channel_botname(chptr));
     }
 }
 
@@ -707,7 +705,7 @@ void chan_devoice (Nick *nptr, User *uptr, Chan *chptr, char *all)
     }   
         
     if (!arg4 || *arg4 == '\0')
-        SetStatus(nptr,arg3,CHFL_VOICE,0,whatbot(arg3));
+        SetStatus(nptr,arg3,CHFL_VOICE,0,channel_botname(chptr));
     else {
         if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) {
             NoticeToUser(nptr, "Access denied");
@@ -715,7 +713,7 @@ void chan_devoice (Nick *nptr, User *uptr, Chan *chptr, char *all)
         }
         nptr2 = find_nick(arg4);
         if (!nptr2) return;
-        SetStatus(nptr2,arg3,CHFL_VOICE,0,whatbot(arg3));
+        SetStatus(nptr2,arg3,CHFL_VOICE,0,channel_botname(chptr));
     }
 }
 
@@ -789,7 +787,7 @@ void chan_set_nojoin (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
 
-    if (find_chanbot(chptr->channelname)) {
+    if (chptr->chanbot != NULL) {
         NoticeToUser(nptr,"You cannot change NOJOIN option if a bot is assigned to the channel.");
         return;
     }
@@ -1054,7 +1052,7 @@ void chan_set_mlock (Nick *nptr, User *uptr, Chan *chptr, char *all)
             
     strncpy(chptr->mlock,all,50);
     NoticeToUser(nptr,"Mlock for channel %s set to \2%s\2",chptr->channelname,chptr->mlock);
-    SendRaw(":%s MODE %s %s",whatbot(chptr->channelname),chptr->channelname,chptr->mlock);
+    SendRaw(":%s MODE %s %s",channel_botname(chptr),chptr->channelname,chptr->mlock);
 }
 
 void chan_set_founder (Nick *nptr, User *uptr, Chan *chptr, char *all)
@@ -1261,7 +1259,7 @@ void chan_kick (Nick *nptr, User *uptr, Chan *chptr, char *all)
     arg3 = all;
     arg4 = SeperateWord(all);
     all = SeperateWord(arg4);
-    char *bot;
+    const char *bot;
     User *uptr2;
 
     if (!arg3 || *arg3 == '\0' || *arg3 != '#') {
@@ -1279,7 +1277,7 @@ void chan_kick (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
 
-    bot = whatbot(arg3);
+    bot = channel_botname(chptr);
     if (!arg4 || *arg4 == '\0') {
         KickUser(bot,nptr->nick,chptr->channelname,"(%s) Requested", nptr->nick);
     } else {
@@ -1330,6 +1328,7 @@ void chan_kick (Nick *nptr, User *uptr, Chan *chptr, char *all)
 void chan_assign (Nick *nptr, User *uptr, Chan *chptr, char *all)
 {
     char *arg1, *arg2;
+    Bot *bot;
 
     arg1 = all;
     arg2 = SeperateWord(arg1);
@@ -1350,18 +1349,18 @@ void chan_assign (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
 
-    if (find_chanbot(arg1)) {
+    if (chptr->chanbot != NULL) {
         NoticeToUser(nptr,"There is already a bot assigned to this channel. Please unassign it before.");
         return;
     }
 
-    if (!find_bot(arg2)) {
+    if ((bot = find_bot(arg2)) == NULL) {
         NoticeToUser(nptr,"This bot does not exist");
         return;
     }
 
-    PartChannel(arg1);
-    addChanbot(arg1,arg2);
+    PartChannel(chptr);
+    chptr->chanbot = bot;
     SetOption(chptr, COPT_NOJOIN);
 
     JoinChannel(arg2, arg1);
@@ -1371,7 +1370,6 @@ void chan_assign (Nick *nptr, User *uptr, Chan *chptr, char *all)
 void chan_unassign (Nick *nptr, User *uptr, Chan *chptr, char *all)
 {
     char *arg1;
-    Chanbot *chanbot;
 
     arg1 = all;
     SeperateWord(all);
@@ -1391,14 +1389,13 @@ void chan_unassign (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
 
-    chanbot = find_chanbot(arg1);
-    if (!chanbot) {
+    if (chptr->chanbot == NULL) {
         NoticeToUser(nptr,"There is no bot assigned to this channel");
         return;
     }
 
-    SendRaw(":%s PART %s :Channel unassigned",chanbot->bot,arg1);
-    delChanbot(chanbot);
+    SendRaw(":%s PART %s :Channel unassigned", chptr->chanbot->nick, arg1);
+    chptr->chanbot = NULL;
     NoticeToUser(nptr,"Channel unassigned. You can now either let the channel without bot or make %s join it with command /msg %s chan set %s nojoin off",me.nick,me.nick,arg1);
 }
 
@@ -1440,9 +1437,10 @@ void chan_addbot (Nick *nptr, User *uptr __unused, Chan *chptr __unused, char *a
 
 void chan_delbot (Nick *nptr, User *uptr __unused, Chan *chptr __unused, char *all)
 {
+    struct hashmap_entry *entry;
     char *arg1;
+    Chan *chan;
     Bot *bot;
-    Chanbot *chanbot,*next;
 
     arg1 = all;
     SeperateWord(arg1);
@@ -1453,10 +1451,9 @@ void chan_delbot (Nick *nptr, User *uptr __unused, Chan *chptr __unused, char *a
         return;
     }
 
-    for (chanbot = LIST_HEAD(chanbot_list); chanbot; chanbot = next) {
-        next = LIST_LNEXT(chanbot);
-        if (!Strcmp(chanbot->bot,bot->nick))
-            delChanbot(chanbot);
+    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chan) {
+        if (chan->chanbot == bot)
+            chan->chanbot = NULL;
     }
 
     fakekill(bot->nick,"Bot deleted");
@@ -1613,7 +1610,7 @@ void chan_unsuspend (Nick *nptr, User *uptr, Chan *chptr, char *all)
 
 void chan_banlist (Nick *nptr, User *uptr, Chan *chptr, char *all)
 {
-    TB *tb;
+    Timeban *tb;
     time_t blah1 = 0, blah2 = 0;
     char *t1, *t2, *ch;
 
@@ -1637,7 +1634,7 @@ void chan_banlist (Nick *nptr, User *uptr, Chan *chptr, char *all)
 
     NoticeToUser(nptr, "List of timebans for channel %s :", chptr->channelname);
 
-    LIST_FOREACH(tb_list, tb, HASH(chptr->channelname)) {
+    LLIST_FOREACH_ENTRY(&chptr->timebans, tb, chan_head) {
         blah1 = tb->setat;
         t1 = strdup(ctime(&blah1));
         *(strchr(t1, '\n')) = '\0';
@@ -1658,7 +1655,7 @@ void chan_banlist (Nick *nptr, User *uptr, Chan *chptr, char *all)
 
 void chan_clearbans (Nick *nptr, User *uptr, Chan *chptr, char *all)
 {
-    TB *tb, *next;
+    Timeban *tb, *tmp_tb;
     char *ch = all;
     SeperateWord(ch);
 
@@ -1677,11 +1674,8 @@ void chan_clearbans (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
 
-    for (tb = LIST_HEAD(tb_list); tb; tb = next) {
-        next = LIST_LNEXT(tb);
-
-        if (!Strcmp(tb->channel, chptr->channelname))
-            DeleteTB(tb);
+    LLIST_FOREACH_ENTRY_SAFE(&chptr->timebans, tb, tmp_tb, chan_head) {
+        DeleteTimeban(tb);
     }
 
     NoticeToUser(nptr, "Banlist cleared.");
@@ -1713,11 +1707,11 @@ void chan_topic (Nick *nptr, User *uptr, Chan *chptr, char *all)
     sprintf(mask, "%s!%s@%s", nptr->nick, nptr->ident, nptr->hiddenhost);
     if (!topic || *topic == '\0') {
         bzero(chptr->topic, TOPICLEN);
-        SendRaw(":%s TOPIC %s %s %ld :", whatbot(ch), ch, mask, time(NULL));
+        SendRaw(":%s TOPIC %s %s %ld :", channel_botname(chptr), ch, mask, time(NULL));
         NoticeToUser(nptr, "Topic cleared.");
     } else {
         strncpy(chptr->topic, topic, TOPICLEN);
-        SendRaw(":%s TOPIC %s %s %ld :%s", whatbot(ch), ch, mask, time(NULL), topic);
+        SendRaw(":%s TOPIC %s %s %ld :%s", channel_botname(chptr), ch, mask, time(NULL), topic);
         NoticeToUser(nptr, "Done.");
     }
 }
