@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "user.h"
 
 #include <errno.h>
+#include <execinfo.h>
 #include <mysql/mysql.h>
 #include <signal.h>
 #include <stdio.h>
@@ -92,7 +93,20 @@ static void sighandler (int signal)
         case SIGPIPE:
             operlog("Got SIGPIPE, ignored");
             break;
-    }
+        case SIGSEGV:
+            operlog("Segmentation fault");
+            // from https://stackoverflow.com/questions/77005/how-to-automatically-generate-a-stacktrace-when-my-program-crashes
+            void *array[10];
+            size_t size;
+
+            // get void*'s for all entries on the stack
+            size = backtrace(array, 10);
+
+            // print out all the frames to stderr
+            fprintf(stderr, "Segmentation fault:\n");
+            backtrace_symbols_fd(array, size, STDERR_FILENO);
+            raise(SIGSEGV);
+        }
 }
 
 static void usage (char *progname)
@@ -210,10 +224,14 @@ int main(int argc, char **argv)
     char op = 0;
     me.retry_attempts = me.nextretry = me.connected = 0;
 
-    struct sigaction sig, old;
+    struct sigaction sig, old, sigresethand;
     memset(&sig,0,sizeof(sig));
+    memset(&sigresethand,0,sizeof(sigresethand));
     sig.sa_handler = sighandler;
-    sigaction(SIGHUP,&sig,&old);
+    sigresethand = sig;
+    sigresethand.sa_flags = SA_RESETHAND;
+
+    sigaction(SIGHUP, &sig, &old);
 #ifdef USE_FILTER
     sigaction(SIGUSR1,&sig,&old);
 #endif
@@ -221,6 +239,7 @@ int main(int argc, char **argv)
     sigaction(SIGINT,&sig,&old);
     sigaction(SIGCHLD,&sig,&old);
     sigaction(SIGPIPE,&sig,&old);
+    sigaction(SIGSEGV, &sigresethand, &old);
 
     struct rlimit rlim;
     if ((getrlimit(RLIMIT_CORE, &rlim)) == -1) {
@@ -323,7 +342,7 @@ int main(int argc, char **argv)
     if (verbose) printf("Connected to server\n");
 
     if (!connect_to_db()) {
-        fprintf(stderr,"Cannot connect to mysql\n");
+        fprintf(stderr,"Cannot connect to mysql: %s\n", mysql_error(&mysql));
         operlog("Cannot connect to mysql db");
         child_clean();
     }

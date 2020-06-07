@@ -51,7 +51,7 @@ void loaduserdb()
     MYSQL_ROW row;
 
     if (!reconnect_to_db()) {
-        fprintf(stderr,"Cannot connect to db\n");
+        fprintf(stderr,"Cannot connect to db%s\n", mysql_error(&mysql));
         operlog("Cannot connect to db");
         return;
     }
@@ -110,7 +110,7 @@ void loadchandb()
     Cflag *cflag;
 
     if (!reconnect_to_db()) {
-        fprintf(stderr,"Cannot connect to db\n");
+        fprintf(stderr,"Cannot connect to db: %s\n", mysql_error(&mysql));
         operlog("Cannot connect to db");
         return;
     }
@@ -193,7 +193,7 @@ void loadtrustdb()
     MYSQL_ROW row;
 
     if (!reconnect_to_db()) {
-        fprintf(stderr,"Cannot connect to db\n");
+        fprintf(stderr,"Cannot connect to db: %s\n", mysql_error(&mysql));
         operlog("Cannot connect to db");
         return;
     }
@@ -220,7 +220,7 @@ void loadlinkdb()
     MYSQL_ROW row;
 
     if (!reconnect_to_db()) {
-        fprintf(stderr,"Cannot connect to db\n");
+        fprintf(stderr, "Cannot connect to db: %s\n", mysql_error(&mysql));
         operlog("Cannot connect to db");
         return;
     }
@@ -251,7 +251,7 @@ void loadbotservdb()
     MYSQL_ROW row;
 
     if (!reconnect_to_db()) {
-        fprintf(stderr,"Cannot connect to db\n");
+        fprintf(stderr,"Cannot connect to db: %s\n", mysql_error(&mysql));
         operlog("Cannot connect to db");
         return;
     }
@@ -296,7 +296,7 @@ void saveuserdb()
     bzero(buf,512);
 
     if (!reconnect_to_db()) {
-        fprintf(stderr,"Cannot connect to db\n");
+        fprintf(stderr,"Cannot connect to db: %s\n", mysql_error(&mysql));
         operlog("Cannot connect to db");
         return;
     }
@@ -322,7 +322,7 @@ void savechandb()
     struct hashmap_entry *entry;
 
     if (!reconnect_to_db()) {
-        fprintf(stderr,"Cannot connect to db\n");
+        fprintf(stderr,"Cannot connect to db: %s\n", mysql_error(&mysql));
         operlog("Cannot connect to db");
         return;
     }
@@ -362,7 +362,7 @@ void savetrustdb()
     struct hashmap_entry *entry;
 
     if (!reconnect_to_db()) {
-        fprintf(stderr,"Cannot connect to db\n");
+        fprintf(stderr,"Cannot connect to db: %s\n", mysql_error(&mysql));
         operlog("Cannot connect to db");
         return;
     }
@@ -387,7 +387,7 @@ void savelinkdb()
     bzero(slave,NICKLEN);
 
     if (!reconnect_to_db()) {
-        fprintf(stderr,"Cannot connect to db\n");
+        fprintf(stderr,"Cannot connect to db: %s\n", mysql_error(&mysql));
         operlog("Cannot connect to db");
         return;
     }
@@ -408,7 +408,7 @@ void savebotservdb()
     struct hashmap_entry *entry;
 
     if (!reconnect_to_db()) {
-        fprintf(stderr,"Cannot connect to db\n");
+        fprintf(stderr,"Cannot connect to db: %s\n", mysql_error(&mysql));
         operlog("Cannot connect to db");
         return;
     }
