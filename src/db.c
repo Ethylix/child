@@ -312,7 +312,7 @@ void saveuserdb()
 
     mysql_query(&mysql,"DELETE FROM child_users");
 
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->users, entry, uptr) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_users(), entry, uptr) {
         snprintf(tmp,1024,"INSERT INTO child_users VALUES ('%s',%d,%d,'%s','%s',%ld,%d,'%s',%d)",strtosql(buf,uptr->nick,512),uptr->level,uptr->lastseen,uptr->vhost,uptr->md5_pass,uptr->options,uptr->timeout,uptr->email,uptr->regtime);
         mysql_query(&mysql,tmp);
     }
@@ -339,7 +339,7 @@ void savechandb()
     mysql_query(&mysql,"DELETE FROM child_chans");
     mysql_query(&mysql,"DELETE FROM child_chan_access");
 
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chptr) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_chans(), entry, chptr) {
         bzero(chname,CHANLEN);
         bzero(nick,NICKLEN);
         bzero(owner,NICKLEN);
@@ -378,7 +378,7 @@ void savetrustdb()
 
     mysql_query(&mysql,"DELETE FROM child_trusts");
 
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->trusts, entry, trust) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_trusts(), entry, trust) {
         snprintf(tmp,1024,"INSERT INTO child_trusts VALUES ('%s',%d)",trust->host,trust->limit);
         mysql_query(&mysql,tmp);
     }
@@ -403,7 +403,7 @@ void savelinkdb()
 
     mysql_query(&mysql,"DELETE FROM child_links");
 
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->links, entry, link) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_links(), entry, link) {
         snprintf(tmp,1024,"INSERT INTO child_links VALUES ('%s','%s')",strtosql(master,link->master,NICKLEN),strtosql(slave,link->slave,NICKLEN));
         mysql_query(&mysql,tmp);
     }
@@ -424,14 +424,14 @@ void savebotservdb()
 
     mysql_query(&mysql,"DELETE FROM child_botserv_bots");
 
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->bots, entry, bot) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_bots(), entry, bot) {
         snprintf(tmp,1024,"INSERT INTO child_botserv_bots VALUES ('%s','%s','%s')",bot->nick,bot->ident,bot->host);
         mysql_query(&mysql,tmp);
     }
 
     mysql_query(&mysql,"DELETE FROM child_botserv_chans");
 
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chptr) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_chans(), entry, chptr) {
         if (chptr->chanbot == NULL)
             continue;
         snprintf(tmp,1024,"INSERT INTO child_botserv_chans VALUES ('%s','%s')",chptr->channelname, chptr->chanbot->nick);

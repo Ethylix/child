@@ -87,7 +87,7 @@ static void set_mode_allchans()
 
     if (rmode) return;
 
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chan) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_chans(), entry, chan) {
         SendRaw("MODE %s +%s",chan->channelname,modes);
     }
     rmode = 1;
@@ -100,7 +100,7 @@ static void remove_mode_allchans()
 
     if (!rmode) return;
 
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chan) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_chans(), entry, chan) {
         SendRaw("MODE %s -%s",chan->channelname,modes);
     }
     rmode = 0;

@@ -36,10 +36,10 @@ Module *find_module(const char *name)
 {
     struct hashmap_entry *entry;
 
-    if (!HASHMAP_FIND(get_core()->modules, name, &entry))
+    if (!HASHMAP_FIND(core_get_modules(), name, &entry))
         return NULL;
 
-    return HASHMAP_ENTRY_VALUE(get_core()->modules, entry);
+    return HASHMAP_ENTRY_VALUE(core_get_modules(), entry);
 }
 
 Hook *find_hook(const Module *mod, const char *name)
@@ -59,7 +59,7 @@ void unloadallmod(void)
     struct hashmap_entry *entry, *tmp_entry;
     Module *mod;
 
-    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->modules, entry, tmp_entry, mod) {
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_modules(), entry, tmp_entry, mod) {
         unloadmodule(mod->modname);
     }
 }
@@ -99,7 +99,7 @@ Module *loadmodule(const char *name)
     mod->nodreload = 0;
     LLIST_INIT(&mod->hooks);
 
-    if (!HASHMAP_INSERT(get_core()->modules, mod->modname, mod, NULL)) {
+    if (!HASHMAP_INSERT(core_get_modules(), mod->modname, mod, NULL)) {
         fprintf(stderr, "Failed to insert module \"%s\" into hashmap (duplicate entry?)\n", mod->modname);
         dlclose(handle);
         free(mod);
@@ -133,7 +133,7 @@ int unloadmodule(const char *name)
 
     dlclose(mod->handle); /* closing module handle */
 
-    HASHMAP_ERASE(get_core()->modules, mod->modname);
+    HASHMAP_ERASE(core_get_modules(), mod->modname);
     free(mod);
 
     return 1;
@@ -178,7 +178,7 @@ int RunHooks(uint64_t hook_mask, Nick *nptr, User *uptr, Chan *chptr, char *parv
     Hook *hook;
     int ret,modstop=0;
 
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->modules, entry, mod) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_modules(), entry, mod) {
         LLIST_FOREACH_ENTRY(&mod->hooks, hook, list_head) {
             if (hook->hook_mask & hook_mask) {
                 ret = hook->ptr(nptr,uptr,chptr,parv);

@@ -125,6 +125,21 @@ struct core {
     MYSQL mysql_handle;
 };
 
+#define core_get_users() (get_core()->users)
+#define core_get_nicks() (get_core()->nicks)
+#define core_get_clones() (get_core()->clones)
+#define core_get_modules() (get_core()->modules)
+#define core_get_trusts() (get_core()->trusts)
+#define core_get_links() (get_core()->links)
+#define core_get_guests() (get_core()->guests)
+#define core_get_chans() (get_core()->chans)
+#define core_get_wchans() (get_core()->wchans)
+#define core_get_bots() (get_core()->bots)
+#define core_get_fakeusers() (get_core()->fakeusers)
+
+#define core_get_limits() (&get_core()->limits)
+#define core_get_timebans() (&get_core()->timebans)
+
 struct core *get_core(void);
 void init_core(void);
 void free_core(void);

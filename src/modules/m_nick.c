@@ -388,7 +388,7 @@ void nick_register (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    if (!HASHMAP_EMPTY(get_core()->users))
+    if (!HASHMAP_EMPTY(core_get_users()))
         AddUser(nptr->nick,1);
     else {
         AddUser(nptr->nick,me.level_owner);
@@ -526,7 +526,7 @@ void nick_info (Nick *nptr, User *uptr, char *all)
     NoticeToUser(nptr,"   Registration time: %s", blah ? ctime(&blah) : "Unknown");
     if (!Strcmp(nptr->nick,arg3) || (uptr->level >= me.level_oper && IsOper(nptr))) {
         NoticeToUser(nptr,"   Linked nicks:");
-        HASHMAP_FOREACH_ENTRY_VALUE(get_core()->links, entry, link) {
+        HASHMAP_FOREACH_ENTRY_VALUE(core_get_links(), entry, link) {
             if (!Strcmp(link->master,arg3))
                 NoticeToUser(nptr,"       %s (Master: %s)",link->slave,link->master);
             if (!Strcmp(link->slave,arg3))

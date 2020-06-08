@@ -47,7 +47,7 @@ Bot *add_bot(const char *nick, const char *ident, const char *host)
     strncpy(newbot->ident, ident, NICKLEN);
     strncpy(newbot->host, host, HOSTLEN);
 
-    if (!HASHMAP_INSERT(get_core()->bots, newbot->nick, newbot, NULL)) {
+    if (!HASHMAP_INSERT(core_get_bots(), newbot->nick, newbot, NULL)) {
         fprintf(stderr, "Failed to insert new bot \"%s\" into hashmap (duplicate entry?)\n", newbot->nick);
         free(newbot);
         return NULL;
@@ -65,7 +65,7 @@ Bot *add_bot(const char *nick, const char *ident, const char *host)
 
 void remove_bot(Bot *bot)
 {
-    if (!HASHMAP_ERASE(get_core()->bots, bot->nick)) {
+    if (!HASHMAP_ERASE(core_get_bots(), bot->nick)) {
         fprintf(stderr, "Failed to remove bot \"%s\" from hashmap.\n",
                 bot->nick);
     }
@@ -82,8 +82,8 @@ Bot *find_bot(const char *nick)
 {
     struct hashmap_entry *entry;
 
-    if (!HASHMAP_FIND(get_core()->bots, nick, &entry))
+    if (!HASHMAP_FIND(core_get_bots(), nick, &entry))
         return NULL;
 
-    return HASHMAP_ENTRY_VALUE(get_core()->bots, entry);
+    return HASHMAP_ENTRY_VALUE(core_get_bots(), entry);
 }

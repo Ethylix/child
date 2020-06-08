@@ -779,7 +779,7 @@ void bot_admin (Nick *nptr, User *uptr __unused, Chan *chptr __unused, Wchan *wc
 
     const char *bot = channel_botname(chptr);
 
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->users, entry, uptr2) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_users(), entry, uptr2) {
         nptr2 = find_nick(uptr2->nick);
         if (nptr2 && IsOper(nptr2) && uptr2->authed == 1) {
             if (uptr2->level >= me.level_root)

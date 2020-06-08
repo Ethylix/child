@@ -40,20 +40,20 @@ Chan *find_channel(const char *name)
 {
     struct hashmap_entry *entry;
 
-    if (!HASHMAP_FIND(get_core()->chans, name, &entry))
+    if (!HASHMAP_FIND(core_get_chans(), name, &entry))
         return NULL;
 
-    return HASHMAP_ENTRY_VALUE(get_core()->chans, entry);
+    return HASHMAP_ENTRY_VALUE(core_get_chans(), entry);
 }
 
 Wchan *find_wchan(const char *name)
 {
     struct hashmap_entry *entry;
 
-    if (!HASHMAP_FIND(get_core()->wchans, name, &entry))
+    if (!HASHMAP_FIND(core_get_wchans(), name, &entry))
         return NULL;
 
-    return HASHMAP_ENTRY_VALUE(get_core()->wchans, entry);
+    return HASHMAP_ENTRY_VALUE(core_get_wchans(), entry);
 }
 
 Cflag *find_cflag(const Chan *chptr, const User *uptr)
@@ -152,7 +152,7 @@ Chan *CreateChannel (char *name, char *owner, int lastseen)
     new_chan->chanbot = NULL;
     LLIST_INIT(&new_chan->timebans);
 
-    if (!HASHMAP_INSERT(get_core()->chans, new_chan->channelname, new_chan, NULL)) {
+    if (!HASHMAP_INSERT(core_get_chans(), new_chan->channelname, new_chan, NULL)) {
         fprintf(stderr, "Failed to insert new channel \"%s\" into hashmap (duplicate entry?)\n", new_chan->channelname);
         free(new_chan);
         return NULL;
@@ -184,7 +184,7 @@ Wchan *CreateWchan(char *name)
     bzero(new_chan->topic, TOPICLEN);
     LLIST_INIT(&new_chan->members);
 
-    if (!HASHMAP_INSERT(get_core()->wchans, new_chan->chname, new_chan, NULL)) {
+    if (!HASHMAP_INSERT(core_get_wchans(), new_chan->chname, new_chan, NULL)) {
         fprintf(stderr, "Failed to insert new wchan \"%s\" into hashmap (duplicate entry?)\n", new_chan->chname);
         free(new_chan);
         return NULL;
@@ -208,7 +208,7 @@ Limit *AddLimit(Chan *chptr)
     limit->time = time(NULL)+me.limittime;
     chptr->active_autolimit = limit;
 
-    LLIST_INSERT_TAIL(&get_core()->limits, &limit->list_head);
+    LLIST_INSERT_TAIL(core_get_limits(), &limit->list_head);
 
     return limit;
 }
@@ -225,7 +225,7 @@ Timeban *AddTimeban(Chan *chan, const char *mask, int duration, const char *reas
     new_tb->setat = time(NULL);
 
     LLIST_INSERT_TAIL(&chan->timebans, &new_tb->chan_head);
-    LLIST_INSERT_TAIL(&get_core()->timebans, &new_tb->core_head);
+    LLIST_INSERT_TAIL(core_get_timebans(), &new_tb->core_head);
 
     return new_tb;
 }
@@ -241,7 +241,7 @@ void DeleteUsersFromChannel (Chan *chan)
 
 void DeleteChannel (Chan *chan)
 {
-    HASHMAP_ERASE(get_core()->chans, chan->channelname);
+    HASHMAP_ERASE(core_get_chans(), chan->channelname);
 
     if (eos)
         PartChannel(chan);
@@ -251,7 +251,7 @@ void DeleteChannel (Chan *chan)
 
 void DeleteWchan (Wchan *wchan)
 {
-    HASHMAP_ERASE(get_core()->wchans, wchan->chname);
+    HASHMAP_ERASE(core_get_wchans(), wchan->chname);
     free(wchan);
 }
 
@@ -261,7 +261,7 @@ void clear_wchans(void)
     Member *member, *tmp_member;
     Wchan *wchan;
 
-    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->wchans, entry, tmp_entry, wchan) {
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_wchans(), entry, tmp_entry, wchan) {
         LLIST_FOREACH_ENTRY_SAFE(&wchan->members, member, tmp_member, wchan_head) {
             DeleteMember(member);
         }
@@ -280,7 +280,7 @@ void clear_limits(void)
 {
     Limit *limit, *tmp_limit;
 
-    LLIST_FOREACH_ENTRY_SAFE(&get_core()->limits, limit, tmp_limit, list_head) {
+    LLIST_FOREACH_ENTRY_SAFE(core_get_limits(), limit, tmp_limit, list_head) {
         DeleteLimit(limit);
     }
 }
@@ -545,13 +545,13 @@ void checkexpired()
     Chan *chptr;
     struct hashmap_entry *entry, *tmp_entry;
 
-    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->users, entry, tmp_entry, uptr) {
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_users(), entry, tmp_entry, uptr) {
         if (((time(NULL) - uptr->lastseen) >= 60*60*24*me.nick_expire) && uptr->authed != 1
                 && uptr->level < me.level_oper && !(IsUserNoexpire(uptr)))
             userdrop(uptr);
     }
 
-    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->chans, entry, tmp_entry, chptr) {
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_chans(), entry, tmp_entry, chptr) {
         if (((time(NULL) - chptr->lastseen) >= 60*60*24*me.chan_expire) && !(IsChanNoexpire(chptr)) && !(IsAclOnChan(chptr)))
             chandrop(chptr);
     }
@@ -563,7 +563,7 @@ void CheckLimits()
     Wchan *wchan;
     Chan *chptr;
 
-    LLIST_FOREACH_ENTRY_SAFE(&get_core()->limits, limit, tmp_limit, list_head) {
+    LLIST_FOREACH_ENTRY_SAFE(core_get_limits(), limit, tmp_limit, list_head) {
         if (time(NULL) >= limit->time) {
             wchan = find_wchan(limit->chan->channelname);
             if (!wchan) {
@@ -584,7 +584,7 @@ int chansreg (char *nick)
     Chan *chan;
     struct hashmap_entry *entry;
 
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chan) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_chans(), entry, chan) {
         if (!Strcmp(chan->owner,nick))
             count++;
     }
@@ -606,7 +606,7 @@ void joinallchans()
     Chan *chptr;
     Wchan *wchan;
 
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chptr) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_chans(), entry, chptr) {
         wchan = find_wchan(chptr->channelname);
         if (!HasOption(chptr, COPT_NOJOIN) || chptr->chanbot != NULL)
             JoinChannel(channel_botname(chptr), chptr->channelname);
@@ -630,7 +630,7 @@ void CheckTimebans()
 {
     Timeban *tb, *tmp_tb;
 
-    LLIST_FOREACH_ENTRY_SAFE(&get_core()->timebans, tb, tmp_tb, core_head) {
+    LLIST_FOREACH_ENTRY_SAFE(core_get_timebans(), tb, tmp_tb, core_head) {
         if (tb->duration == -1 || time(NULL) < tb->setat + tb->duration)
             continue;
 

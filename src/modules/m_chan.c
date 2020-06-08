@@ -1405,10 +1405,10 @@ void chan_botlist (Nick *nptr)
     Bot *bot;
 
     NoticeToUser(nptr,"List of available bots :");
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->bots, entry, bot) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_bots(), entry, bot) {
         NoticeToUser(nptr,"     \2%s\2 (%s@%s)",bot->nick,bot->ident,bot->host);
     }
-    NoticeToUser(nptr,"End of list (%d entries).", HASHMAP_SIZE(get_core()->bots));
+    NoticeToUser(nptr,"End of list (%d entries).", HASHMAP_SIZE(core_get_bots()));
 }
 
 void chan_addbot (Nick *nptr, User *uptr __unused, Chan *chptr __unused, char *all)
@@ -1451,7 +1451,7 @@ void chan_delbot (Nick *nptr, User *uptr __unused, Chan *chptr __unused, char *a
         return;
     }
 
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chan) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_chans(), entry, chan) {
         if (chan->chanbot == bot)
             chan->chanbot = NULL;
     }

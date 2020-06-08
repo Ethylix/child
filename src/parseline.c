@@ -365,7 +365,7 @@ void m_kill (char *sender, char *tail)
             return;
         }
 
-        HASHMAP_FOREACH_ENTRY_VALUE(get_core()->chans, entry, chptr) {
+        HASHMAP_FOREACH_ENTRY_VALUE(core_get_chans(), entry, chptr) {
             if (Strcmp(channel_botname(chptr), nick))
                 continue;
 
@@ -825,13 +825,13 @@ void m_nick (char *sender, char *tail)
     DeleteGuest(nptr->nick);
 
     // TODO(target0): handle error cases.
-    HASHMAP_ERASE(get_core()->nicks, nptr->nick);
+    HASHMAP_ERASE(core_get_nicks(), nptr->nick);
 
     strncpy(nptr->nick,newnick,NICKLEN - 1);
     nptr->nick[NICKLEN - 1] = '\0';
 
     // TODO(target0): handle error cases.
-    HASHMAP_INSERT(get_core()->nicks, nptr->nick, nptr, NULL);
+    HASHMAP_INSERT(core_get_nicks(), nptr->nick, nptr, NULL);
 
     uptr = find_user(oldnick);
 

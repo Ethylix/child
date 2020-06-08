@@ -44,10 +44,10 @@ User *find_user(const char *name)
 {
     struct hashmap_entry *entry;
 
-    if (!HASHMAP_FIND(get_core()->users, name, &entry))
+    if (!HASHMAP_FIND(core_get_users(), name, &entry))
         return NULL;
 
-    return HASHMAP_ENTRY_VALUE(get_core()->users, entry);
+    return HASHMAP_ENTRY_VALUE(core_get_users(), entry);
 }
 
 Nick *find_nick(const char *name)
@@ -56,7 +56,7 @@ Nick *find_nick(const char *name)
     struct hashmap_entry *entry;
 
     // TODO(target0): do a proper O(1) lookup.
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->nicks, entry, tmp) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_nicks(), entry, tmp) {
         if (!Strcmp(tmp->nick,name) || !Strcmp(tmp->uid,name))
             return tmp;
     }
@@ -68,10 +68,10 @@ Guest *find_guest(const char *name)
 {
     struct hashmap_entry *entry;
 
-    if (!HASHMAP_FIND(get_core()->guests, name, &entry))
+    if (!HASHMAP_FIND(core_get_guests(), name, &entry))
         return NULL;
 
-    return HASHMAP_ENTRY_VALUE(get_core()->guests, entry);
+    return HASHMAP_ENTRY_VALUE(core_get_guests(), entry);
 }
 
 /* A nickname has only one master but can have several slaves */
@@ -80,10 +80,10 @@ Link *find_link(const char *slave)
 {
     struct hashmap_entry *entry;
 
-    if (!HASHMAP_FIND(get_core()->links, slave, &entry))
+    if (!HASHMAP_FIND(core_get_links(), slave, &entry))
         return NULL;
 
-    return HASHMAP_ENTRY_VALUE(get_core()->links, entry);
+    return HASHMAP_ENTRY_VALUE(core_get_links(), entry);
 }
 
 Link *find_link2 (char *master, char *slave)
@@ -92,7 +92,7 @@ Link *find_link2 (char *master, char *slave)
     struct hashmap_entry *entry;
 
     // TODO(target0): do a proper O(1) lookup.
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->links, entry, tmp) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_links(), entry, tmp) {
         if (!Strcmp(tmp->master,master) && !Strcmp(tmp->slave,slave))
             return tmp;
     }
@@ -104,10 +104,10 @@ Fake *find_fake (char *nick)
 {
     struct hashmap_entry *entry;
 
-    if (!HASHMAP_FIND(get_core()->fakeusers, nick, &entry))
+    if (!HASHMAP_FIND(core_get_fakeusers(), nick, &entry))
         return NULL;
 
-    return HASHMAP_ENTRY_VALUE(get_core()->fakeusers, entry);
+    return HASHMAP_ENTRY_VALUE(core_get_fakeusers(), entry);
 }
 
 User *AddUser (char *nick, int level)
@@ -128,7 +128,7 @@ User *AddUser (char *nick, int level)
 
     LLIST_INIT(&new_user->cflags);
 
-    if (!HASHMAP_INSERT(get_core()->users, new_user->nick, new_user, NULL)) {
+    if (!HASHMAP_INSERT(core_get_users(), new_user->nick, new_user, NULL)) {
         fprintf(stderr, "Failed to insert new user \"%s\" into hashmap (duplicate entry?)\n", new_user->nick);
         free(new_user);
         return NULL;
@@ -158,7 +158,7 @@ Nick *AddNick(char *nick, char *ident, char *host, char *uid, char *hiddenhost, 
     new_nick->lasttry = 0;
     LLIST_INIT(&new_nick->wchans);
 
-    if (!HASHMAP_INSERT(get_core()->nicks, new_nick->nick, new_nick, NULL)) {
+    if (!HASHMAP_INSERT(core_get_nicks(), new_nick->nick, new_nick, NULL)) {
         fprintf(stderr, "Failed to insert new nick \"%s\" into hashmap (duplicate entry?)\n", new_nick->nick);
         free(new_nick);
         return NULL;
@@ -171,7 +171,7 @@ Nick *AddNick(char *nick, char *ident, char *host, char *uid, char *hiddenhost, 
         clone = (Clone *)malloc(sizeof(Clone));
         strncpy(clone->host, reshost, HOSTLEN);
         clone->count = 1;
-        if (!HASHMAP_INSERT(get_core()->clones, clone->host, clone, NULL)) {
+        if (!HASHMAP_INSERT(core_get_clones(), clone->host, clone, NULL)) {
             fprintf(stderr, "Failed to insert new clone \"%s\" into hashmap (duplicate entry?)\n", clone->host);
             free(clone);
         }
@@ -189,7 +189,7 @@ Guest *AddGuest (char *nick, int timeout, int nickconn)
     new_guest->timeout = timeout;
     new_guest->nickconn = nickconn;
 
-    if (!HASHMAP_INSERT(get_core()->guests, new_guest->nick, new_guest, NULL)) {
+    if (!HASHMAP_INSERT(core_get_guests(), new_guest->nick, new_guest, NULL)) {
         fprintf(stderr, "Failed to insert new guest \"%s\" into hashmap (duplicate entry?)\n", new_guest->nick);
         free(new_guest);
         return NULL;
@@ -206,7 +206,7 @@ Link *AddLink(char *master, char *slave)
     strncpy(new_link->master,master,NICKLEN);
     strncpy(new_link->slave,slave,NICKLEN);
 
-    if (!HASHMAP_INSERT(get_core()->links, new_link->slave, new_link, NULL)) {
+    if (!HASHMAP_INSERT(core_get_links(), new_link->slave, new_link, NULL)) {
         fprintf(stderr, "Failed to insert new link \"%s\" into hashmap (duplicate entry?)\n", new_link->slave);
         free(new_link);
         return NULL;
@@ -226,7 +226,7 @@ Fake *AddFake(char *nick, char *ident, char *host)
     strncpy(new_fake->ident, ident, NICKLEN);
     strncpy(new_fake->host, host, HOSTLEN);
 
-    if (!HASHMAP_INSERT(get_core()->fakeusers, new_fake->nick, new_fake, NULL)) {
+    if (!HASHMAP_INSERT(core_get_fakeusers(), new_fake->nick, new_fake, NULL)) {
         fprintf(stderr, "Failed to insert new fakeuser \"%s\" into hashmap (duplicate entry?)\n", new_fake->nick);
         free(new_fake);
         return NULL;
@@ -237,7 +237,7 @@ Fake *AddFake(char *nick, char *ident, char *host)
 
 void DeleteAccount (User *user)
 {
-    if (!HASHMAP_ERASE(get_core()->users, user->nick))
+    if (!HASHMAP_ERASE(core_get_users(), user->nick))
         return;
 
     if (find_nick(user->nick) && eos)
@@ -250,13 +250,13 @@ void DeleteWildNick (Nick *nptr)
 {
     Clone *clone;
 
-    if (!HASHMAP_ERASE(get_core()->nicks, nptr->nick))
+    if (!HASHMAP_ERASE(core_get_nicks(), nptr->nick))
         return;
 
     if ((clone = find_clone(nptr->reshost)) != NULL) {
         clone->count--;
         if (clone->count == 0) {
-            HASHMAP_ERASE(get_core()->clones, clone->host);
+            HASHMAP_ERASE(core_get_clones(), clone->host);
             free(clone);
         }
     }
@@ -268,7 +268,7 @@ void clear_nicks(void)
     struct hashmap_entry *entry, *tmp_entry;
     Nick *nptr;
 
-    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->nicks, entry, tmp_entry, nptr) {
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_nicks(), entry, tmp_entry, nptr) {
         DeleteWildNick(nptr);
     }
 }
@@ -277,7 +277,7 @@ void DeleteGuest (char *nick)
 {
     Guest *guest = find_guest(nick);
     if (!guest) return;
-    HASHMAP_ERASE(get_core()->guests, nick);
+    HASHMAP_ERASE(core_get_guests(), nick);
     free(guest);
 }
 
@@ -286,7 +286,7 @@ void clear_guests(void)
     struct hashmap_entry *entry, *tmp_entry;
     Guest *guest;
 
-    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->guests, entry, tmp_entry, guest) {
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_guests(), entry, tmp_entry, guest) {
         DeleteGuest(guest->nick);
     }
 }
@@ -295,7 +295,7 @@ void DeleteLink (char *slave)
 {
     Link *link = find_link(slave);
     if (!link) return;
-    HASHMAP_ERASE(get_core()->links, slave);
+    HASHMAP_ERASE(core_get_links(), slave);
     free(link);
 }
 
@@ -304,7 +304,7 @@ void DeleteLinks (char *nick)
     Link *tmp;
     struct hashmap_entry *entry, *tmp_entry;
 
-    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->links, entry, tmp_entry, tmp) {
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_links(), entry, tmp_entry, tmp) {
         if (!Strcmp(tmp->master,nick) || !Strcmp(tmp->slave,nick))
             DeleteLink(tmp->slave);
     }
@@ -312,7 +312,7 @@ void DeleteLinks (char *nick)
 
 void DeleteFake (Fake *fake)
 {
-    HASHMAP_ERASE(get_core()->fakeusers, fake->nick);
+    HASHMAP_ERASE(core_get_fakeusers(), fake->nick);
     free(fake);
 }
 
@@ -321,7 +321,7 @@ void clear_fakes(void)
     struct hashmap_entry *entry, *tmp_entry;
     Fake *fake;
 
-    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->fakeusers, entry, tmp_entry, fake) {
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_fakeusers(), entry, tmp_entry, fake) {
         DeleteFake(fake);
     }
 }
@@ -368,10 +368,10 @@ Clone *find_clone (char *host)
 {
     struct hashmap_entry *entry;
 
-    if (!HASHMAP_FIND(get_core()->clones, host, &entry))
+    if (!HASHMAP_FIND(core_get_clones(), host, &entry))
         return NULL;
 
-    return HASHMAP_ENTRY_VALUE(get_core()->clones, entry);
+    return HASHMAP_ENTRY_VALUE(core_get_clones(), entry);
 }
 
 int howmanyclones(char *host)
@@ -388,7 +388,7 @@ void CheckGuests()
     Guest *guest;
     int gv;
 
-    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->guests, entry, tmp_entry, guest) {
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_guests(), entry, tmp_entry, guest) {
         // TODO(target0): improve this.
         if ((time(NULL) - guest->nickconn) >= guest->timeout) {
             init_srandom();
@@ -485,7 +485,7 @@ void killallfakes()
     struct hashmap_entry *entry;
     Bot *bot;
 
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->bots, entry, bot) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_bots(), entry, bot) {
         fakekill(bot->nick,"Exiting");
     }
 }
@@ -495,7 +495,7 @@ void loadallfakes()
     struct hashmap_entry *entry;
     Bot *bot;
 
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->bots, entry, bot) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_bots(), entry, bot) {
         fakeuser(bot->nick,bot->ident,bot->host,BOTSERV_UMODES);
         SendRaw("SQLINE %s :Reserved for services",bot->nick);
     }
@@ -507,7 +507,7 @@ void userdrop (User *uptr)
     Chan *chptr;
     User *uptr2;
 
-    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(get_core()->chans, entry, tmp_entry, chptr) {
+    HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_chans(), entry, tmp_entry, chptr) {
         if (!Strcmp(chptr->owner, uptr->nick)) {
             if ((uptr2 = get_coowner(chptr)) != NULL) {
                 DeleteUserFromChannel(uptr2, chptr);

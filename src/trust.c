@@ -34,10 +34,10 @@ Trust *find_trust_strict (char *host)
 {
     struct hashmap_entry *entry;
 
-    if (!HASHMAP_FIND(get_core()->trusts, host, &entry))
+    if (!HASHMAP_FIND(core_get_trusts(), host, &entry))
         return NULL;
 
-    return HASHMAP_ENTRY_VALUE(get_core()->trusts, entry);
+    return HASHMAP_ENTRY_VALUE(core_get_trusts(), entry);
 }
 
 Trust *find_trust(char *host)
@@ -47,7 +47,7 @@ Trust *find_trust(char *host)
     struct hashmap_entry *entry;
 
     // TODO(target0): improve this.
-    HASHMAP_FOREACH_ENTRY_VALUE(get_core()->trusts, entry, tmp) {
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_trusts(), entry, tmp) {
         if (!Strcmp(tmp->host,host))
             return tmp;
 
@@ -78,7 +78,7 @@ Trust *AddTrust(char *host, int limit)
     strncpy(new_trust->host,host,HOSTLEN);
     new_trust->limit = limit;
 
-    if (!HASHMAP_INSERT(get_core()->trusts, new_trust->host, new_trust, NULL)) {
+    if (!HASHMAP_INSERT(core_get_trusts(), new_trust->host, new_trust, NULL)) {
         fprintf(stderr, "Failed to insert new trust \"%s\" into hashmap (duplicate entry?)\n", new_trust->host);
         free(new_trust);
         return NULL;
@@ -88,6 +88,6 @@ Trust *AddTrust(char *host, int limit)
 
 void DeleteTrust(Trust *trust)
 {
-    HASHMAP_ERASE(get_core()->trusts, trust->host);
+    HASHMAP_ERASE(core_get_trusts(), trust->host);
     free(trust);
 }
