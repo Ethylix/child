@@ -14,6 +14,7 @@ set(CONFIG_HEADER ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 find_package(OpenSSL REQUIRED)
 find_package(MySQL REQUIRED)
 find_package(Sodium REQUIRED)
+find_package(LibProm)
 
 find_library(DL_LIBRARY NAMES dl)
 if (DL_LIBRARY)
@@ -25,6 +26,9 @@ ENDIF (DL_LIBRARY)
 
 
 add_subdirectory(src)
+
+message("")
+
 
 enable_testing()
 add_subdirectory(tests)

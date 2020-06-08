@@ -5,8 +5,13 @@ jobs:
     environment:
       DEBIAN_FRONTEND: noninteractive
       CK_TAP_LOG_FILE_NAME: tests/results.tap
+      PROM_VERSION: 0.1.3
     steps:
-      - run: apt update && apt install -y check libsodium-dev
+      - run: apt update && apt install -y check libsodium-dev curl libmicrohttpd-dev
+      - run: >
+          curl -L https://github.com/digitalocean/prometheus-client-c/releases/download/v${PROM_VERSION}/libprom-dev-${PROM_VERSION}-Linux.deb -o /tmp/libprom-dev.deb &&
+          curl -L https://github.com/digitalocean/prometheus-client-c/releases/download/v${PROM_VERSION}/libpromhttp-dev-${PROM_VERSION}-Linux.deb -o /tmp/libpromhttp-dev.deb &&
+          dpkg -i /tmp/libprom-dev.deb /tmp/libpromhttp-dev.deb
       - checkout:
       - run: cmake .
       - run: make
