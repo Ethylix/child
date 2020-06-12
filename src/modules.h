@@ -115,6 +115,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define HOOK_SAVEDB         0x2000
 #define HOOK_CONNECTED      0x4000
 #define HOOK_SASL           0x8000
+#define HOOK_CREATE_ACCOUNT 0x10000
+#define HOOK_DELETE_ACCOUNT 0x20000
+#define HOOK_CREATE_CHANNEL 0x40000
+#define HOOK_DELETE_CHANNEL 0x80000
+#define HOOK_RUNHOOK        0x100000
+#define HOOK_POST_LOGIN     0x200000
 
 #define MOD_STOP        0
 #define MOD_CONTINUE    1

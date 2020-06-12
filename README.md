@@ -10,12 +10,14 @@ Child is an IRC Service for [UnrealIRCD](https://www.unrealircd.com).
 - `cmake`
 - `check`
 - `libsodium`
+- `libmicrohttpd` (if building m_prometheus)
+- `libprom` / `libpromhttp` (if building m_prometheus, see https://github.com/digitalocean/prometheus-client-c)
 - mysql 5.7
-- unrealircd 4.2
+- unrealircd 5.2.1
 
 # Build
 ```
-apt install libmariadb-dev-compat libsodium-dev libmariadbclient-dev libc-dev libssl-dev cmake check
+apt install libmariadb-dev-compat libsodium-dev libmariadbclient-dev libc-dev libssl-dev libmicrohttpd-dev cmake check
 mkdir build
 cd build
 cmake ..

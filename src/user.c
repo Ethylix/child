@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "core_api.h"
 #include "hashmap.h"
 #include "mem.h"
+#include "modules.h"
 #include "net.h"
 #include "string_utils.h"
 
@@ -133,6 +134,8 @@ User *AddUser (const char *nick, int level)
         return NULL;
     }
 
+    RunHooks(HOOK_CREATE_ACCOUNT, NULL, NULL, NULL, NULL);
+
     return new_user;
 }
 
@@ -212,6 +215,8 @@ void DeleteAccount (User *user)
 
     DeleteGuest(user->nick);
     free(user);
+
+    RunHooks(HOOK_DELETE_ACCOUNT, NULL, NULL, NULL, NULL);
 }
 
 void DeleteWildNick (Nick *nptr)
@@ -713,6 +718,8 @@ void user_login(Nick *nptr, User *uptr)
         strncpy(nptr->hiddenhost, host, HOSTLEN);
         NoticeToUser(nptr,"Your cloak \2%s\2 has been activated.", host);
     }
+
+    RunHooks(HOOK_POST_LOGIN, nptr, uptr, NULL, NULL);
 }
 
 void user_logout(Nick *nptr, User *uptr)

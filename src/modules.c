@@ -188,6 +188,8 @@ int RunHooks(uint64_t hook_mask, Nick *nptr, User *uptr, Chan *chptr, char *parv
     HASHMAP_FOREACH_ENTRY_VALUE(core_get_modules(), entry, mod) {
         LLIST_FOREACH_ENTRY(&mod->hooks, hook, list_head) {
             if (hook->hook_mask & hook_mask) {
+                if ((hook_mask & HOOK_RUNHOOK) == 0)
+                    RunHooks(HOOK_RUNHOOK, NULL, NULL, NULL, (char *[]){hook->name,hook->modname});
                 ret = hook->ptr(nptr,uptr,chptr,parv);
                 if (ret == MOD_STOP) modstop = 1;
             }
