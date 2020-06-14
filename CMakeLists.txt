@@ -5,8 +5,10 @@ project(Child C)
 set(CHILD_VERSION "2.0-dev")
 
 option(USE_FILTER "Enable filtering rules" 0)
+option(USE_PROM "Enable prometheus exporter" 1)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -Wall -W -O2")
+set(VENDOR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 add_definitions(-DHAVE_CONFIG_H)
@@ -32,6 +34,26 @@ message("")
 
 add_subdirectory(src)
 add_subdirectory(tests)
+
+if (USE_PROM)
+  message("-- Build with prometheus: Yes (default)")
+  add_library(prom STATIC ${VENDOR_DIR}/prometheus-client-c/prom/src)
+  set_target_properties(prom PROPERTIES 
+    LINKER_LANGUAGE C
+  )
+  target_include_directories(prom PUBLIC ${VENDOR_DIR}/prometheus-client-c/prom/include)
+
+  add_library(promhttp STATIC ${VENDOR_DIR}/prometheus-client-c/promhttp/src)
+  set_target_properties(promhttp PROPERTIES 
+    LINKER_LANGUAGE C
+  )
+  target_include_directories(prom PUBLIC ${VENDOR_DIR}/prometheus-client-c/promhttp/include)
+
+else()
+  message("-- Build with prometheus: No")
+endif()
+message("")
+
 
 enable_testing()
 add_test(NAME check_hashmap COMMAND check_hashmap)

@@ -14,3 +14,8 @@ add_child_module(m_help m_help.c)
 add_child_module(m_host m_host.c)
 add_child_module(m_nick m_nick.c)
 add_child_module(m_oper m_oper.c)
+
+if (USE_PROM)
+  add_child_module(m_prometheus m_prometheus.c)
+  target_link_libraries(m_prometheus prom promhttp)
+endif()
