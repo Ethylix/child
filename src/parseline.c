@@ -278,7 +278,7 @@ skip_flags:
             }
         }
 
-        if (chptr->entrymsg != NULL && chptr->entrymsg[0] != '\0')
+        if (chptr->entrymsg[0] != '\0')
             FakeNotice(bot,nptr,"[%s] %s",chptr->channelname,chptr->entrymsg);
 
         RunHooks(HOOK_JOIN,nptr,uptr,chptr,NULL);
