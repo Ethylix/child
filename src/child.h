@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <config.h>
 
+#include "server.h"
 #include "user.h"
 
 #define HASHMAX 65000
@@ -79,6 +80,9 @@ struct {
     char usercloak[HOSTLEN+1];
     int emailreg;
     int retry_attempts, connected, nextretry;
+
+    char remote_server[SERVERNAMELEN+1];
+    char remote_sid[SIDLEN+1];
 } me;
 
 extern char *strcasestr (const char *, const char *);

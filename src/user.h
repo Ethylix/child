@@ -163,6 +163,7 @@ typedef struct nick {
     int ignored,ignoretime;
     int loginattempts,lasttry;
     struct llist_head wchans;
+    struct llist_head server_head;
 } Nick;
 
 typedef struct guest {

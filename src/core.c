@@ -80,6 +80,7 @@ void init_core(void) {
 
     LLIST_INIT(&core->limits);
     LLIST_INIT(&core->timebans);
+    LLIST_INIT(&core->servers);
 }
 
 void free_core(void) {

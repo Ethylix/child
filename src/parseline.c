@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "hashmap.h"
 #include "modules.h"
 #include "net.h"
+#include "server.h"
 #include "string_utils.h"
 #include "trust.h"
 #include "user.h"
@@ -60,7 +61,9 @@ int ParseLine(void)
                     "CHGIDENT", m_chgident,
                     "PRIVMSG",  m_privmsg,
                     "TOPIC", m_topic,
-                    "UID", m_register_user_v4,
+                    "UID", m_uid,
+                    "SQUIT", m_squit,
+                    "SID", m_sid,
                 };
     void  *senders[] =
                 {
@@ -68,7 +71,8 @@ int ParseLine(void)
                     "PROTOCTL", m_protoctl,
                     "TOPIC", m_stopic,
                     "NETINFO", m_eos,
-		    "NICK", m_register_user_v3,
+                    "NICK", m_register_user_v3,
+                    "SERVER", m_server,
                 };
 
     char *sender, *command, *tail;
@@ -887,8 +891,36 @@ void m_ping (char *command)
     RunHooks(HOOK_PING,NULL,NULL,NULL,NULL);
 }
 
-void m_protoctl ()
+void m_protoctl(char *command, char *tail)
 {
+    char *sid = NULL;
+    char *str_ptr;
+
+    // TODO(target0): improve this ugly parsing
+    if (!strncasecmp(command, "SID=", 4)) {
+        sid = strchr(command, '=');
+        sid++;
+    }
+
+    if (!sid) {
+        for (str_ptr = strtok(tail, " "); str_ptr; str_ptr = strtok(NULL, " ")) {
+            if (!strncasecmp(str_ptr, "SID=", 4)) {
+                sid = strchr(str_ptr, '=');
+                sid++;
+                break;
+            }
+        }
+    }
+
+    if (sid) {
+        strncpy(me.remote_sid, sid, SIDLEN);
+        if (*me.remote_server && !find_server(me.remote_server)) {
+            if (!add_server(me.remote_server, me.remote_sid)) {
+                operlog("Failed to create server instance for remote %s (%s)", me.remote_server, me.remote_sid);
+            }
+        }
+    }
+
     loadallfakes();
     RunHooks(HOOK_CONNECTED,NULL,NULL,NULL,NULL);
 }
@@ -1113,7 +1145,7 @@ void m_register_user_v3 (char *command, char *tail)
     return;
 }
 
-void m_register_user_v4 (char *command __unused, char *tail)
+void m_uid (char *sender, char *tail)
 {
     char *nick;
     char *umode;
@@ -1124,6 +1156,13 @@ void m_register_user_v4 (char *command __unused, char *tail)
     char *nickip;
     long int modes=0;
     Nick *nptr;
+    Server *server;
+
+    server = find_server(sender);
+    if (!server) {
+        operlog("Failed to find server entry for sender %s (tail: %s), not registering user", sender, tail);
+        return;
+    }
 
     nick = tail;
     ident = SeperateWord(nick);
@@ -1180,6 +1219,7 @@ void m_register_user_v4 (char *command __unused, char *tail)
     if (IsCharInString('z',umode)) modes |= UMODE_SSL;
 
     nptr = AddNick(nick,ident,host,uid,hiddenhost,modes,clientip);
+    LLIST_INSERT_TAIL(&server->nicks, &nptr->server_head);
 
     User *uptr;
     uptr = find_user(nptr->nick);
@@ -1264,5 +1304,63 @@ void m_stopic (char *command, char *tail)
     if ((chptr = find_channel(chname)) != NULL) {
         if (chptr->topic[0] == '\0')
             strncpy(chptr->topic, topic, TOPICLEN);
+    }
+}
+
+void m_squit(char *sender __unused, char *tail)
+{
+    Server *server;
+    Nick *nptr, *tmp_nptr;
+    char *sname;
+
+    sname = tail;
+    SeperateWord(sname);
+
+    server = find_server(sname);
+    if (!server) {
+        operlog("Cannot find server %s for SQUIT", sname);
+        return;
+    }
+
+    LLIST_FOREACH_ENTRY_SAFE(&server->nicks, nptr, tmp_nptr, server_head) {
+        userquit(nptr->nick);
+    }
+
+    delete_server(server);
+}
+
+void m_sid(char *sender __unused, char *tail)
+{
+    char *sname;
+    char *sid;
+
+    sname = tail;
+    sid = SeperateWord(sname);
+    sid = SeperateWord(sid);
+    SeperateWord(sid);
+
+    if (find_server(sname)) {
+        operlog("Duplicate server name in SID: %s (%s)", sname, sid);
+        return;
+    }
+
+    if (find_server(sid)) {
+        operlog("Duplicate server sid in SID: %s (%s)", sname, sid);
+        return;
+    }
+
+    if (!add_server(sname, sid)) {
+        operlog("Failed to create new server %s (%s)", sname, sid);
+    }
+}
+
+void m_server(char *command, char *tail __unused)
+{
+    strncpy(me.remote_server, command, SERVERNAMELEN);
+
+    if (*me.remote_sid && !find_server(me.remote_sid)) {
+        if (!add_server(me.remote_server, me.remote_sid)) {
+            operlog("Failed to create server instance for remote %s (%s)", me.remote_server, me.remote_sid);
+        }
     }
 }

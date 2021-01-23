@@ -12,6 +12,7 @@ set(HEADERS
   mem.h
   modules.h
   net.h
+  server.h
   string_utils.h
   trust.h
   undef.h
@@ -34,6 +35,7 @@ set(BIN_SOURCES
   modules.c
   net.c
   parseline.c
+  server.c
   string_utils.c
   trust.c
   user.c

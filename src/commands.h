@@ -174,11 +174,14 @@ void m_ping (char *);
 void m_privmsg (char *, char *);
 void m_quit (char *);
 void m_register_user_v3 (char *, char *);
-void m_register_user_v4 (char *, char *);
+void m_uid (char *, char *);
 void m_sethost (char *, char *);
 void m_setident (char *, char *);
 void m_protoctl ();
 void m_topic (char *, char *);
 void m_stopic (char *, char *);
+void m_squit(char *, char *);
+void m_sid(char *, char *);
+void m_server(char *, char *);
 
 #endif

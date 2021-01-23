@@ -17,6 +17,7 @@ struct guest;
 struct chan;
 struct wchan;
 struct fakeuser;
+struct server;
 
 struct config {
     char *nick;
@@ -114,6 +115,8 @@ struct core {
     struct llist_head limits;
     struct llist_head timebans;
 
+    struct llist_head servers;
+
     struct config config;
 
     int sock;
@@ -139,6 +142,7 @@ struct core {
 
 #define core_get_limits() (&get_core()->limits)
 #define core_get_timebans() (&get_core()->timebans)
+#define core_get_servers() (&get_core()->servers)
 
 struct core *get_core(void);
 void init_core(void);

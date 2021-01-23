@@ -260,6 +260,7 @@ void DeleteWildNick (Nick *nptr)
             free(clone);
         }
     }
+    LLIST_REMOVE(&nptr->server_head);
     free(nptr);
 }
 

@@ -300,6 +300,9 @@ int main(int argc, char **argv)
 #endif
     me.emailreg = 0;
 
+    bzero(me.remote_server, SERVERNAMELEN+1);
+    bzero(me.remote_sid, SIDLEN+1);
+
     /* -- */
 
     while ((op = getopt(argc,argv,"dhv")) != EOF) {
