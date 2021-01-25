@@ -465,7 +465,7 @@ void oper_fakeuser (Nick *nptr, User *uptr __unused, char *all)
         return;
     }
 
-    fakeuser(arg3,arg4,arg5,"i");
+    fakeuser(arg3, arg4, arg5, NULL, "i");
 }
 
 void oper_fakenick (Nick *nptr, User *uptr __unused, char *all)
@@ -625,7 +625,7 @@ void oper_massfakeuser (Nick *nptr, User *uptr __unused, char *all)
         
     for(i=start;i<=end;i++) {
         sprintf(name,"%s%d",arg3,i);
-        fakeuser(name,name,me.host,"i");
+        fakeuser(name, name, me.host, NULL, "i");
     }   
         
     operlog("%s executed MASSFAKEUSER :%d clones (%s)",nptr->nick,howmanyfakes,arg3);

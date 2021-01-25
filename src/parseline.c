@@ -362,9 +362,11 @@ void m_kill (char *sender, char *tail)
 
     if (!nptr) {
         if (!Strcmp(nick, me.nick)) {
-            fakeuser(me.nick,me.ident,me.host,MY_UMODES);
+            generate_uid(me.uid);
+            fakeuser(me.nick, me.ident, me.host, me.uid, MY_UMODES);
         } else if ((bot = find_bot(nick)) != NULL) {
-            fakeuser(bot->nick, bot->ident, bot->host, BOTSERV_UMODES);
+            generate_uid(bot->uid);
+            fakeuser(bot->nick, bot->ident, bot->host, bot->uid, BOTSERV_UMODES);
         } else {
             return;
         }

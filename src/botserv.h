@@ -30,6 +30,7 @@ typedef struct bot {
     char nick[NICKLEN+1]; /* hash key */
     char ident[NICKLEN+1];
     char host[HOSTLEN+1];
+    char uid[UIDLEN+1];
 } Bot;
     
 Bot *add_bot(const char *nick, const char *ident, const char *host);

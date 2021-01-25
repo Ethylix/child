@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "llist.h"
 
 #define SERVERNAMELEN   64
-#define SIDLEN          16
+#define SIDLEN          3
 
 typedef struct server {
     char name[SERVERNAMELEN + 1];

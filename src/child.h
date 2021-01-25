@@ -42,7 +42,7 @@ struct {
     char host[32]; 
     char server[40];
     int port;
-    char sid[8];
+    char sid[SIDLEN + 1];
     char linkpass[50];
     int maxclones;
     char bindip[40];
@@ -83,6 +83,7 @@ struct {
 
     char remote_server[SERVERNAMELEN+1];
     char remote_sid[SIDLEN+1];
+    char uid[UIDLEN+1];
 } me;
 
 extern char *strcasestr (const char *, const char *);

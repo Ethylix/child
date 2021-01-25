@@ -31,6 +31,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define HOSTLEN 60
 #define EMAILLEN 100
 
+#define UIDLEN 9
+
 #define TIMEOUT_DFLT 60
 
 #define BOTSERV_UMODES "oSq"
@@ -110,9 +112,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #define IsAuthed(x) ((x) && (x)->authed == 1)
 
-#define fakeuser(a,b,c,d) { \
-                                if ((AddFake(a,b,c)) != NULL) { \
-                                    SendRaw("NICK %s 1 %ld %s %s %s 0 +%s * :%s",a,time(NULL),b,c,me.name,d,b); \
+#define fakeuser(nick_,ident_,host_, uid_, umodes_) { \
+                                if ((AddFake(nick_, ident_, host_, uid_)) != NULL) { \
+                                    SendRaw(":%s UID %s 1 %ld %s %s %s 0 +%s * * * :%s", nick_, time(NULL), ident_, host_, uid_, umodes_, ident_); \
                                 } \
                           }
 #define fakejoin(x,y) SendRaw(":%s JOIN %s",x,y)
@@ -155,7 +157,7 @@ typedef struct nick {
     char nick[NICKLEN + 1]; /* hash key */
     char ident[NICKLEN + 1];
     char host[HOSTLEN + 1];
-    char uid[HOSTLEN + 1];
+    char uid[UIDLEN + 1];
     char hiddenhost[HOSTLEN + 1];
     char reshost[HOSTLEN + 1];
     long int umodes;
@@ -181,6 +183,7 @@ typedef struct fakeuser {
     char nick[NICKLEN + 1]; /* hash key */
     char ident[NICKLEN + 1];
     char host[HOSTLEN + 1];
+    char uid[UIDLEN + 1];
 } Fake;
 
 User *find_user(const char *);
@@ -214,11 +217,12 @@ void loadallfakes (void);
 void userdrop (User *);
 Clone *find_clone (char *);
 void sync_user(const User *);
-Fake *AddFake (char *, char *, char *);
-Fake *find_fake (char *);
+Fake *AddFake (const char *, const char *, const char *, const char *);
+Fake *find_fake (const char *);
 void DeleteFake (Fake *);
 void clear_fakes(void);
 User *get_link_master (User *);
 int IsSuperAdmin (User *);
+void generate_uid(char *);
 
 #endif

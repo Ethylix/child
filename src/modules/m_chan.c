@@ -1413,6 +1413,7 @@ void chan_botlist (Nick *nptr)
 
 void chan_addbot (Nick *nptr, User *uptr __unused, Chan *chptr __unused, char *all)
 {
+    Bot *bot;
     char *arg1,*arg2,*arg3;
     arg1 = all;
     arg2 = SeperateWord(arg1);
@@ -1429,8 +1430,9 @@ void chan_addbot (Nick *nptr, User *uptr __unused, Chan *chptr __unused, char *a
         return;
     }
 
-    add_bot(arg1, arg2, arg3);
-    fakeuser(arg1,arg2,arg3,BOTSERV_UMODES);
+    bot = add_bot(arg1, arg2, arg3);
+    generate_uid(bot->uid);
+    fakeuser(arg1, arg2, arg3, bot->uid, BOTSERV_UMODES);
     SendRaw("SQLINE %s :Reserved for services",arg1);
     NoticeToUser(nptr,"Done.");
 }

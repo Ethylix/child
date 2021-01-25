@@ -100,14 +100,18 @@ Link *find_link2 (char *master, char *slave)
     return NULL;
 }
 
-Fake *find_fake (char *nick)
+Fake *find_fake(const char *nick_or_uid)
 {
+    Fake *tmp;
     struct hashmap_entry *entry;
 
-    if (!HASHMAP_FIND(core_get_fakeusers(), nick, &entry))
-        return NULL;
+    // TODO(target0): O(1) lookup.
+    HASHMAP_FOREACH_ENTRY_VALUE(core_get_fakeusers(), entry, tmp) {
+        if (!Strcmp(tmp->nick, nick_or_uid) || !Strcmp(tmp->uid, nick_or_uid))
+            return tmp;
+    }
 
-    return HASHMAP_ENTRY_VALUE(core_get_fakeusers(), entry);
+    return NULL;
 }
 
 User *AddUser (char *nick, int level)
@@ -146,7 +150,7 @@ Nick *AddNick(char *nick, char *ident, char *host, char *uid, char *hiddenhost, 
     strncpy(new_nick->nick,nick,NICKLEN);
     strncpy(new_nick->ident,ident,NICKLEN);
     strncpy(new_nick->host,host,HOSTLEN);
-    strncpy(new_nick->uid,uid,HOSTLEN);
+    strncpy(new_nick->uid,uid,UIDLEN);
     strncpy(new_nick->hiddenhost,hiddenhost,HOSTLEN);
     strncpy(new_nick->reshost,reshost,HOSTLEN);
     new_nick->umodes = umodes;
@@ -215,16 +219,25 @@ Link *AddLink(char *master, char *slave)
     return new_link;
 }
 
-Fake *AddFake(char *nick, char *ident, char *host)
+Fake *AddFake(const char *nick, const char *ident, const char *host, const char *uid)
 {
     Fake *new_fake;
-    if ((find_fake(nick)) != NULL)
-        return NULL;
-    new_fake = (Fake *)malloc(sizeof(Fake));
 
-    strncpy(new_fake->nick, nick, NICKLEN);
-    strncpy(new_fake->ident, ident, NICKLEN);
-    strncpy(new_fake->host, host, HOSTLEN);
+    if ((find_fake(nick)) || find_fake(uid))
+        return NULL;
+
+    new_fake = malloc(sizeof(*new_fake));
+    if (!new_fake)
+        return NULL;
+
+    strncpy(new_fake->nick, nick, NICKLEN + 1);
+    strncpy(new_fake->ident, ident, NICKLEN + 1);
+    strncpy(new_fake->host, host, HOSTLEN + 1);
+
+    if (uid)
+        strncpy(new_fake->uid, uid, UIDLEN + 1);
+    else
+        generate_uid(new_fake->uid);
 
     if (!HASHMAP_INSERT(core_get_fakeusers(), new_fake->nick, new_fake, NULL)) {
         fprintf(stderr, "Failed to insert new fakeuser \"%s\" into hashmap (duplicate entry?)\n", new_fake->nick);
@@ -497,8 +510,9 @@ void loadallfakes()
     Bot *bot;
 
     HASHMAP_FOREACH_ENTRY_VALUE(core_get_bots(), entry, bot) {
-        fakeuser(bot->nick,bot->ident,bot->host,BOTSERV_UMODES);
-        SendRaw("SQLINE %s :Reserved for services",bot->nick);
+        generate_uid(bot->uid);
+        fakeuser(bot->nick, bot->ident, bot->host, bot->uid, BOTSERV_UMODES);
+        SendRaw("SQLINE %s :Reserved for services", bot->nick);
     }
 }
 
@@ -635,4 +649,31 @@ int IsSuperAdmin (User *uptr)
         return 1;
 
     return 0;
+}
+
+/* From https://github.com/unrealircd/unrealircd/blob/b65584226c1d76aed8119549c586f441a9dbb8ee/src/user.c#L625 */
+static char uid_int_to_char(int v)
+{
+    if (v < 10)
+        return '0' + v;
+    else
+        return 'A' + v - 10;
+}
+
+void generate_uid(char *dst_uid)
+{
+    char uid[UIDLEN + 1];
+
+    do {
+        snprintf(uid, sizeof(uid), "%s%c%c%c%c%c%c",
+                 me.sid,
+                 uid_int_to_char(random() % 36),
+                 uid_int_to_char(random() % 36),
+                 uid_int_to_char(random() % 36),
+                 uid_int_to_char(random() % 36),
+                 uid_int_to_char(random() % 36),
+                 uid_int_to_char(random() % 36));
+    } while (find_nick(uid));
+
+    strncpy(dst_uid, uid, UIDLEN + 1);
 }
