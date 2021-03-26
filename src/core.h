@@ -54,10 +54,6 @@ struct config {
 
     int savedb_interval;
 
-#ifdef USE_GNUTLS
-    int ssl;
-#endif  // USE_GNUTLS
-
     char *guest_prefix;
 
     int anonymous_global;

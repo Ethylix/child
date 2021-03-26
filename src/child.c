@@ -49,11 +49,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 rulelist rule_list;
 #endif
 
-#ifdef USE_GNUTLS
-gnutls_session_t session;
-gnutls_certificate_credentials_t xcred;
-#endif
-
 static void sighandler (int signal)
 {
     int status;
@@ -272,9 +267,6 @@ int main(int argc, char **argv)
     me.level_owner = 1000;
     me.limittime = 5;
     me.savedb_interval = 60;
-#ifdef USE_GNUTLS
-    me.ssl = 0;
-#endif
     me.anonymous_global = 0;
     me.maxmsgtime = 2;
     me.maxmsgnb = 5;

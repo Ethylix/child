@@ -60,9 +60,6 @@ struct {
     char logfile[32];
     int limittime;
     int savedb_interval;
-#ifdef USE_GNUTLS
-    int ssl;
-#endif
     char guest_prefix[32];
     int anonymous_global;
     char sendmail[128];

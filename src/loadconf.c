@@ -96,9 +96,6 @@ void loadconf(int what)
         if (sscanf(line,"LimitTime %i",&me.limittime)) { if (get_core()->vv) printf("\tlimittime = '%i'\n",me.limittime); continue; }
         if (sscanf(line,"LocalAddr %s",me.bindip)) { if (get_core()->vv) printf("\tbindip = '%s'\n",me.bindip); continue; }
         if (sscanf(line,"SaveDB %i",&me.savedb_interval)) { if (get_core()->vv) printf("\tsavedb_interval = '%i'\n",me.savedb_interval); continue; }
-#ifdef USE_GNUTLS
-        if (sscanf(line,"SSL %i",&me.ssl)) { if (get_core()->vv) printf("\tssl = '%i'\n",me.ssl); continue; }
-#endif
         if (sscanf(line,"GuestPrefix \"%[^\"]\"",me.guest_prefix)) { if (get_core()->vv) printf("\tguest_prefix = '%s'\n",me.guest_prefix); continue; }
         if (sscanf(line,"AnonGlobal %i",&me.anonymous_global)) { if (get_core()->vv) printf("\tanonymous_global = '%i'\n",me.anonymous_global); continue; }
         if (sscanf(line,"SendMailPath \"%[^\"]\"",me.sendmail)) { if (get_core()->vv) printf("\tsendmail = '%s'\n",me.sendmail); continue; }
