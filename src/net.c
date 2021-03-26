@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "child.h"
 #include "core.h"
-#include "filter.h"
 #include "mem.h"
 #include "string_utils.h"
 
@@ -199,11 +198,6 @@ void SendRaw (char *msg, ...)
         return;
 #endif
     }
-
-#ifdef USE_FILTER
-    if ((filter_check(buf, DIRECT_OUT)) == RULE_DROP)
-        return;
-#endif
 
     outptr = outdata.outbuf + outdata.writebytes;
 

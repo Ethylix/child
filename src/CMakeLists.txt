@@ -6,7 +6,6 @@ set(HEADERS
   commands.h
   core.h
   db.h
-  filter.h
   hashmap.h
   llist.h
   mem.h
@@ -27,7 +26,6 @@ set(BIN_SOURCES
   commands.c
   core.c
   db.c
-  filter.c
   hashmap.c
   loadconf.c
   md5.c

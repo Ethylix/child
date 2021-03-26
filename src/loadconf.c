@@ -22,15 +22,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "child.h"
 #include "core.h"
 #include "commands.h"
-#include "filter.h"
 #include "modules.h"
 
 #include <stdio.h>
 #include <string.h>
-
-#ifdef USE_FILTER
-extern rulelist rule_list;
-#endif
 
 void loadconf(int what)
 {
@@ -113,9 +108,6 @@ void loadconf(int what)
         if (sscanf(line,"ChanLevNoStatus %i",&me.chlev_nostatus)) { if (get_core()->vv) printf("\tchlev_nostatus = '%i'\n",me.chlev_nostatus); continue; }
         if (sscanf(line,"ChanLevAKick %i",&me.chlev_akick)) { if (get_core()->vv) printf("\tchlev_akick = '%i'\n",me.chlev_akick); continue; }
         if (sscanf(line,"ChanLevAKickBan %i",&me.chlev_akb)) { if (get_core()->vv) printf("\tchlev_akb = '%i'\n",me.chlev_akb); continue; }
-#ifdef USE_FILTER
-        if (sscanf(line,"EnableFilter %i",&me.filter)) { rule_list.enabled = me.filter; if (get_core()->vv) printf("\tfilter = '%i'\n",me.filter); continue; }
-#endif
         if (sscanf(line,"EmailReg %i",&me.emailreg)) { if (get_core()->vv) printf("\temailreg = '%i'\n",me.emailreg); continue; }
 
         if (get_core()->vv) printf("\tUNKNOWN : %s",line);

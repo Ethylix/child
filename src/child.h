@@ -71,9 +71,6 @@ struct {
     int chlev_halfop,chlev_voice;
     int chlev_nostatus,chlev_akick,chlev_akb;
     int chlev_invite;
-#ifdef USE_FILTER
-    int filter;
-#endif
     char usercloak[HOSTLEN+1];
     int emailreg;
     int retry_attempts, connected, nextretry;

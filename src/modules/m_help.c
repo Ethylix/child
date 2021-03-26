@@ -130,11 +130,6 @@ void help_oper_modlist (Nick *);
 void help_oper_rehash (Nick *);
 void help_oper_setraws (Nick *);
 void help_oper_cmdlev (Nick *);
-#ifdef USE_FILTER
-void help_oper_ruleslist (Nick *);
-void help_oper_reloadrules (Nick *);
-void help_oper_setfilter (Nick *);
-#endif
 void help_oper_superadmin (Nick *);
 void help_oper_sglobal (Nick *);
 void help_oper_fakelist (Nick *);
@@ -256,18 +251,9 @@ void child_init(Module *module)
     addHelpOperCommand("stats",help_oper_stats,"Display network stats",me.level_oper);
     addHelpOperCommand("sglobal",help_oper_sglobal,"Send a server-wide notice",me.level_oper);
     addHelpOperCommand("setraws",help_oper_setraws,"Enable/disable raws",me.level_owner);
-#ifdef USE_FILTER
-    addHelpOperCommand("setfilter",help_oper_setfilter,"Enable/disable filter",me.level_root);
-#endif
     addHelpOperCommand("savedb",help_oper_savedb,"Save database",me.level_root);
-#ifdef USE_FILTER
-    addHelpOperCommand("ruleslist",help_oper_ruleslist,"List filter rules",me.level_root);
-#endif
     addHelpOperCommand("restart",help_oper_restart,"Restart services",me.level_root);
     addHelpOperCommand("regexpcheck",help_oper_regexpcheck,"Check users affected by a regexp",me.level_oper);
-#ifdef USE_FILTER
-    addHelpOperCommand("reloadrules",help_oper_reloadrules,"Reload filter rules",me.level_root);
-#endif
     addHelpOperCommand("rehash",help_oper_rehash,"Rehash configuration",me.level_root);
     addHelpOperCommand("raw",help_oper_raw,"Send a raw",me.level_root);
     addHelpOperCommand("operlist",help_oper_operlist,"Display online irc operators",me.level_oper);
@@ -427,11 +413,6 @@ void child_cleanup()
     delHelpOperCommand("die");
     delHelpOperCommand("setraws");
     delHelpOperCommand("cmdlev");
-#ifdef USE_FILTER
-    delHelpOperCommand("reloadrules");
-    delHelpOperCommand("ruleslist");
-    delHelpOperCommand("setfilter");
-#endif
     delHelpOperCommand("superadmin");
     delHelpOperCommand("sglobal");
     delHelpOperCommand("glinechan");
@@ -1394,26 +1375,6 @@ void help_oper_cmdlev (Nick *nptr)
     NoticeToUser(nptr,"Change the required level to use a command");
     NoticeToUser(nptr,"Example: cmdlev chan register 100");
 }
-
-#ifdef USE_FILTER
-void help_oper_ruleslist (Nick *nptr)
-{
-    NoticeToUser(nptr,"Syntax: \2ruleslist\2");
-    NoticeToUser(nptr,"List all filter rules");
-}
-
-void help_oper_reloadrules (Nick *nptr)
-{
-    NoticeToUser(nptr,"Syntax: \2reloadrules\2");
-    NoticeToUser(nptr,"Reload filter rules");
-}
-
-void help_oper_setfilter (Nick *nptr)
-{
-    NoticeToUser(nptr,"Syntax: \2setfilter [0|1]\2");
-    NoticeToUser(nptr,"Display or set the filter status (disabled or enabled, 0 or 1)");
-}
-#endif
 
 void help_oper_superadmin (Nick *nptr)
 {

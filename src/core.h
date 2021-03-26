@@ -78,10 +78,6 @@ struct config {
     int chlev_akb;
     int chlev_invite;
 
-#ifdef USE_FILTER
-    int filter;
-#endif  // USE_FILTER
-
     char *usercloak;
 
     int emailreg;
@@ -102,9 +98,6 @@ struct core {
     DECLARE_HASHMAP(chans, const char *, struct chan *);
     DECLARE_HASHMAP(wchans, const char *, struct wchan *);
     DECLARE_HASHMAP(bots, const char *, struct bot *);
-#ifdef USE_FILTER
-    struct hashmap *rules;
-#endif  // USE_FILTER
     DECLARE_HASHMAP(fakeusers, const char *, struct fakeuser *);
 
     struct llist_head limits;

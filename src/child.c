@@ -25,7 +25,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "commands.h"
 #include "core.h"
 #include "db.h"
-#include "filter.h"
 #include "modules.h"
 #include "string_utils.h"
 #include "trust.h"
@@ -45,10 +44,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 #include <unistd.h>
 
-#ifdef USE_FILTER
-rulelist rule_list;
-#endif
-
 static void sighandler (int signal)
 {
     int status;
@@ -57,11 +52,6 @@ static void sighandler (int signal)
         case SIGHUP:
             loadconf(1);
             break;
-#ifdef USE_FILTER
-        case SIGUSR1:
-            loadrulefile();
-            break;
-#endif
         case SIGUSR2:
             operlog("Got SIGUSR2, reconnecting to server");
             get_core()->eos = false;
@@ -138,7 +128,6 @@ static void write_pid()
 
 void child_clean()
 {
-    FreeAllMem();
     free_core();
     exit(0);
 }
@@ -219,9 +208,6 @@ int main(int argc, char **argv)
     sigresethand.sa_flags = SA_RESETHAND;
 
     sigaction(SIGHUP, &sig, &old);
-#ifdef USE_FILTER
-    sigaction(SIGUSR1,&sig,&old);
-#endif
     sigaction(SIGUSR2,&sig,&old);
     sigaction(SIGINT,&sig,&old);
     sigaction(SIGCHLD,&sig,&old);
@@ -281,9 +267,6 @@ int main(int argc, char **argv)
     me.chlev_nostatus = -1;
     me.chlev_akick = -2;
     me.chlev_akb = -3;
-#ifdef USE_FILTER
-    me.filter = 0;
-#endif
     me.emailreg = 0;
 
     bzero(me.remote_server, SERVERNAMELEN+1);
@@ -309,10 +292,6 @@ int main(int argc, char **argv)
     }
 
     loadconf(0);
-#ifdef USE_FILTER
-    if (me.filter)
-        loadrulefile();
-#endif
 
     retval = ConnectToServer();
     switch(retval) {

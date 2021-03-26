@@ -4,9 +4,5 @@ mkdir build && cd build
 cmake ..
 make
 
-Useful cmake options :
- -DUSE_FILTER=1 : enable data filtering (see doc/filter.conf)
-
 Copy ./doc/example.conf to ./child.conf, and edit it
-If you compiled with filter support, you can copy ./doc/filter.conf to ./filter.conf and edit it
 Then, you can start child by typing ./child

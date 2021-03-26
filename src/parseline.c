@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "child.h"   
 #include "commands.h"
 #include "core.h"
-#include "filter.h"
 #include "hashmap.h"
 #include "modules.h"
 #include "net.h"
@@ -78,11 +77,6 @@ int ParseLine(void)
 
     if (!sender || *sender == '\0')
         return 0;
-
-#ifdef USE_FILTER
-    if ((filter_check(sender, DIRECT_IN)) == RULE_DROP)
-        return 0;
-#endif
 
     command = SeperateWord(sender);
     tail = SeperateWord(command);

@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "commands.h"
 #include "core.h"
 #include "db.h"
-#include "filter.h"
 #include "hashmap.h"
 #include "modules.h"
 #include "net.h"
@@ -34,10 +33,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-#ifdef USE_FILTER
-extern rulelist rule_list;
-#endif
 
 void do_oper (Nick *, User *, char *);
 void do_help (Nick *, User *, char *);
@@ -76,11 +71,6 @@ void oper_die (Nick *, User *, char *);
 void oper_noexpire (Nick *, User *, char *);
 void oper_suspend (Nick *, User *, char *);
 void oper_cmdlev (Nick *, User *, char *);
-#ifdef USE_FILTER
-void oper_reloadrules (Nick *);
-void oper_ruleslist (Nick *);
-void oper_setfilter (Nick *, User *, char *);
-#endif
 void oper_superadmin (Nick *, User *, char *);
 void oper_fakelist (Nick *);
 void oper_glinechan (Nick *, User *, char *);
@@ -100,18 +90,9 @@ void child_init(Module *module)
     addOperCommand("stats",oper_stats,me.level_oper);
     addOperCommand("sglobal",oper_sglobal,me.level_oper);
     addOperCommand("setraws",oper_setraws,me.level_owner);
-#ifdef USE_FILTER
-    addOperCommand("setfilter",oper_setfilter,me.level_root);
-#endif
     addOperCommand("savedb",oper_savedb,me.level_root);
-#ifdef USE_FILTER
-    addOperCommand("ruleslist",oper_ruleslist,me.level_root);
-#endif
     addOperCommand("restart",oper_restart,me.level_root);
     addOperCommand("regexpcheck",oper_regexpcheck,me.level_oper);
-#ifdef USE_FILTER
-    addOperCommand("reloadrules",oper_reloadrules,me.level_root);
-#endif
     addOperCommand("rehash",oper_rehash,me.level_root);
     addOperCommand("raw",oper_raw,me.level_root);
     addOperCommand("operlist",oper_operlist,me.level_oper);
@@ -179,11 +160,6 @@ void child_cleanup()
     delOperCommand("noexpire");
     delOperCommand("suspend");
     delOperCommand("cmdlev");
-#ifdef USE_FILTER
-    delOperCommand("reloadrules");
-    delOperCommand("ruleslist");
-    delOperCommand("setfilter");
-#endif
     delOperCommand("superadmin");
     delOperCommand("sglobal");
     delOperCommand("fakelist");
@@ -1230,41 +1206,3 @@ void oper_superadmin (Nick *nptr, User *uptr __unused, char *all)
     } else
         NoticeToUser(nptr, "Syntax: \2superadmin [\037on\037|\037off\037]\2");
 }
-
-#ifdef USE_FILTER
-void oper_ruleslist (Nick *nptr)
-{
-    struct ruleset *rule;
-    NoticeToUser(nptr,"Rules list :");
-    for (rule = rule_list.ltail; rule; rule = rule->lprev)
-        NoticeToUser(nptr,"%s %s%s from %s to %s action %s data \"%s\"", rule->rule == RULE_DROP ? "drop" : "pass",
-                    rule->direction == DIRECT_IN ? "in" : "out", rule->quick ? " quick" : "", rule->from[0] ? rule->from : "(null)",
-                    rule->to[0] ? rule->to : "(null)", rule->action[0] ? rule->action : "(null)", rule->data[0] ? rule->data : "(null)");
-    NoticeToUser(nptr,"End of list.");
-}
-
-void oper_reloadrules (Nick *nptr)
-{
-    if ((loadrulefile()) == 1)
-        NoticeToUser(nptr,"Filter rules reloaded");
-    else
-        NoticeToUser(nptr,"Cannot reload rules");
-}
-
-void oper_setfilter (Nick *nptr, User *uptr __unused, char *all)
-{
-    char *arg1;
-    arg1 = all;
-    SeperateWord(arg1);
-
-    if (!arg1 || *arg1 == '\0')
-        NoticeToUser(nptr,"Filter status: %s", rule_list.enabled ? "enabled" : "disabled");
-    else {
-        if (!Strcmp(arg1,"0") || !Strcmp(arg1,"1")) {
-            rule_list.enabled = atoi(arg1);
-            NoticeToUser(nptr,"Done.");
-        } else
-            NoticeToUser(nptr,"Unknown value %s",arg1);
-    }
-}
-#endif
