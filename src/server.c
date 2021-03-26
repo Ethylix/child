@@ -48,6 +48,7 @@ Server *add_server(const char *name, const char *sid) {
 
     strncpy(server->name, name, SERVERNAMELEN);
     strncpy(server->sid, sid, SIDLEN);
+    LLIST_INIT(&server->nicks);
 
     LLIST_INSERT_TAIL(core_get_servers(), &server->list_head);
 
