@@ -1382,7 +1382,13 @@ void m_sjoin(char *sender, char *tail)
     // :042 SJOIN 1463647041 #Troll +ntTSf [5j#R2,10m#M2,10t]:2  :050T8AL7X 0504QF86V
     // :042 SJOIN 1470200804 #geekfault :038FZ03TS &*!HS-157@2a00:5884:8369:0:0:0:0:1
     sjoinbuf = strstr(modes, " :");
-    *sjoinbuf++ = 0;
+    if (sjoinbuf) {
+        *sjoinbuf++ = 0;
+    } else {
+        // Modes not present, such as
+        // :042 SJOIN 1514128801 #cafai :038F53WGM @~C
+        sjoinbuf = strchr(modes, ':');
+    }
     *sjoinbuf++ = 0;
 
     wchan = find_wchan(chname);
