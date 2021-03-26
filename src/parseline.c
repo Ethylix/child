@@ -1372,12 +1372,19 @@ void m_sjoin(char *sender, char *tail)
 {
     char *chname, *modes, *sjoinbuf;
     char *sjbuf_elem;
+    char *tmp_buf;
     Wchan *wchan;
 
     chname = tail;
     chname = SeperateWord(chname);
     modes = SeperateWord(chname);
-    sjoinbuf = strchr(modes, ':');
+
+    // Jump to the last ':' character, to account for lines such as
+    // :042 SJOIN 1463647041 #Troll +ntTSf [5j#R2,10m#M2,10t]:2  :050T8AL7X 0504QF86V 038FZ03TS
+    tmp_buf = sjoinbuf = strchr(modes, ':');
+    while ((tmp_buf = strchr(tmp_buf+1, ':')) != NULL) {
+        sjoinbuf = tmp_buf;
+    }
     *sjoinbuf++ = 0;
 
     wchan = find_wchan(chname);
