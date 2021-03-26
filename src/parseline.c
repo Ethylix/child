@@ -922,10 +922,10 @@ void m_protoctl(char *command, char *tail)
                 operlog("Failed to create server instance for remote %s (%s)", me.remote_server, me.remote_sid);
             }
         }
-    }
 
-    loadallfakes();
-    RunHooks(HOOK_CONNECTED,NULL,NULL,NULL,NULL);
+        loadallfakes();
+        RunHooks(HOOK_CONNECTED,NULL,NULL,NULL,NULL);
+    }
 }
 
 void m_privmsg (char *sender, char *tail)
@@ -1161,9 +1161,9 @@ void m_uid (char *sender, char *tail)
     Nick *nptr;
     Server *server;
 
-    server = find_server(sender);
+    server = find_server(sender+1);
     if (!server) {
-        operlog("Failed to find server entry for sender %s (tail: %s), not registering user", sender, tail);
+        operlog("Failed to find server entry for sender %s (tail: %s), not registering user", sender+1, tail);
         return;
     }
 
