@@ -21,14 +21,11 @@ USA.
 
 #include "commands.h"
 #include "child.h"
+#include "core.h"
 #include "string_utils.h"
-
-#include "mem.h"
 
 #include <stdlib.h>
 #include <string.h>
-
-extern commandlist command_list;
 
 Command *__addCommand (char *name, int type, void (*func)(), char *desc, int subtype, int level)
 {
@@ -48,14 +45,14 @@ Command *__addCommand (char *name, int type, void (*func)(), char *desc, int sub
     else
         strncpy(newcmd->desc,desc,CMDLEN);
 
-    LIST_INSERT_HEAD(command_list, newcmd, HASH_INT(type+subtype));
+    LLIST_INSERT_TAIL(core_get_commands(), &newcmd->list_head);
 
     return newcmd;
 }
 
 void delCommand (Command *cmd)
 {
-    LIST_REMOVE(command_list, cmd, HASH_INT(cmd->type+cmd->subtype));
+    LLIST_REMOVE(&cmd->list_head);
     free(cmd);
 }
 
@@ -71,7 +68,8 @@ int deleteCommand (char *name, int type, int subtype)
 Command *find_command (char *name, int type, int subtype)
 {
     Command *tmp;
-    LIST_FOREACH(command_list, tmp, HASH_INT(type+subtype)) {
+
+    LLIST_FOREACH_ENTRY(core_get_commands(), tmp, list_head) {
         if (!Strcmp(tmp->name,name) && tmp->type == type && tmp->subtype == subtype)
             return tmp;
     }

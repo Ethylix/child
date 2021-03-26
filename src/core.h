@@ -106,7 +106,6 @@ struct core {
     DECLARE_HASHMAP(chans, const char *, struct chan *);
     DECLARE_HASHMAP(wchans, const char *, struct wchan *);
     DECLARE_HASHMAP(bots, const char *, struct bot *);
-    struct hashmap *commands;
 #ifdef USE_FILTER
     struct hashmap *rules;
 #endif  // USE_FILTER
@@ -116,6 +115,9 @@ struct core {
     struct llist_head timebans;
 
     struct llist_head servers;
+
+    // TODO(target0): replace with a better data structure
+    struct llist_head commands;
 
     struct config config;
 
@@ -143,6 +145,7 @@ struct core {
 #define core_get_limits() (&get_core()->limits)
 #define core_get_timebans() (&get_core()->timebans)
 #define core_get_servers() (&get_core()->servers)
+#define core_get_commands() (&get_core()->commands)
 
 struct core *get_core(void);
 void init_core(void);

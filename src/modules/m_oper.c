@@ -35,7 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern commandlist command_list;
 #ifdef USE_FILTER
 extern rulelist rule_list;
 #endif
@@ -221,7 +220,7 @@ void do_oper (Nick *nptr, User *uptr, char *all)
     all = SeperateWord(all);
     
     Command *cmd;
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_OPER)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg2) && cmd->type == CMD_OPER) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,all);

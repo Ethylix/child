@@ -32,8 +32,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern commandlist command_list;
-
 void do_chan (Nick *, User *, char *);
 void do_help (Nick *, User *, char *);
 void chan_register (Nick *, User *, Chan *, char *);
@@ -205,7 +203,7 @@ void do_chan (Nick *nptr, User *uptr, char *all)
     all = SeperateWord(all);
 
     Command *cmd;
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_CHAN)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg2) && cmd->type == CMD_CHAN) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,chptr,all);
@@ -764,7 +762,7 @@ void chan_set (Nick *nptr, User *uptr, Chan *chptr, char *all)
     all = SeperateWord(all);
 
     Command *cmd;
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_CHAN+CMD_CHAN_SET)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg4) && cmd->type == CMD_CHAN && cmd->subtype == CMD_CHAN_SET) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,chptr,all);

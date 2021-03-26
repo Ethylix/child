@@ -33,8 +33,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern commandlist command_list;
-
 void do_nick (Nick *, User *, char *);
 void do_help (Nick *, User *, char *);
 void nick_link (Nick *, User *, char *);
@@ -129,7 +127,7 @@ void do_nick (Nick *nptr, User *uptr, char *all)
     all = SeperateWord(all);
 
     Command *cmd;
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_NICK)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg2) && cmd->type == CMD_NICK) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,all);
@@ -563,7 +561,7 @@ void nick_set (Nick *nptr, User *uptr, char *all)
     all = SeperateWord(all);
 
     Command *cmd;
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_NICK+CMD_NICK_SET)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg3) && cmd->type == CMD_NICK && cmd->subtype == CMD_NICK_SET) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,all);

@@ -32,7 +32,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdio.h>
 #include <string.h>
 
-extern commandlist command_list;
 #ifdef USE_FILTER
 extern rulelist rule_list;
 #endif
@@ -97,7 +96,6 @@ long get_mem(int which)
 
 void InitMem()
 {
-    LIST_INIT(command_list);
 #ifdef USE_FILTER
     LIST_INIT(rule_list);
 #endif

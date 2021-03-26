@@ -45,7 +45,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 #include <unistd.h>
 
-commandlist command_list;
 #ifdef USE_FILTER
 rulelist rule_list;
 #endif

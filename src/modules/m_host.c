@@ -30,8 +30,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 #include <string.h>
 
-extern commandlist command_list;
-
 void do_host (Nick *, User *, char *);
 void do_help (Nick *, User *, char *);
 void host_set (Nick *, User *, char *);
@@ -77,7 +75,7 @@ void do_host(Nick *nptr, User *uptr, char *all)
     all = SeperateWord(all);
     
     Command *cmd;
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HOST)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg2) && cmd->type == CMD_HOST) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,all);

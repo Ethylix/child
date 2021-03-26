@@ -27,8 +27,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 #include <string.h>
 
-extern commandlist command_list;
-
 #define ACTUAL_CMDLEN 16
 
 
@@ -472,7 +470,7 @@ void do_help (Nick *nptr, User *uptr, char *all)
     all = SeperateWord(all);
 
     Command *cmd;
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg2) && cmd->type == CMD_HELP) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,all);
@@ -497,7 +495,7 @@ void help_host (Nick *nptr, User *uptr, char *all)
         NoticeToUser(nptr,"Commands available for vhosts management :");
         NoticeToUser(nptr," ");
 
-        LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_HOST)) {
+        LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
             if (cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_HOST) {
                 if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level)) {
                     bzero(padding,ACTUAL_CMDLEN);
@@ -511,7 +509,7 @@ void help_host (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_HOST)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg3) && cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_HOST) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr);
@@ -547,7 +545,7 @@ void help_nick (Nick *nptr, User *uptr, char *all)
         NoticeToUser(nptr,"Commands available for nicks management :");
         NoticeToUser(nptr," ");
 
-        LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_NICK)) {
+        LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
             if (cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_NICK) {
                 if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level)) {
                     bzero(padding,ACTUAL_CMDLEN);
@@ -561,7 +559,7 @@ void help_nick (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_NICK)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg3) && cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_NICK) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,all);
@@ -631,7 +629,7 @@ void help_nick_set (Nick *nptr, User *uptr, char *all)
     if (!arg4 || *arg4 == '\0') {
         NoticeToUser(nptr,"Syntax: \2NICK SET \037option\037 \037value\037");
         NoticeToUser(nptr," ");
-        LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_NICK_SET)) {
+        LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
             if (cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_NICK_SET) {
                 if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level)) {
                     bzero(padding,ACTUAL_CMDLEN);
@@ -645,7 +643,7 @@ void help_nick_set (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_NICK_SET)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg4) && cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_NICK_SET) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr);
@@ -732,7 +730,7 @@ void help_chan (Nick *nptr, User *uptr, char *all)
         NoticeToUser(nptr,"Commands available for channels management :");
         NoticeToUser(nptr," ");
         
-        LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_CHAN)) {
+        LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
             if (cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_CHAN) {
                 if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level)) {
                     bzero(padding,ACTUAL_CMDLEN);
@@ -746,7 +744,7 @@ void help_chan (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_CHAN)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg3) && cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_CHAN) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,all);
@@ -924,7 +922,7 @@ void help_chan_set (Nick *nptr, User *uptr, char *all)
     if (!arg4 || *arg4 == '\0') {
         NoticeToUser(nptr,"Syntax: \2CHAN SET \037#channel\037 \037option\037 \037value\037\2");
         NoticeToUser(nptr," ");
-        LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_CHAN_SET)) {
+        LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
             if (cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_CHAN_SET) {
                 if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level)) {
                     bzero(padding,ACTUAL_CMDLEN);
@@ -938,7 +936,7 @@ void help_chan_set (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_CHAN_SET)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg4) && cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_CHAN_SET) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr);
@@ -1129,7 +1127,7 @@ void help_bot (Nick *nptr, User *uptr, char *all)
     NoticeToUser(nptr,"Commands available in channels :");
     NoticeToUser(nptr," ");
 
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_BOT)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_BOT) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level)) {
                 bzero(padding,ACTUAL_CMDLEN);
@@ -1159,7 +1157,7 @@ void help_oper (Nick *nptr, User *uptr, char *all)
         NoticeToUser(nptr,"Commands available for administration :");
         NoticeToUser(nptr," ");
 
-        LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_OPER)) {
+        LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
             if (cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_OPER) {
                 if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level)) {
                     bzero(padding,ACTUAL_CMDLEN);
@@ -1173,7 +1171,7 @@ void help_oper (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_OPER)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg3) && cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_OPER) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr);

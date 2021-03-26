@@ -36,8 +36,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern commandlist command_list;
-
 /* parseline v2, greetz to wildcat for the idea */
 
 int ParseLine(void)
@@ -1004,7 +1002,7 @@ void m_privmsg (char *sender, char *tail)
     if (target[0] == '#') {
         if (!chptr || !wchan) return;
         ch_ptr = SeperateWord(ch_ptr);
-        LIST_FOREACH(command_list, cmd, HASH_INT(CMD_BOT)) {
+        LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
             if (!Strcmp(cmd->name,arg1) && cmd->type == CMD_BOT) {
                 if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                     cmd->func(nptr,uptr,chptr,wchan,ch_ptr);
@@ -1025,7 +1023,7 @@ void m_privmsg (char *sender, char *tail)
         return;
     }
 
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_BASE)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg1) && cmd->type == CMD_BASE) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,ch_ptr);

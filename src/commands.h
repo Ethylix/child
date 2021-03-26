@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _COMMANDS_H
 #define _COMMANDS_H
 
-#include <mem.h>
+#include "llist.h"
 
 #define CMDLEN 200
 
@@ -134,8 +134,6 @@ void func (Nick *nptr, User *uptr, char *all);
 #define delHelpBotCommand(a) deleteCommand(a,CMD_HELP,CMD_HELP_BOT)
 #define delHelpOperCommand(a) deleteCommand(a,CMD_HELP,CMD_HELP_OPER)
 
-/* hash key : type + subtype (HASH_INT) */
-
 typedef struct command {
     char name[CMDLEN + 1];
     char desc[CMDLEN + 1];
@@ -143,15 +141,8 @@ typedef struct command {
     int subtype;
     int level;
     void (*func)();
-    struct command *next,*prev;
-    struct command *lnext,*lprev;
+    struct llist_head list_head;
 } Command;
-
-typedef struct {
-    int size;
-    TABLE(Command);
-    Command *lhead;
-} commandlist;
 
 Command *__addCommand (char *, int, void(*)(), char *, int, int);
 void delCommand (Command *);
