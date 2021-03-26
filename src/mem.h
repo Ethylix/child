@@ -27,63 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define MEM_VSIZE 1
 #define MEM_RSS 2
 
-#define TABLESZ 5003
-#define MAX_HASH TABLESZ
-
-#define LIST_EMPTY(x) ((x).size == 0)
-
-#define LIST_INSERT_HEAD(x, y, z) { \
-                                    (y)->prev = (y)->next = NULL; \
-                                    if ((x).table[z]) { \
-                                        (x).table[z]->prev = (y); \
-                                        (y)->next = (x).table[z]; \
-                                    } \
-                                    (x).table[z] = (y); \
-                                    (y)->lprev = (y)->lnext = NULL; \
-                                    if ((x).lhead) { \
-                                        (x).lhead->lprev = (y); \
-                                        (y)->lnext = (x).lhead; \
-                                    } \
-                                    (x).lhead = (y); \
-                                    (x).size++; \
-                                  }
-
-#define LIST_REMOVE(x, y, z) { \
-                                if ((y) == (x).table[z]) { \
-                                    (x).table[z] = (y)->next; \
-                                    if ((x).table[z]) \
-                                        (x).table[z]->prev = NULL; \
-                                } else { \
-                                    if ((y)->next) \
-                                        (y)->next->prev = (y)->prev; \
-                                    (y)->prev->next = (y)->next; \
-                                } \
-                                if ((y) == (x).lhead) { \
-                                    (x).lhead = (y)->lnext; \
-                                    if ((x).lhead) \
-                                        (x).lhead->lprev = NULL; \
-                                } else { \
-                                    if ((y)->lnext) \
-                                        (y)->lnext->lprev = (y)->lprev; \
-                                    (y)->lprev->lnext = (y)->lnext; \
-                                } \
-                                (x).size--; \
-                              }
-
-#define LIST_FOREACH(x, y, z) for ((y) = (x).table[z]; (y); (y) = (y)->next)
-#define LIST_FOREACH_ALL(x, y) for ((y) = (x).lhead; (y); (y) = (y)->lnext)
-
-#define LIST_HEAD(x) ((x).lhead)
-
-#define LIST_NEXT(x) ((x)->next)
-#define LIST_LNEXT(x) ((x)->lnext)
-
-#define LIST_INIT(x) memset(&x, 0, sizeof(x))
-
-#define HASH(x) hash(x)
-#define HASH_INT(x) ((x) % TABLESZ)
-
-#define TABLE(x) x *table[TABLESZ]
+#define MAX_HASH 5003
 
 long get_mem (int);
 void InitMem (void);
