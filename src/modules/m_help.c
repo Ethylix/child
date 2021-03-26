@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 #include "child.h"
+#include "core.h"
 #include "commands.h"
 #include "modules.h"
 #include "string_utils.h"
@@ -27,8 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 
 extern commandlist command_list;
-
-extern int raws;
 
 #define ACTUAL_CMDLEN 16
 
@@ -1315,7 +1314,7 @@ void help_oper_forceauth (Nick *nptr)
 void help_oper_raw (Nick *nptr)
 {
     NoticeToUser(nptr,"Syntax: \2raw \037commands\037\2");
-    NoticeToUser(nptr,"Execute a raw (%s)",raws ? "enabled" : "disabled");
+    NoticeToUser(nptr,"Execute a raw (%s)", get_core()->raws ? "enabled" : "disabled");
     NoticeToUser(nptr,"This command is very DANGEROUS and might be disabled.");
 }
 

@@ -38,9 +38,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 extern commandlist command_list;
 
-extern int eos;
-extern int vv;
-
 /* parseline v2, greetz to wildcat for the idea */
 
 int ParseLine(void)
@@ -96,7 +93,7 @@ int ParseLine(void)
     parv[1] = command;
     parv[2] = tail;
 
-    if (vv) printf("%s %s %s\n",sender,command,tail);
+    if (get_core()->vv) printf("%s %s %s\n",sender,command,tail);
 
     if (!command || *command == '\0')
         return 0;
@@ -154,9 +151,9 @@ void m_chgident (char *sender __unused, char *tail)
 
 void m_eos ()
 {
-    if (!eos)
+    if (!get_core()->eos)
 	    joinallchans();
-    eos = 1;
+    get_core()->eos = true;
 }
 
 void m_join (char *sender, char *tail)

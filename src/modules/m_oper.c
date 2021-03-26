@@ -40,9 +40,6 @@ extern commandlist command_list;
 extern rulelist rule_list;
 #endif
 
-extern int raws;
-extern int startuptime;
-
 void do_oper (Nick *, User *, char *);
 void do_help (Nick *, User *, char *);
 void oper_nicklist (Nick *, User *, char *);
@@ -873,7 +870,7 @@ void oper_stats (Nick *nptr)
     Nick *nptr2;
     struct hashmap_entry *entry;
 
-    int uptime = time(NULL) - startuptime;
+    int uptime = time(NULL) - get_core()->startuptime;
     int days = uptime / 86400, hours = (uptime / 3600) % 24, mins = (uptime / 60) % 60, secs = uptime % 60;
 
     NoticeToUser(nptr,"There are %d registered users and %d registered channels",
@@ -996,7 +993,7 @@ void oper_sglobal (Nick *nptr, User *uptr __unused, char *all)
 
 void oper_raw (Nick *nptr, User *uptr __unused, char *all)
 {
-    if (raws != 1) {
+    if (!get_core()->raws) {
         NoticeToUser(nptr,"The raws are disabled");
         return;
     }
@@ -1022,11 +1019,11 @@ void oper_setraws (Nick *nptr, User *uptr __unused, char *all)
     SeperateWord(arg3);
 
     if (!Strcmp(arg3,"1")) {
-        raws = 1;
+        get_core()->raws = true;
         NoticeToUser(nptr,"The raws are now enabled");
         operlog("%s enabled RAWS",nptr->nick);
     } else if (!Strcmp(arg3,"0")) {
-        raws = 0;
+        get_core()->raws = false;
         NoticeToUser(nptr,"The raws are now disabled");
         operlog("%s disabled RAWS",nptr->nick);
     } else

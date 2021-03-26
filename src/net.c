@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "net.h"
 
 #include "child.h"
+#include "core.h"
 #include "filter.h"
 #include "mem.h"
 #include "string_utils.h"
@@ -38,10 +39,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
-
-extern int vv;
-extern int sock;
-extern int eos;
 
 static jmp_buf timeout_jump;
 
@@ -61,7 +58,7 @@ static void close_secure_connection()
 
 int ConnectToServer()
 {
-    int n;
+    int n, sock;
     struct addrinfo hints,hints2;
     struct addrinfo *res = NULL,*res2 = NULL;
 
@@ -172,6 +169,8 @@ int ConnectToServer()
 #endif
     fcntl(sock,F_SETFL,O_NONBLOCK);
 
+    get_core()->sock = sock;
+
     return 1;
 }
 
@@ -190,7 +189,7 @@ void DisconnectFromServer ()
 {
     SendRaw("SQUIT");
     operlog("Disconnect from server (SQUIT)");
-    eos = 0;
+    get_core()->eos = false;
 }
 
 void flush_sendq()
@@ -207,7 +206,7 @@ void flush_sendq()
         bytes = gnutls_record_send(session, outdata.outbuf, len);
     else
 #endif
-    bytes = send(sock, outdata.outbuf, len, 0);
+    bytes = send(get_core()->sock, outdata.outbuf, len, 0);
 
     memmove(outdata.outbuf, outdata.outbuf + bytes, len - bytes);
     outdata.outbuf[len-bytes] = 0;
@@ -223,7 +222,7 @@ void SendRaw (char *msg, ...)
     char *outptr;
     ircsprintf(buf,1023,msg,val);
 
-    if (vv) printf(">> %s\n",buf);
+    if (get_core()->vv) printf(">> %s\n",buf);
     snprintf(tmp,1024,"%s\r\n",buf);
 
     len = strlen(tmp);
@@ -280,7 +279,7 @@ int ReadChunk(void)
         readbytes = gnutls_record_recv(session, indata.chunkbufentry, (CHUNKSIZE - oldbytes) - 10);
     else
 #endif
-    readbytes = read(sock, indata.chunkbufentry, (CHUNKSIZE - oldbytes) - 10);
+    readbytes = read(get_core()->sock, indata.chunkbufentry, (CHUNKSIZE - oldbytes) - 10);
     if (readbytes == 0 || readbytes == -1)
         return 0;
 
@@ -340,7 +339,7 @@ int ReadLine (char *cur, char *next)
 
 void CloseAllSock()
 {
-    close(sock);
+    close(get_core()->sock);
 #ifdef USE_GNUTLS
     if (me.ssl)
         close_secure_connection();

@@ -32,8 +32,6 @@ USA.
 
 extern rulelist rule_list;
 
-extern int verbose, vv;
-
 #ifdef USE_FILTER
 
 #define strempty(x) (!(x) || (*(x) == '\0'))
@@ -230,7 +228,7 @@ int loadrulefile()
         return 0;
     }
 
-    if (verbose) printf("Loading filter rules\n");
+    if (get_core()->verbose) printf("Loading filter rules\n");
     while (!feof(fp)) {
         if (!fgets(line, 1023, fp)) break;
         if ((tmp = strchr(line, '\r')) != NULL)
@@ -245,7 +243,7 @@ int loadrulefile()
             break;
         }
         else {
-            if (vv)
+            if (get_core()->vv)
                 printf("%s\n",line);
         }
     }
@@ -258,7 +256,7 @@ int loadrulefile()
         return 0;
     }
 
-    if (verbose) printf("Rules loaded\n");
+    if (get_core()->verbose) printf("Rules loaded\n");
     return 1;
 }
 

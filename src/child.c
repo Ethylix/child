@@ -45,11 +45,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 #include <unistd.h>
 
-int sock;
-int startuptime;
-int verbose, vv, raws, eos;
-MYSQL mysql;
-
 commandlist command_list;
 #ifdef USE_FILTER
 rulelist rule_list;
@@ -75,10 +70,11 @@ static void sighandler (int signal)
 #endif
         case SIGUSR2:
             operlog("Got SIGUSR2, reconnecting to server");
-            eos = me.retry_attempts = me.connected = 0;
+            get_core()->eos = false;
+            me.retry_attempts = me.connected = 0;
             me.nextretry = time(NULL)+1;
             cleanup_reconnect();
-            close(sock);
+            close(get_core()->sock);
             break;
         case SIGINT:
             operlog("SIGINT signal received, exiting");
@@ -156,7 +152,7 @@ void child_clean()
 void child_die(int save)
 {
     if (save) savealldb();
-    mysql_close(&mysql);
+    mysql_close(&get_core()->mysql_handle);
     killallfakes();
     unloadallmod();
     DisconnectFromServer();
@@ -170,7 +166,7 @@ void child_die(int save)
 void child_restart(int save)
 {
     if (save) savealldb();
-    mysql_close(&mysql);
+    mysql_close(&get_core()->mysql_handle);
     killallfakes();
     unloadallmod();
     DisconnectFromServer();
@@ -207,17 +203,16 @@ void init_srandom(void)
 
 int main(int argc, char **argv)
 {
-    startuptime = time(NULL);
-
     InitMem();
     init_core();
+
+    get_core()->startuptime = time(NULL);
 
     int retval,mysql_lastconn,lastcheck,lastcheck2,timenow;
     struct pollfd pfd;
 
     indata.nextline = indata.chunkbufentry = indata.chunkbuf;
 
-    eos = raws = verbose = vv = 0;
     int daemonize = 1;
     char op = 0;
     me.retry_attempts = me.nextretry = me.connected = 0;
@@ -311,10 +306,10 @@ int main(int argc, char **argv)
                 daemonize = 0;
                 break;
             case 'v':
-                if (verbose)
-                    vv = 1;
+                if (get_core()->verbose)
+                    get_core()->vv = true;
                 else
-                    verbose = 1;
+                    get_core()->verbose = true;
                 break;
             case 'h':
             default:
@@ -340,20 +335,20 @@ int main(int argc, char **argv)
             child_clean();
     }
 
-    if (verbose) printf("Connected to server\n");
+    if (get_core()->verbose) printf("Connected to server\n");
 
     if (!connect_to_db()) {
-        fprintf(stderr,"Cannot connect to mysql: %s\n", mysql_error(&mysql));
+        fprintf(stderr,"Cannot connect to mysql: %s\n", mysql_error(&get_core()->mysql_handle));
         operlog("Cannot connect to mysql db");
         child_clean();
     }
 
-    if (verbose) printf("Connected to mysql DB\n");
+    if (get_core()->verbose) printf("Connected to mysql DB\n");
     loadalldb();
-    if (verbose) printf("Logging in to server\n");
+    if (get_core()->verbose) printf("Logging in to server\n");
     SendInitToServer();
     me.connected = 1;
-    if (verbose) printf("Logged in to server\n");
+    if (get_core()->verbose) printf("Logged in to server\n");
 
     SendRaw("EOS");
 
@@ -370,7 +365,7 @@ int main(int argc, char **argv)
         if (!me.connected)
             goto try_reconnect;
 
-        pfd.fd = sock;
+        pfd.fd = get_core()->sock;
         pfd.events = POLLIN | POLLPRI;
         if (outdata.writebytes > 0)
             pfd.events |= POLLOUT;
@@ -383,14 +378,15 @@ int main(int argc, char **argv)
 
             if (pfd.revents & (POLLIN | POLLPRI)) {
                 if (!ReadChunk()) {
-                    if (!me.connected || !eos)
+                    if (!me.connected || !get_core()->eos)
                         continue;
                     operlog("Connection reset by peer");
                     savealldb();
-                    eos = me.retry_attempts = me.connected = 0;
+                    get_core()->eos = false;
+                    me.retry_attempts = me.connected = 0;
                     me.nextretry = time(NULL)+1;
                     cleanup_reconnect();
-                    close(sock);
+                    close(get_core()->sock);
                     continue;
                 }
                 while (GetLineFromChunk())

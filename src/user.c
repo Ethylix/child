@@ -38,8 +38,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 #include <unistd.h>
 
-extern int eos;
-
 User *find_user(const char *name)
 {
     struct hashmap_entry *entry;
@@ -260,7 +258,7 @@ void DeleteAccount (User *user)
     if (!HASHMAP_ERASE(core_get_users(), user->nick))
         return;
 
-    if (find_nick(user->nick) && eos)
+    if (find_nick(user->nick) && get_core()->eos)
         SendRaw("SVSMODE %s -r",user->nick);
     if (HasOption(user, UOPT_PROTECT)) DeleteGuest(user->nick);
     free(user);

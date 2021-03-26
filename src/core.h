@@ -123,8 +123,8 @@ struct core {
     int startuptime;
     bool verbose;
     bool vv;
-    int raws;
-    int eos;
+    bool raws;
+    bool eos;
     MYSQL mysql_handle;
 };
 

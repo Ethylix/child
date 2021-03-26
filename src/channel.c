@@ -34,8 +34,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-extern int eos;
-
 Chan *find_channel(const char *name)
 {
     struct hashmap_entry *entry;
@@ -240,7 +238,7 @@ void DeleteChannel (Chan *chan)
 {
     HASHMAP_ERASE(core_get_chans(), chan->channelname);
 
-    if (eos)
+    if (get_core()->eos)
         PartChannel(chan);
 
     free(chan);
@@ -617,7 +615,7 @@ void joinallchans()
 
 void chandrop (Chan *chptr)
 {
-    if (eos)
+    if (get_core()->eos)
         PartChannel(chptr);
     DeleteUsersFromChannel(chptr);
     DeleteChannel(chptr);
