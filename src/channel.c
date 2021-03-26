@@ -486,9 +486,7 @@ void DeleteUserFromWchans (Nick *nptr)
     Member *member, *tmp_member;
 
     LLIST_FOREACH_ENTRY_SAFE(&nptr->wchans, member, tmp_member, nick_head) {
-        DeleteMember(member);
-        if (!member_exists(member->wchan))
-            DeleteWchan(member->wchan);
+        DeleteUserFromWchan(nptr, member->wchan);
     }
 }
 
