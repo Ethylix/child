@@ -1381,9 +1381,7 @@ void m_sjoin(char *sender, char *tail)
     *sjoinbuf++ = 0;
 
     wchan = find_wchan(chname);
-    if (wchan) {
-        operlog("Wchan %s already exists on SJOIN", chname);
-    } else {
+    if (!wchan) {
         wchan = CreateWchan(chname);
     }
 
@@ -1419,15 +1417,18 @@ void m_sjoin(char *sender, char *tail)
                 flags |= CHFL_VOICE;
                 continue;
             case '&': // +b
-                break;
             case '"': // +e
-                break;
             case '\'': // +I
                 break;
             default:
                 nptr = find_nick(sjbuf_elem);
-                break;
+                if (!nptr) {
+                    operlog("Failed to resolve nick/uid %s in SJOIN buffer for chan %s", sjbuf_elem, chname);
+                }
             }
+
+            // We got a nick/uid or an unsupported mode, break
+            break;
         }
 
         if (!nptr) {
