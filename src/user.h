@@ -114,7 +114,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #define fakeuser(nick_,ident_,host_, uid_, umodes_) { \
                                 if ((AddFake(nick_, ident_, host_, uid_)) != NULL) { \
-                                    SendRaw(":%s UID %s 1 %ld %s %s %s 0 +%s * * * :%s", nick_, time(NULL), ident_, host_, uid_, umodes_, ident_); \
+                                    SendRaw("UID %s 1 %ld %s %s %s 0 +%s * * * :%s", nick_, time(NULL), ident_, host_, uid_, umodes_, ident_); \
                                 } \
                           }
 #define fakejoin(x,y) SendRaw(":%s JOIN %s",x,y)
