@@ -1372,19 +1372,17 @@ void m_sjoin(char *sender, char *tail)
 {
     char *chname, *modes, *sjoinbuf;
     char *sjbuf_elem;
-    char *tmp_buf;
     Wchan *wchan;
 
     chname = tail;
     chname = SeperateWord(chname);
     modes = SeperateWord(chname);
 
-    // Jump to the last ':' character, to account for lines such as
-    // :042 SJOIN 1463647041 #Troll +ntTSf [5j#R2,10m#M2,10t]:2  :050T8AL7X 0504QF86V 038FZ03TS
-    tmp_buf = sjoinbuf = strchr(modes, ':');
-    while ((tmp_buf = strchr(tmp_buf+1, ':')) != NULL) {
-        sjoinbuf = tmp_buf;
-    }
+    // Lookup " :" string to find the sjoin buffer. This should work for weird edge cases such as
+    // :042 SJOIN 1463647041 #Troll +ntTSf [5j#R2,10m#M2,10t]:2  :050T8AL7X 0504QF86V
+    // :042 SJOIN 1470200804 #geekfault :038FZ03TS &*!HS-157@2a00:5884:8369:0:0:0:0:1
+    sjoinbuf = strstr(modes, " :");
+    *sjoinbuf++ = 0;
     *sjoinbuf++ = 0;
 
     wchan = find_wchan(chname);
