@@ -1393,11 +1393,14 @@ void m_sjoin(char *sender, char *tail)
         m_mode(sender, buf);
     }
 
-    // Add all users to the channel, but don't enforce user modes.
+    // Add all users to the channel.
     for (sjbuf_elem = strtok(sjoinbuf, " "); sjbuf_elem; sjbuf_elem = strtok(NULL, " ")) {
         int flags = 0;
         Member *member;
         Nick *nptr = NULL;
+        User *uptr;
+        Cflag *cflag;
+        Chan *chptr;
 
         for (; *sjbuf_elem; sjbuf_elem++) {
             switch (*sjbuf_elem) {
@@ -1442,5 +1445,19 @@ void m_sjoin(char *sender, char *tail)
 
         member = AddUserToWchan(nptr, wchan);
         member->flags = flags;
+
+        chptr = find_channel(chname);
+        if (!chptr)
+            continue;
+
+        uptr = find_user(nptr->nick);
+        if (!uptr || !uptr->authed)
+            continue;
+
+        cflag = find_cflag_recursive(chptr, uptr);
+        if (!cflag)
+            continue;
+
+        sync_cflag(cflag);
     }
 }
