@@ -64,6 +64,7 @@ int ParseLine(void)
                     "UID", m_uid,
                     "SQUIT", m_squit,
                     "SID", m_sid,
+                    "SJOIN", m_sjoin,
                 };
     void  *senders[] =
                 {
@@ -1364,5 +1365,81 @@ void m_server(char *command, char *tail __unused)
         if (!add_server(me.remote_server, me.remote_sid)) {
             operlog("Failed to create server instance for remote %s (%s)", me.remote_server, me.remote_sid);
         }
+    }
+}
+
+void m_sjoin(char *sender, char *tail)
+{
+    char *chname, *modes, *sjoinbuf;
+    char *sjbuf_elem;
+    Wchan *wchan;
+
+    chname = tail;
+    chname = SeperateWord(chname);
+    modes = SeperateWord(chname);
+    sjoinbuf = strchr(modes, ':');
+    *sjoinbuf++ = 0;
+
+    wchan = find_wchan(chname);
+    if (wchan) {
+        operlog("Wchan %s already exists on SJOIN", chname);
+    } else {
+        wchan = CreateWchan(chname);
+    }
+
+    // Apply modes to enforce mlock.
+    if (modes) {
+        char buf[1024];
+
+        snprintf(buf, 1023, "%s %s", chname, modes);
+        m_mode(sender, buf);
+    }
+
+    // Add all users to the channel, but don't enforce user modes.
+    for (sjbuf_elem = strtok(sjoinbuf, " "); sjbuf_elem; sjbuf_elem = strtok(NULL, " ")) {
+        int flags = 0;
+        Member *member;
+        Nick *nptr = NULL;
+
+        for (; *sjbuf_elem; sjbuf_elem++) {
+            switch (*sjbuf_elem) {
+            case '*':
+                flags |= CHFL_OWNER;
+                continue;
+            case '~':
+                flags |= CHFL_PROTECT;
+                continue;
+            case '@':
+                flags |= CHFL_OP;
+                continue;
+            case '%':
+                flags |= CHFL_HALFOP;
+                continue;
+            case '+':
+                flags |= CHFL_VOICE;
+                continue;
+            case '&': // +b
+                break;
+            case '"': // +e
+                break;
+            case '\'': // +I
+                break;
+            default:
+                nptr = find_nick(sjbuf_elem);
+                break;
+            }
+        }
+
+        if (!nptr) {
+            continue;
+        }
+
+        if (find_member(wchan, nptr) != NULL) {
+            operlog("User %s already present in channel %s during SJOIN, ignoring", nptr->nick, chname);
+            continue;
+        }
+
+        member = AddUserToWchan(nptr, wchan);
+        member->flags = flags;
     }
 }
