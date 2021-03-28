@@ -1337,6 +1337,7 @@ void m_sid(char *sender, char *tail)
     sid = SeperateWord(sid);
     SeperateWord(sid);
 
+    sender++;
     sptr = find_server(sender);
     if (!sptr) {
         operlog("Cannot find source server %s for new server %s (%s)\n", sender, sname, sid);
