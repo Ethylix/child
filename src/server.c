@@ -37,7 +37,7 @@ Server *find_server(const char *name_or_sid)
     return NULL;
 }
 
-Server *add_server(const char *name, const char *sid) {
+Server *add_server(const char *name, const char *sid, Server *hub) {
     Server *server;
 
     server = malloc(sizeof(*server));
@@ -49,8 +49,12 @@ Server *add_server(const char *name, const char *sid) {
     strncpy(server->name, name, SERVERNAMELEN);
     strncpy(server->sid, sid, SIDLEN);
     LLIST_INIT(&server->nicks);
+    LLIST_INIT(&server->leafs);
 
     LLIST_INSERT_TAIL(core_get_servers(), &server->list_head);
+
+    if (hub)
+        LLIST_INSERT_TAIL(&hub->leafs, &server->leaf_head);
 
     return server;
 }
@@ -61,5 +65,21 @@ void delete_server(Server *server) {
     }
 
     LLIST_REMOVE(&server->list_head);
+    LLIST_REMOVE(&server->leaf_head);
     free(server);
+}
+
+void detach_server_recursive(Server *server) {
+    Nick *nptr, *tmp_nptr;
+    Server *sptr, *tmp_sptr;
+
+    LLIST_FOREACH_ENTRY_SAFE(&server->nicks, nptr, tmp_nptr, server_head) {
+        userquit(nptr->nick);
+    }
+
+    LLIST_FOREACH_ENTRY_SAFE(&server->leafs, sptr, tmp_sptr, leaf_head) {
+        detach_server_recursive(sptr);
+    }
+
+    delete_server(server);
 }

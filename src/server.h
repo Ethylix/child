@@ -29,11 +29,14 @@ typedef struct server {
     char name[SERVERNAMELEN + 1];
     char sid[SIDLEN + 1];
     struct llist_head nicks;
+    struct llist_head leafs;
     struct llist_head list_head;
+    struct llist_head leaf_head;
 } Server;
 
 Server *find_server(const char *);
-Server *add_server(const char *, const char *);
+Server *add_server(const char *, const char *, Server *);
 void delete_server(Server *);
+void detach_server_recursive(Server *);
 
 #endif

@@ -918,7 +918,7 @@ void m_protoctl(char *command, char *tail)
     if (sid) {
         strncpy(me.remote_sid, sid, SIDLEN);
         if (*me.remote_server && !find_server(me.remote_server)) {
-            if (!add_server(me.remote_server, me.remote_sid)) {
+            if (!add_server(me.remote_server, me.remote_sid, /*hub=*/NULL)) {
                 operlog("Failed to create server instance for remote %s (%s)", me.remote_server, me.remote_sid);
             }
         }
@@ -1313,7 +1313,6 @@ void m_stopic (char *command, char *tail)
 void m_squit(char *command, char *tail __unused)
 {
     Server *server;
-    Nick *nptr, *tmp_nptr;
     char *sname;
 
     sname = command;
@@ -1324,15 +1323,12 @@ void m_squit(char *command, char *tail __unused)
         return;
     }
 
-    LLIST_FOREACH_ENTRY_SAFE(&server->nicks, nptr, tmp_nptr, server_head) {
-        userquit(nptr->nick);
-    }
-
-    delete_server(server);
+    detach_server_recursive(server);
 }
 
-void m_sid(char *sender __unused, char *tail)
+void m_sid(char *sender, char *tail)
 {
+    Server *sptr;
     char *sname;
     char *sid;
 
@@ -1340,6 +1336,12 @@ void m_sid(char *sender __unused, char *tail)
     sid = SeperateWord(sname);
     sid = SeperateWord(sid);
     SeperateWord(sid);
+
+    sptr = find_server(sender);
+    if (!sptr) {
+        operlog("Cannot find source server %s for new server %s (%s)\n", sender, sname, sid);
+        return;
+    }
 
     if (find_server(sname)) {
         operlog("Duplicate server name in SID: %s (%s)", sname, sid);
@@ -1351,7 +1353,7 @@ void m_sid(char *sender __unused, char *tail)
         return;
     }
 
-    if (!add_server(sname, sid)) {
+    if (!add_server(sname, sid, sptr)) {
         operlog("Failed to create new server %s (%s)", sname, sid);
     }
 }
@@ -1361,7 +1363,7 @@ void m_server(char *command, char *tail __unused)
     strncpy(me.remote_server, command, SERVERNAMELEN);
 
     if (*me.remote_sid && !find_server(me.remote_sid)) {
-        if (!add_server(me.remote_server, me.remote_sid)) {
+        if (!add_server(me.remote_server, me.remote_sid, /*hub=*/NULL)) {
             operlog("Failed to create server instance for remote %s (%s)", me.remote_server, me.remote_sid);
         }
     }
