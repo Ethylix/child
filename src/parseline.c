@@ -62,7 +62,6 @@ int ParseLine(void)
                     "PRIVMSG",  m_privmsg,
                     "TOPIC", m_topic,
                     "UID", m_uid,
-                    "SQUIT", m_squit,
                     "SID", m_sid,
                     "SJOIN", m_sjoin,
                 };
@@ -74,6 +73,7 @@ int ParseLine(void)
                     "NETINFO", m_eos,
                     "NICK", m_register_user_v3,
                     "SERVER", m_server,
+                    "SQUIT", m_squit,
                 };
 
     char *sender, *command, *tail;
@@ -1310,14 +1310,13 @@ void m_stopic (char *command, char *tail)
     }
 }
 
-void m_squit(char *sender __unused, char *tail)
+void m_squit(char *command, char *tail __unused)
 {
     Server *server;
     Nick *nptr, *tmp_nptr;
     char *sname;
 
-    sname = tail;
-    SeperateWord(sname);
+    sname = command;
 
     server = find_server(sname);
     if (!server) {
