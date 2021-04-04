@@ -1020,7 +1020,7 @@ void m_privmsg (char *sender, char *tail)
     char mymask[256];
     snprintf(mymask,256,"%s@%s",me.nick,me.name);
 
-    if (Strcmp(target,me.nick) && Strcmp(target,mymask))
+    if (Strcmp(target,me.nick) && Strcmp(target,mymask) && Strcmp(target, me.uid))
         return;
 
     if (!Strcmp(arg1,"\1VERSION\1")) {
