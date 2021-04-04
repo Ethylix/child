@@ -18,34 +18,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#ifndef _CHILD_H
-#define _CHILD_H
+#ifndef _LOGGING_H
+#define _LOGGING_H
 
+#define operlog(x, ...) mylog(core_get_config()->logfile, x, ##__VA_ARGS__)
 
-#include <config.h>
-
-#include "server.h"
-#include "user.h"
-
-#define HASHMAX 65000
-#define CONF_LOAD   0
-#define CONF_REHASH 1
-
-#define DEFAULT_CONFFILE "child.conf"
-
-char *strcasestr (const char *, const char *);
-
-void child_die (int);
-void child_restart (int);
-void child_clean (void) __attribute__((noreturn));
-
-/* loadconf.c */
-void loadconf (int);
-
-/* md5.c */
-char *md5_hash (char *);
-
-/* parseline.c */
-int ParseLine (void);
+void mylog (char *, char *, ...);
 
 #endif

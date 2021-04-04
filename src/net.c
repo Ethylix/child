@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "child.h"
 #include "core.h"
+#include "logging.h"
 #include "mem.h"
 #include "string_utils.h"
 

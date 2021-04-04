@@ -410,7 +410,6 @@ void CheckGuests()
     HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_guests(), entry, tmp_entry, guest) {
         // TODO(target0): improve this.
         if ((time(NULL) - guest->nickconn) >= guest->timeout) {
-            init_srandom();
             gv = random()%999999;
             gv += hash(guest->nick);
             gv = gv%999999;

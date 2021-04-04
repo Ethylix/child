@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "commands.h"
 #include "core.h"
 #include "hashmap.h"
+#include "logging.h"
 #include "modules.h"
 #include "net.h"
 #include "string_utils.h"

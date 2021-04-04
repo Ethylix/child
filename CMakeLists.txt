@@ -25,3 +25,4 @@ add_subdirectory(tests)
 
 enable_testing()
 add_test(NAME check_hashmap COMMAND check_hashmap)
+add_test(NAME check_parseline COMMAND check_parseline)

@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "commands.h"
 #include "core.h"
 #include "db.h"
+#include "logging.h"
 #include "modules.h"
 #include "string_utils.h"
 #include "trust.h"
@@ -93,28 +94,6 @@ static void usage (char *progname)
     exit(-1);
 }
 
-void mylog (char *file, char *msg, ...)
-{
-    char tmp[1024];
-    char buf[1024];
-    va_list val;
-    FILE *index;
-    time_t tm;
-    ircsprintf(buf,1023,msg,val);
-    
-    tm = time(NULL);
-    
-    snprintf(tmp,1023,"[ %s] %s\n",ctime(&tm),buf);
-    
-    /* The ctime() function returns the result with a trailing '\n' */
-    
-    *(strstr(tmp,"\n")) = ' ';
-    index = fopen(file,"a+");
-    if (!index) return;
-    fputs(tmp,index);
-    fclose(index);
-}
-
 static void write_pid()
 {
     FILE *fp;
@@ -169,19 +148,6 @@ void child_restart(int save)
         abort();
     }
     child_clean();
-}
-
-void init_srandom(void)
-{
-#ifdef HAVE_SRANDOMDEV
-    srandomdev();
-#else
-    /* this piece of code comes from srandomdev() source */
-    struct timeval tv;
-
-    gettimeofday(&tv, NULL);
-    srandom(getpid() ^ tv.tv_sec ^ tv.tv_usec);
-#endif
 }
 
 int main(int argc, char **argv)
