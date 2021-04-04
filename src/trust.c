@@ -75,6 +75,8 @@ Trust *AddTrust(char *host, int limit)
 {
     Trust *new_trust;
     new_trust = (Trust *)malloc(sizeof(Trust));
+    memset(new_trust, 0, sizeof(*new_trust));
+
     strncpy(new_trust->host,host,HOSTLEN);
     new_trust->limit = limit;
 

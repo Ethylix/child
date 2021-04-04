@@ -35,6 +35,8 @@ Command *__addCommand (char *name, int type, void (*func)(), char *desc, int sub
     Command *newcmd;
 
     newcmd = (Command *)malloc(sizeof(Command));
+    memset(newcmd, 0, sizeof(*newcmd));
+
     strncpy(newcmd->name,name,CMDLEN);
     newcmd->type = type;
     newcmd->subtype = subtype;

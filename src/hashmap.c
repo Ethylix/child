@@ -16,6 +16,7 @@ struct hashmap *hashmap_new(const struct hashmap_descriptor *desc)
     hm = malloc(sizeof(*hm));
     if (!hm)
         return NULL;
+    memset(hm, 0, sizeof(*hm));
 
     hm->bucket_count = desc->initial_bucket_count ?: HASHMAP_DEFAULT_BUCKET_COUNT;
     hm->size = 0;
@@ -25,6 +26,7 @@ struct hashmap *hashmap_new(const struct hashmap_descriptor *desc)
         free(hm);
         return NULL;
     }
+    memset(hm->map, 0, hm->bucket_count * sizeof(struct llist_head));
 
     for (i = 0; i < hm->bucket_count; i++)
         LLIST_INIT(&hm->map[i]);
@@ -65,6 +67,7 @@ static int hashmap_resize(struct hashmap *hm, size_t new_bucket_count)
     new_map = malloc(new_bucket_count * sizeof(struct llist_head));
     if (!new_map)
         return -1;
+    memset(new_map, 0, new_bucket_count * sizeof(struct llist_head));
 
     for (i = 0; i < new_bucket_count; i++)
         LLIST_INIT(&new_map[i]);
@@ -111,6 +114,7 @@ bool hashmap_insert(struct hashmap *hm, const void *key, void *value,
     he = malloc(sizeof(*he));
     if (!he)
         return false;
+    memset(he, 0, sizeof(*he));
 
     if (hm->create_key)
         he->key = hm->create_key(key);

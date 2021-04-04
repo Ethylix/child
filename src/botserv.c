@@ -43,6 +43,7 @@ Bot *add_bot(const char *nick, const char *ident, const char *host)
     if (!newbot)
         return NULL;
 
+    memset(newbot, 0, sizeof(*newbot));
     strncpy(newbot->nick, nick, NICKLEN);
     strncpy(newbot->ident, ident, NICKLEN);
     strncpy(newbot->host, host, HOSTLEN);

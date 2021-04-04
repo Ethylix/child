@@ -93,6 +93,8 @@ Module *loadmodule(const char *name)
     }
 
     mod = (Module *)malloc(sizeof(Module));
+    memset(mod, 0, sizeof(*mod));
+
     strncpy(mod->modname,name,50);
     mod->modname[50] = '\0';
     mod->handle = handle; /* saving module handle */
@@ -155,6 +157,8 @@ Hook *AddHook(uint64_t hook_mask, int (*fptr)(Nick *, User *, Chan *, char *[]),
     }
 
     hook = (Hook *)malloc(sizeof(Hook));
+    memset(hook, 0, sizeof(*hook));
+
     strncpy(hook->name,name,50);
     strncpy(hook->modname,modname,50);
     hook->ptr = fptr;

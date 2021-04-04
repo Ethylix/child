@@ -118,6 +118,7 @@ User *AddUser (char *nick, int level)
 {
     User *new_user;
     new_user = (User *)malloc(sizeof(User));
+    memset(new_user, 0, sizeof(*new_user));
 
     strncpy(new_user->nick,nick,NICKLEN);
     new_user->level = level;
@@ -146,6 +147,7 @@ Nick *AddNick(char *nick, char *ident, char *host, char *uid, char *hiddenhost, 
     Nick *new_nick;
 
     new_nick = (Nick *)malloc(sizeof(Nick));
+    memset(new_nick, 0, sizeof(*new_nick));
 
     strncpy(new_nick->nick,nick,NICKLEN);
     strncpy(new_nick->ident,ident,NICKLEN);
@@ -173,6 +175,8 @@ Nick *AddNick(char *nick, char *ident, char *host, char *uid, char *hiddenhost, 
         clone->count++;
     else {
         clone = (Clone *)malloc(sizeof(Clone));
+        memset(clone, 0, sizeof(*clone));
+
         strncpy(clone->host, reshost, HOSTLEN);
         clone->count = 1;
         if (!HASHMAP_INSERT(core_get_clones(), clone->host, clone, NULL)) {
@@ -188,6 +192,7 @@ Guest *AddGuest (char *nick, int timeout, int nickconn)
 {
     Guest *new_guest;
     new_guest = (Guest *)malloc(sizeof(Guest));
+    memset(new_guest, 0, sizeof(*new_guest));
 
     strncpy(new_guest->nick,nick,NICKLEN);
     new_guest->timeout = timeout;
@@ -206,6 +211,7 @@ Link *AddLink(char *master, char *slave)
 {
     Link *new_link;
     new_link = (Link *)malloc(sizeof(Link));
+    memset(new_link, 0, sizeof(*new_link));
 
     strncpy(new_link->master,master,NICKLEN);
     strncpy(new_link->slave,slave,NICKLEN);
@@ -229,6 +235,7 @@ Fake *AddFake(const char *nick, const char *ident, const char *host, const char 
     new_fake = malloc(sizeof(*new_fake));
     if (!new_fake)
         return NULL;
+    memset(new_fake, 0, sizeof(*new_fake));
 
     strncpy(new_fake->nick, nick, NICKLEN + 1);
     strncpy(new_fake->ident, ident, NICKLEN + 1);

@@ -133,23 +133,17 @@ Chan *CreateChannel (char *name, char *owner, int lastseen)
 {
     Chan *new_chan;
     new_chan = (Chan *)malloc(sizeof(Chan));
+    memset(new_chan, 0, sizeof(*new_chan));
 
     strncpy(new_chan->channelname,name,CHANLEN);
     strncpy(new_chan->owner,owner,NICKLEN);
     new_chan->options = COPT_AXXFLAGS | COPT_SECURE;
-    new_chan->regtime = 0;
-    new_chan->autolimit = 0;
-    bzero(new_chan->entrymsg,250);
-    bzero(new_chan->mlock,50);
-    bzero(new_chan->topic, TOPICLEN);
     if (!lastseen)
         new_chan->lastseen = time(NULL);
     else
         new_chan->lastseen = lastseen;
 
     LLIST_INIT(&new_chan->cflags);
-    new_chan->active_autolimit = NULL;
-    new_chan->chanbot = NULL;
     LLIST_INIT(&new_chan->timebans);
 
     if (!HASHMAP_INSERT(core_get_chans(), new_chan->channelname, new_chan, NULL)) {
@@ -179,9 +173,9 @@ Wchan *CreateWchan(char *name)
 {
     Wchan *new_chan;
     new_chan = (Wchan *)malloc(sizeof(Wchan));
+    memset(new_chan, 0, sizeof(*new_chan));
 
     strncpy(new_chan->chname,name,CHANLEN);
-    bzero(new_chan->topic, TOPICLEN);
     LLIST_INIT(&new_chan->members);
 
     if (!HASHMAP_INSERT(core_get_wchans(), new_chan->chname, new_chan, NULL)) {
@@ -203,6 +197,7 @@ Limit *AddLimit(Chan *chptr)
     }
 
     limit = (Limit *)malloc(sizeof(Limit));
+    memset(limit, 0, sizeof(*limit));
 
     limit->chan = chptr;
     limit->time = time(NULL)+me.limittime;
@@ -218,6 +213,8 @@ Timeban *AddTimeban(Chan *chan, const char *mask, int duration, const char *reas
     Timeban *new_tb;
 
     new_tb = (Timeban *)malloc(sizeof(Timeban));
+    memset(new_tb, 0, sizeof(*new_tb));
+
     new_tb->chan = chan;
     strncpy(new_tb->mask, mask, MASKLEN);
     strncpy(new_tb->reason, reason, 256);
@@ -296,6 +293,7 @@ Cflag *AddUserToChannel (User *user, Chan *chan, int level, int uflags)
 {
     Cflag *new_cflag;
     new_cflag = (Cflag *)malloc(sizeof(Cflag));
+    memset(new_cflag, 0, sizeof(*new_cflag));
 
     new_cflag->chan = chan;
     new_cflag->user = user;
@@ -333,6 +331,7 @@ Member *AddUserToWchan (Nick *nptr, Wchan *chan)
 {
     Member *member;
     member = (Member *)malloc(sizeof(Member));
+    memset(member, 0, sizeof(*member));
 
     member->wchan = chan;
     member->nick = nptr;
