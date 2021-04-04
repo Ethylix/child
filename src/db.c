@@ -467,7 +467,7 @@ int connect_to_db()
 
     mysql_init(&get_core()->mysql_handle);
     mysql_options(&get_core()->mysql_handle, MYSQL_OPT_RECONNECT, &reconnect);
-    if (!mysql_real_connect(&get_core()->mysql_handle,me.mysql_host,me.mysql_login,me.mysql_passwd,me.mysql_db,0,NULL,0)) return 0;
+    if (!mysql_real_connect(&get_core()->mysql_handle,core_get_config()->mysql_host,core_get_config()->mysql_login,core_get_config()->mysql_passwd,core_get_config()->mysql_db,0,NULL,0)) return 0;
     return 1;
 }
 

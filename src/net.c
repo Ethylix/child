@@ -62,9 +62,9 @@ int ConnectToServer()
     hints.ai_next = NULL;
 
     char port[6];
-    sprintf(port,"%d",me.port);
+    sprintf(port,"%d",core_get_config()->port);
 
-    n = getaddrinfo(me.server,port,&hints,&res);
+    n = getaddrinfo(core_get_config()->server,port,&hints,&res);
     if (n != 0) {
         fprintf(stderr,"getaddrinfo: %s\n",gai_strerror(n));
         if (n == EAI_SYSTEM) perror("getaddrinfo");
@@ -74,7 +74,7 @@ int ConnectToServer()
     sock = socket(res->ai_family,res->ai_socktype,res->ai_protocol);
     if (sock < 0) { perror("socket"); freeaddrinfo(res); return 0; }
 
-    if (*me.bindip) {
+    if (*core_get_config()->bindip) {
         hints2.ai_flags = AI_PASSIVE;
         hints2.ai_family = PF_UNSPEC;
         hints2.ai_socktype = SOCK_STREAM;
@@ -84,7 +84,7 @@ int ConnectToServer()
         hints2.ai_canonname = NULL;
         hints2.ai_next = NULL;
 
-        n = getaddrinfo(me.bindip,NULL,&hints2,&res2);
+        n = getaddrinfo(core_get_config()->bindip,NULL,&hints2,&res2);
         if (n != 0) {
             fprintf(stderr,"getaddrinfo: %s\n",gai_strerror(n));
             if (n == EAI_SYSTEM) perror("getaddrinfo");
@@ -105,7 +105,7 @@ int ConnectToServer()
     if (setjmp(timeout_jump) == 1) {
         close(sock);
         freeaddrinfo(res);
-        if (*me.bindip) freeaddrinfo(res2);
+        if (*core_get_config()->bindip) freeaddrinfo(res2);
         return -1;
     }
 
@@ -115,7 +115,7 @@ int ConnectToServer()
         signal(SIGALRM,SIG_DFL);
         operlog("connect() error: %s",strerror(errno));
         freeaddrinfo(res);
-        if (*me.bindip) freeaddrinfo(res2);
+        if (*core_get_config()->bindip) freeaddrinfo(res2);
         close(sock);
         return 0;
     }
@@ -123,7 +123,7 @@ int ConnectToServer()
     alarm(0);
     signal(SIGALRM,SIG_DFL);
     freeaddrinfo(res);
-    if (*me.bindip) freeaddrinfo(res2);
+    if (*core_get_config()->bindip) freeaddrinfo(res2);
 
     fcntl(sock,F_SETFL,O_NONBLOCK);
 
@@ -134,13 +134,13 @@ int ConnectToServer()
 
 void SendInitToServer()
 {
-    SendRaw("PASS :%s",me.linkpass);
-    SendRaw("PROTOCTL EAUTH=%s SID=%s", me.name, me.sid);
+    SendRaw("PASS :%s",core_get_config()->linkpass);
+    SendRaw("PROTOCTL EAUTH=%s SID=%s", core_get_config()->name, core_get_config()->sid);
     SendRaw("PROTOCTL NOQUIT NICKv2 SJOIN SJ3 CLK TKLEXT TKLEXT2 NICKIP ESVID MLOCK EXTSWHOIS");
-    SendRaw("SERVER %s 1 :Child IRC Services",me.name);
-    SendRaw("SQLINE %s :Reserved for services",me.nick);
-    generate_uid(me.uid);
-    fakeuser(me.nick, me.ident, me.host, me.uid, MY_UMODES);
+    SendRaw("SERVER %s 1 :Child IRC Services",core_get_config()->name);
+    SendRaw("SQLINE %s :Reserved for services",core_get_config()->nick);
+    generate_uid(get_core()->uid);
+    fakeuser(core_get_config()->nick, core_get_config()->ident, core_get_config()->host, get_core()->uid, MY_UMODES);
 }
 
 void DisconnectFromServer ()

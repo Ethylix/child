@@ -55,14 +55,14 @@ static void sighandler (int signal)
         case SIGUSR2:
             operlog("Got SIGUSR2, reconnecting to server");
             get_core()->eos = false;
-            me.retry_attempts = me.connected = 0;
-            me.nextretry = time(NULL)+1;
+            get_core()->retry_attempts = get_core()->connected = 0;
+            get_core()->nextretry = time(NULL)+1;
             cleanup_reconnect();
             close(get_core()->sock);
             break;
         case SIGINT:
             operlog("SIGINT signal received, exiting");
-            fakekill(me.nick,"Got SIGINT, exiting");
+            fakekill(core_get_config()->nick,"Got SIGINT, exiting");
             child_die(1);
             break;
         case SIGCHLD:
@@ -198,7 +198,7 @@ int main(int argc, char **argv)
 
     int daemonize = 1;
     char op = 0;
-    me.retry_attempts = me.nextretry = me.connected = 0;
+    get_core()->retry_attempts = get_core()->nextretry = get_core()->connected = 0;
 
     struct sigaction sig, old, sigresethand;
     memset(&sig,0,sizeof(sig));
@@ -227,50 +227,50 @@ int main(int argc, char **argv)
 
     /* Setting default values */
 
-    strcpy(me.nick,"C");
-    strcpy(me.name,"services.geeknode.org");
-    strcpy(me.ident,"cserve");
-    strcpy(me.host,"geeknode.org");
-    strcpy(me.linkpass,"f00p4ss");
-    strcpy(me.mysql_host,"localhost");
-    strcpy(me.mysql_db,"child");
-    strcpy(me.mysql_login,"child");
-    strcpy(me.mysql_passwd,"childp4ss");
-    strcpy(me.logfile,"child.log");
-    strcpy(me.guest_prefix,"Geek");
-    strcpy(me.sendmail,"/usr/sbin/sendmail -t");
-    strcpy(me.sendfrom,"noreply@geeknode.org");
-    strcpy(me.usercloak,".users.geeknode.org");
-    bzero(me.bindip,32);
-    me.port = 4400;
-    me.maxclones = 5;
-    me.nick_expire = 45;
-    me.chan_expire = 60;
-    me.chanperuser = 10;
-    me.level_oper = 100;
-    me.level_admin = 500;
-    me.level_root = 900;
-    me.level_owner = 1000;
-    me.limittime = 5;
-    me.savedb_interval = 60;
-    me.anonymous_global = 0;
-    me.maxmsgtime = 2;
-    me.maxmsgnb = 5;
-    me.ignoretime = 60;
-    me.maxloginatt = 3;
-    me.chlev_sadmin = 20;
-    me.chlev_admin = 10;
-    me.chlev_op = 5;
-    me.chlev_halfop = 4;
-    me.chlev_voice = 3;
-    me.chlev_invite = 1;
-    me.chlev_nostatus = -1;
-    me.chlev_akick = -2;
-    me.chlev_akb = -3;
-    me.emailreg = 0;
+    strcpy(core_get_config()->nick,"C");
+    strcpy(core_get_config()->name,"services.geeknode.org");
+    strcpy(core_get_config()->ident,"cserve");
+    strcpy(core_get_config()->host,"geeknode.org");
+    strcpy(core_get_config()->linkpass,"f00p4ss");
+    strcpy(core_get_config()->mysql_host,"localhost");
+    strcpy(core_get_config()->mysql_db,"child");
+    strcpy(core_get_config()->mysql_login,"child");
+    strcpy(core_get_config()->mysql_passwd,"childp4ss");
+    strcpy(core_get_config()->logfile,"child.log");
+    strcpy(core_get_config()->guest_prefix,"Geek");
+    strcpy(core_get_config()->sendmail,"/usr/sbin/sendmail -t");
+    strcpy(core_get_config()->sendfrom,"noreply@geeknode.org");
+    strcpy(core_get_config()->usercloak,".users.geeknode.org");
+    bzero(core_get_config()->bindip,32);
+    core_get_config()->port = 4400;
+    core_get_config()->maxclones = 5;
+    core_get_config()->nick_expire = 45;
+    core_get_config()->chan_expire = 60;
+    core_get_config()->chanperuser = 10;
+    core_get_config()->level_oper = 100;
+    core_get_config()->level_admin = 500;
+    core_get_config()->level_root = 900;
+    core_get_config()->level_owner = 1000;
+    core_get_config()->limittime = 5;
+    core_get_config()->savedb_interval = 60;
+    core_get_config()->anonymous_global = 0;
+    core_get_config()->maxmsgtime = 2;
+    core_get_config()->maxmsgnb = 5;
+    core_get_config()->ignoretime = 60;
+    core_get_config()->maxloginatt = 3;
+    core_get_config()->chlev_sadmin = 20;
+    core_get_config()->chlev_admin = 10;
+    core_get_config()->chlev_op = 5;
+    core_get_config()->chlev_halfop = 4;
+    core_get_config()->chlev_voice = 3;
+    core_get_config()->chlev_invite = 1;
+    core_get_config()->chlev_nostatus = -1;
+    core_get_config()->chlev_akick = -2;
+    core_get_config()->chlev_akb = -3;
+    core_get_config()->emailreg = 0;
 
-    bzero(me.remote_server, SERVERNAMELEN+1);
-    bzero(me.remote_sid, SIDLEN+1);
+    bzero(get_core()->remote_server, SERVERNAMELEN+1);
+    bzero(get_core()->remote_sid, SIDLEN+1);
 
     /* -- */
 
@@ -296,12 +296,12 @@ int main(int argc, char **argv)
     retval = ConnectToServer();
     switch(retval) {
         case -1:
-            fprintf(stderr,"Failed to connect to %s:%d (connection timed out)\n",me.server,me.port);
-            operlog("Failed to connect to %s:%d (connection timed out)",me.server,me.port);
+            fprintf(stderr,"Failed to connect to %s:%d (connection timed out)\n",core_get_config()->server,core_get_config()->port);
+            operlog("Failed to connect to %s:%d (connection timed out)",core_get_config()->server,core_get_config()->port);
             child_clean();
         case 0:
-            fprintf(stderr,"Failed to connect to %s:%d\n",me.server,me.port);
-            operlog("Failed to connect to %s:%d",me.server,me.port);
+            fprintf(stderr,"Failed to connect to %s:%d\n",core_get_config()->server,core_get_config()->port);
+            operlog("Failed to connect to %s:%d",core_get_config()->server,core_get_config()->port);
             child_clean();
     }
 
@@ -317,7 +317,7 @@ int main(int argc, char **argv)
     loadalldb();
     if (get_core()->verbose) printf("Logging in to server\n");
     SendInitToServer();
-    me.connected = 1;
+    get_core()->connected = 1;
     if (get_core()->verbose) printf("Logged in to server\n");
 
     SendRaw("EOS");
@@ -332,7 +332,7 @@ int main(int argc, char **argv)
     write_pid();
 
     for (;;) {
-        if (!me.connected)
+        if (!get_core()->connected)
             goto try_reconnect;
 
         pfd.fd = get_core()->sock;
@@ -348,13 +348,13 @@ int main(int argc, char **argv)
 
             if (pfd.revents & (POLLIN | POLLPRI)) {
                 if (!ReadChunk()) {
-                    if (!me.connected || !get_core()->eos)
+                    if (!get_core()->connected || !get_core()->eos)
                         continue;
                     operlog("Connection reset by peer");
                     savealldb();
                     get_core()->eos = false;
-                    me.retry_attempts = me.connected = 0;
-                    me.nextretry = time(NULL)+1;
+                    get_core()->retry_attempts = get_core()->connected = 0;
+                    get_core()->nextretry = time(NULL)+1;
                     cleanup_reconnect();
                     close(get_core()->sock);
                     continue;
@@ -367,30 +367,30 @@ int main(int argc, char **argv)
 try_reconnect:
         timenow = time(NULL);
 
-        if (!me.connected && timenow - me.nextretry >= 0) {
+        if (!get_core()->connected && timenow - get_core()->nextretry >= 0) {
             retval = ConnectToServer();
             if (retval == -1 || retval == 0) {
-                me.retry_attempts++;
-                operlog("Reconnecting attempt #%d failed (%s)",me.retry_attempts,retval ? "timeout" : "error");
-                if (me.retry_attempts >= MAX_RECO_ATTEMPTS) {
+                get_core()->retry_attempts++;
+                operlog("Reconnecting attempt #%d failed (%s)",get_core()->retry_attempts,retval ? "timeout" : "error");
+                if (get_core()->retry_attempts >= MAX_RECO_ATTEMPTS) {
                     operlog("Maximum reconnection attempts reached, exiting");
                     savealldb();
                     unloadallmod();
                     CloseAllSock();
                     child_clean();
                 }
-                me.nextretry = timenow + RECONNECT_DELAY;
+                get_core()->nextretry = timenow + RECONNECT_DELAY;
             } else {
                 SendInitToServer();
-                me.connected = 1;
-                me.nextretry = 0;
+                get_core()->connected = 1;
+                get_core()->nextretry = 0;
                 SendRaw("EOS");
                 operlog("Reconnected");
             }
-            if (me.connected) continue;
+            if (get_core()->connected) continue;
         }
 
-        if (timenow - mysql_lastconn >= 60*me.savedb_interval) {
+        if (timenow - mysql_lastconn >= 60*core_get_config()->savedb_interval) {
             savealldb();
             mysql_lastconn = timenow;
         }
@@ -408,7 +408,7 @@ try_reconnect:
         }
 
         // Avoid burning the CPU while trying to reconnect.
-        if (!me.connected)
+        if (!get_core()->connected)
             usleep(10000);
     }
 

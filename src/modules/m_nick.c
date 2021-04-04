@@ -114,7 +114,7 @@ void do_nick (Nick *nptr, User *uptr, char *all)
     SeperateWord(arg2);
 
     if (!arg2 || *arg2 == '\0') {
-        NoticeToUser(nptr, "Type \2/msg %s help nick\2 for more informations",me.nick);
+        NoticeToUser(nptr, "Type \2/msg %s help nick\2 for more informations",core_get_config()->nick);
         return;
     }
 
@@ -276,7 +276,7 @@ void nick_ghost (Nick *nptr, User *uptr __unused, char *all)
 
     char ghostmsg[128];
     sprintf(ghostmsg,"GHOST command used by %s",nptr->nick);
-    killuser(nptr2->nick,ghostmsg,me.nick);
+    killuser(nptr2->nick,ghostmsg,core_get_config()->nick);
     NoticeToUser(nptr,"Done.");
 }
 
@@ -311,9 +311,9 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
 
         nptr->loginattempts++;
         if (nptr->lasttry == 0) nptr->lasttry = time(NULL);
-        if (nptr->loginattempts >= me.maxloginatt && time(NULL) - nptr->lasttry < 60) {
-            killuser(nptr->nick,"Max login attempts exceeded",me.nick);
-        } else if (nptr->loginattempts < me.maxloginatt && time(NULL) - nptr->lasttry >= 60) {
+        if (nptr->loginattempts >= core_get_config()->maxloginatt && time(NULL) - nptr->lasttry < 60) {
+            killuser(nptr->nick,"Max login attempts exceeded",core_get_config()->nick);
+        } else if (nptr->loginattempts < core_get_config()->maxloginatt && time(NULL) - nptr->lasttry >= 60) {
             nptr->loginattempts = 1;
             nptr->lasttry = time(NULL);
         }
@@ -342,10 +342,10 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
         strncpy(nptr->hiddenhost, user->vhost, HOSTLEN);
         NoticeToUser(nptr,"Your vhost \2%s\2 has been activated",user->vhost);
     } else if (HasOption(user, UOPT_CLOAKED)) {
-        SendRaw("CHGHOST %s %s%s", nptr->nick, user->nick, me.usercloak);
+        SendRaw("CHGHOST %s %s%s", nptr->nick, user->nick, core_get_config()->usercloak);
         char host[HOSTLEN + NICKLEN + 1];
         bzero(host, HOSTLEN+NICKLEN+1);
-        snprintf(host, HOSTLEN + NICKLEN + 1, "%s%s", user->nick, me.usercloak);
+        snprintf(host, HOSTLEN + NICKLEN + 1, "%s%s", user->nick, core_get_config()->usercloak);
         strncpy(nptr->hiddenhost, host, HOSTLEN);
         NoticeToUser(nptr,"Your cloak has been activated");
     }
@@ -389,8 +389,8 @@ void nick_register (Nick *nptr, User *uptr, char *all)
     if (!HASHMAP_EMPTY(core_get_users()))
         AddUser(nptr->nick,1);
     else {
-        AddUser(nptr->nick,me.level_owner);
-        NoticeToUser(nptr,"You have now the level \2%d\2",me.level_owner);
+        AddUser(nptr->nick,core_get_config()->level_owner);
+        NoticeToUser(nptr,"You have now the level \2%d\2",core_get_config()->level_owner);
     }   
         
     user = find_user(nptr->nick);
@@ -402,7 +402,7 @@ void nick_register (Nick *nptr, User *uptr, char *all)
     char email[512];
     bzero(newpass, 16);
     char *pass;
-    if (me.emailreg == 1) {
+    if (core_get_config()->emailreg == 1) {
         gen_rand_string(newpass, "A-Za-z0-9", 12);
         pass = md5_hash(newpass);
     } else
@@ -416,9 +416,9 @@ void nick_register (Nick *nptr, User *uptr, char *all)
 
     NoticeToUser(nptr, "You are now registered.");
 
-    if (me.emailreg == 1) {
+    if (core_get_config()->emailreg == 1) {
         bzero(email, 512);
-        sprintf(email, "From: Child <%s>\r\nTo: %s <%s>\r\nSubject: Account information\r\n\r\nYour user info:\r\n\tLogin: %s\r\n\tPassword: %s\r\n\r\nYou can auth with the following command: /msg %s nick identify %s\r\n", me.sendfrom, user->nick, user->email, user->nick, newpass, me.nick, newpass);
+        sprintf(email, "From: Child <%s>\r\nTo: %s <%s>\r\nSubject: Account information\r\n\r\nYour user info:\r\n\tLogin: %s\r\n\tPassword: %s\r\n\r\nYou can auth with the following command: /msg %s nick identify %s\r\n", core_get_config()->sendfrom, user->nick, user->email, user->nick, newpass, core_get_config()->nick, newpass);
         sendmail(user->email, email);
         NoticeToUser(nptr, "A password has been generated and sent to your specified e-mail address (this mean that the password you've specified doesn't work).");
     } else {        
@@ -444,7 +444,7 @@ void nick_drop (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    if (uptr->level < me.level_oper || !IsOper(nptr)) {
+    if (uptr->level < core_get_config()->level_oper || !IsOper(nptr)) {
         NoticeToUser(nptr,"Access denied");
         return;
     }
@@ -494,7 +494,7 @@ void nick_info (Nick *nptr, User *uptr, char *all)
         return;
     }   
         
-    if (HasOption(user, UOPT_PRIVATE) && Strcmp(user->nick,uptr->nick) && (uptr->level < me.level_oper || !IsOper(nptr))) {
+    if (HasOption(user, UOPT_PRIVATE) && Strcmp(user->nick,uptr->nick) && (uptr->level < core_get_config()->level_oper || !IsOper(nptr))) {
         NoticeToUser(nptr,"The nick %s is private.",user->nick);
         return;
     }   
@@ -502,13 +502,13 @@ void nick_info (Nick *nptr, User *uptr, char *all)
     NoticeToUser(nptr,"Informations for \2%s\2 :",user->nick);
     NoticeToUser(nptr,"   Level :             %d",user->level);
     NoticeToUser(nptr,"   Online:             %s",user->authed == 1 ? "yes" : "no");
-    if (!Strcmp(nptr->nick,arg3) || (uptr->level >= me.level_oper && IsOper(nptr)) || !HasOption(user, UOPT_HIDEMAIL))
+    if (!Strcmp(nptr->nick,arg3) || (uptr->level >= core_get_config()->level_oper && IsOper(nptr)) || !HasOption(user, UOPT_HIDEMAIL))
         NoticeToUser(nptr,"   Email:              %s",user->email);
     char opt[512];
     memset(opt,0x00,512);
     if (HasOption(user, UOPT_PROTECT)) strcat(opt,"Protect ");
     if (HasOption(user, UOPT_PRIVATE)) strcat(opt,"Private ");
-    if (IsUserNoexpire(user) || user->level >= me.level_oper) strcat(opt,"Noexpire ");
+    if (IsUserNoexpire(user) || user->level >= core_get_config()->level_oper) strcat(opt,"Noexpire ");
     if (HasOption(user, UOPT_NOAUTO)) strcat(opt,"Noauto ");
     if (HasOption(user, UOPT_HIDEMAIL)) strcat(opt,"Hidemail ");
     if (*opt == '\0') sprintf(opt,"None");
@@ -522,7 +522,7 @@ void nick_info (Nick *nptr, User *uptr, char *all)
     NoticeToUser(nptr,"   Last seen: %s",ctime(&blah));
     blah = user->regtime;
     NoticeToUser(nptr,"   Registration time: %s", blah ? ctime(&blah) : "Unknown");
-    if (!Strcmp(nptr->nick,arg3) || (uptr->level >= me.level_oper && IsOper(nptr))) {
+    if (!Strcmp(nptr->nick,arg3) || (uptr->level >= core_get_config()->level_oper && IsOper(nptr))) {
         NoticeToUser(nptr,"   Linked nicks:");
         HASHMAP_FOREACH_ENTRY_VALUE(core_get_links(), entry, link) {
             if (!Strcmp(link->master,arg3))
@@ -655,9 +655,9 @@ void nick_set_cloak (Nick *nptr, User *uptr, char *all)
 
     if (!Strcmp(arg1,"on")) {
         SetOption(uptr, UOPT_CLOAKED);
-        SendRaw("CHGHOST %s %s%s", uptr->nick, uptr->nick, me.usercloak);
+        SendRaw("CHGHOST %s %s%s", uptr->nick, uptr->nick, core_get_config()->usercloak);
         bzero(host, HOSTLEN+NICKLEN+1);
-        snprintf(host, HOSTLEN+NICKLEN+1, "%s%s", uptr->nick, me.usercloak);
+        snprintf(host, HOSTLEN+NICKLEN+1, "%s%s", uptr->nick, core_get_config()->usercloak);
         strncpy(nptr->hiddenhost, host, HOSTLEN);
         NoticeToUser(nptr,"Your host is now cloaked");
     } else if (!Strcmp(arg1, "off")) {
@@ -732,7 +732,7 @@ void nick_set_password (Nick *nptr, User *uptr, char *all)
         free(pass);
         NoticeToUser(nptr,"Your password has been changed");
     } else {
-        if (uptr->level < me.level_oper || !IsOper(nptr)) {
+        if (uptr->level < core_get_config()->level_oper || !IsOper(nptr)) {
             NoticeToUser(nptr,"Access denied");
             return;
         }   
@@ -794,7 +794,7 @@ void nick_requestpassword (Nick *nptr, User *uptr, char *all)
     bzero(email, 1024);
 
     operlog("%s (%s@%s) requested new password for %s\n",nptr->nick,nptr->ident,nptr->host,uptr->nick);
-    snprintf(email, 1023, "From: Child <%s>\r\nTo: %s <%s>\r\nSubject: Request of password\r\n\r\n%s (%s@%s) requested new password.\r\nYour user info:\r\n\tLogin: %s\r\n\tPassword: %s\r\n\r\nYou can auth with the following command: /msg %s nick identify %s\r\n", me.sendfrom, uptr->nick, uptr->email, nptr->nick, nptr->ident, nptr->host, uptr->nick, newpass, me.nick, newpass);
+    snprintf(email, 1023, "From: Child <%s>\r\nTo: %s <%s>\r\nSubject: Request of password\r\n\r\n%s (%s@%s) requested new password.\r\nYour user info:\r\n\tLogin: %s\r\n\tPassword: %s\r\n\r\nYou can auth with the following command: /msg %s nick identify %s\r\n", core_get_config()->sendfrom, uptr->nick, uptr->email, nptr->nick, nptr->ident, nptr->host, uptr->nick, newpass, core_get_config()->nick, newpass);
     sendmail(uptr->email, email);
 
     NoticeToUser(nptr,"New password generated and sent to your email address");

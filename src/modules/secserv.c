@@ -54,12 +54,12 @@ void child_init()
 {
     kills = perm = rmode = 0;
     seclev = 1;
-    old_maxclones = me.maxclones;
+    old_maxclones = core_get_config()->maxclones;
     AddHook(HOOK_NICKCREATE,&check_nick,"check_nickcreate",modname);
     AddHook(HOOK_NICKCHANGE,&check_nick,"check_nickchange",modname);
     AddHook(HOOK_PING,&reset_vars,"reset_vars",modname);
-    addOperCommand("seclev",secserv_cmds,me.level_admin);
-    addHelpOperCommand("seclev",secserv_help,"Manage security level",me.level_admin);
+    addOperCommand("seclev",secserv_cmds,core_get_config()->level_admin);
+    addHelpOperCommand("seclev",secserv_help,"Manage security level",core_get_config()->level_admin);
     MsgToChan(logchan,"[SecServ] Hi !");
 }
 
@@ -146,7 +146,7 @@ int set_seclev (int level)
                 Global("[Security] Back to normal security level.");
             }
             seclev = 0;
-            me.maxclones = old_maxclones;
+            core_get_config()->maxclones = old_maxclones;
 
             MsgToChan(logchan,"Security level \0033disabled\003");
             break;
@@ -159,7 +159,7 @@ int set_seclev (int level)
                 Global("[Security] Back to normal security level.");
             }
             seclev = 1;
-            me.maxclones = old_maxclones;
+            core_get_config()->maxclones = old_maxclones;
 
             MsgToChan(logchan,"Security level set to \2%d\2",seclev);
             break;
@@ -173,7 +173,7 @@ int set_seclev (int level)
             }
 
             seclev = 2;
-            me.maxclones = 2;
+            core_get_config()->maxclones = 2;
 
             MsgToChan(logchan,"Security level set to\0034 %d\3",seclev);
             break;
@@ -187,7 +187,7 @@ int set_seclev (int level)
                 Global("[Security] Possible clones attack, protecting channels.");
             set_mode_allchans();
             seclev = 3;
-            me.maxclones = 2;
+            core_get_config()->maxclones = 2;
 
             MsgToChan(logchan,"Security level set to\0034 %d\3",seclev);
             break;
@@ -197,7 +197,7 @@ int set_seclev (int level)
 
             Global("[Security] Possible huge clones attack, new connections currently denied.");
             seclev = 4;
-            me.maxclones = 1;
+            core_get_config()->maxclones = 1;
 
             MsgToChan(logchan,"[\2\0034CRITICAL\2\3] Security level set to \0034\2%d\2\3",seclev);
             break;
@@ -217,23 +217,23 @@ void secserv_cmds (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    if ((uptr->level < me.level_root || uptr->authed != 1) && atoi(arg2) == 4) {
+    if ((uptr->level < core_get_config()->level_root || uptr->authed != 1) && atoi(arg2) == 4) {
         NoticeToUser(nptr,"Access denied");
         return;
     }
 
-    if (uptr->level < me.level_owner && atoi(arg2) == 4 && perm == 2) {
+    if (uptr->level < core_get_config()->level_owner && atoi(arg2) == 4 && perm == 2) {
         NoticeToUser(nptr,"Access denied, only the owner can do that");
         return;
     }
 
     if (arg3 && *arg3) {
-        if (uptr->level < me.level_root && atoi(arg3) == 2) {
+        if (uptr->level < core_get_config()->level_root && atoi(arg3) == 2) {
             NoticeToUser(nptr,"Access denied");
             return;
         }
 
-        if (uptr->level < me.level_owner && atoi(arg3) == 2 && atoi(arg2) == 4) {
+        if (uptr->level < core_get_config()->level_owner && atoi(arg3) == 2 && atoi(arg2) == 4) {
             NoticeToUser(nptr,"Access denied, only the owner can do that");
             return;
         }
@@ -254,7 +254,7 @@ int check_nick(Nick *nptr)
     /*if (!Strcmp(nptr->server,"research.geeknode.org")) return MOD_CONTINUE;*/
 
     if (seclev == 4) {
-        killuser(nick,"We are undergoing a clones attack. New connections are currently denied, please try again later.",me.nick);
+        killuser(nick,"We are undergoing a clones attack. New connections are currently denied, please try again later.",core_get_config()->nick);
         kills++;
         return MOD_STOP;
     }
@@ -262,7 +262,7 @@ int check_nick(Nick *nptr)
     if (match_bad_pattern(nick) >= 3) {
         switch(seclev) {
             case 1:
-                killuser(nick,"Your nick may be an evil bot nick, please change it.",me.nick);
+                killuser(nick,"Your nick may be an evil bot nick, please change it.",core_get_config()->nick);
                 MsgToChan(logchan,"\2User %s!%s@%s killed (Bad nick)\2",nick,nptr->ident,nptr->host);
                 kills++;
                 if (kills >= maxkills && perm < 2) {

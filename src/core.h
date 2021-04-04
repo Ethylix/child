@@ -2,6 +2,8 @@
 #define _CORE_H
 
 #include "hashmap.h"
+#include "server.h"
+#include "user.h"
 
 #include <mysql/mysql.h>
 #include <poll.h>
@@ -20,17 +22,17 @@ struct fakeuser;
 struct server;
 
 struct config {
-    char *nick;
-    char *name;
-    char *ident;
-    char *host;
+    char nick[32];
+    char name[32];
+    char ident[32];
+    char host[32];
 
-    char *server;
+    char server[40];
     int port;
-    char *bindip;
+    char bindip[40];
 
-    char *sid;
-    char *linkpass;
+    char sid[SIDLEN+1];
+    char linkpass[50];
     int maxclones;
 
     int nick_expire;
@@ -43,23 +45,23 @@ struct config {
     int level_root;
     int level_owner;
 
-    char *mysql_host;
-    char *mysql_db;
-    char *mysql_login;
-    char *mysql_passwd;
+    char mysql_host[40];
+    char mysql_db[32];
+    char mysql_login[32];
+    char mysql_passwd[32];
 
-    char *logfile;
+    char logfile[32];
 
     int limittime;
 
     int savedb_interval;
 
-    char *guest_prefix;
+    char guest_prefix[32];
 
     int anonymous_global;
 
-    char *sendmail;
-    char *sendfrom;
+    char sendmail[128];
+    char sendfrom[128];
 
     int maxmsgtime;
     int maxmsgnb;
@@ -78,13 +80,9 @@ struct config {
     int chlev_akb;
     int chlev_invite;
 
-    char *usercloak;
+    char usercloak[HOSTLEN+1];
 
     int emailreg;
-
-    int retry_attempts;
-    int connected;
-    int nextretry;
 };
 
 struct core {
@@ -108,8 +106,10 @@ struct core {
     // TODO(target0): replace with a better data structure
     struct llist_head commands;
 
+    // Startup config
     struct config config;
 
+    // Runtime parameters
     int sock;
     int startuptime;
     bool verbose;
@@ -117,6 +117,13 @@ struct core {
     bool raws;
     bool eos;
     MYSQL mysql_handle;
+    int retry_attempts;
+    int connected;
+    int nextretry;
+
+    char remote_server[SERVERNAMELEN+1];
+    char remote_sid[SIDLEN+1];
+    char uid[UIDLEN+1];
 };
 
 #define core_get_users() (get_core()->users)
@@ -135,6 +142,8 @@ struct core {
 #define core_get_timebans() (&get_core()->timebans)
 #define core_get_servers() (&get_core()->servers)
 #define core_get_commands() (&get_core()->commands)
+
+#define core_get_config() (&get_core()->config)
 
 struct core *get_core(void);
 void init_core(void);

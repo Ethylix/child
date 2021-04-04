@@ -380,7 +380,7 @@ void send_global (char *target, char *msg, ...)
 
     ircsprintf(buf,511,msg,val);
 
-    SendRaw(":%s NOTICE $%s :%s", me.nick, target, buf);
+    SendRaw(":%s NOTICE $%s :%s", core_get_config()->nick, target, buf);
 }
 
 Clone *find_clone (char *host)
@@ -414,7 +414,7 @@ void CheckGuests()
             gv = random()%999999;
             gv += hash(guest->nick);
             gv = gv%999999;
-            SendRaw("SVSNICK %s %s%d %ld",guest->nick,me.guest_prefix,gv,time(NULL));
+            SendRaw("SVSNICK %s %s%d %ld",guest->nick,core_get_config()->guest_prefix,gv,time(NULL));
             DeleteGuest(guest->nick);
         }
     }
@@ -486,7 +486,7 @@ int sendmail(char *to, char *mail)
     if (pid == 0) { /* child pid */
         FILE *fp;
         char cmd[256];
-        snprintf(cmd,256,"%s %s",me.sendmail,to);
+        snprintf(cmd,256,"%s %s",core_get_config()->sendmail,to);
         if ((fp = popen(cmd,"w")) == NULL)
             return 0;
 
@@ -598,36 +598,36 @@ void sync_cflag(const Cflag *cflag)
             SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
 
         hasaccess = 1;
-    } else if (!hasaccess && !(cflag->flags == CHLEV_OWNER) && cflag->flags >= me.chlev_admin) {
+    } else if (!hasaccess && !(cflag->flags == CHLEV_OWNER) && cflag->flags >= core_get_config()->chlev_admin) {
         if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!HasProtect(member) || !HasOp(member)))
             SetStatus(nptr, chname, CHFL_PROTECT|CHFL_OP, 1, bot);
         else if (cflag->automode == CFLAG_AUTO_VOICE && !HasVoice(member))
             SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
 
         hasaccess = 1;
-    } else if (!hasaccess && cflag->flags >= me.chlev_op && cflag->flags < me.chlev_admin) {
+    } else if (!hasaccess && cflag->flags >= core_get_config()->chlev_op && cflag->flags < core_get_config()->chlev_admin) {
         if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!HasOp(member)))
             SetStatus(nptr, chname, CHFL_OP, 1, bot);
         else if (cflag->automode == CFLAG_AUTO_VOICE && !HasVoice(member))
             SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
 
         hasaccess = 1;
-    } else if (!hasaccess && cflag->flags >= me.chlev_halfop && cflag->flags < me.chlev_op) {
+    } else if (!hasaccess && cflag->flags >= core_get_config()->chlev_halfop && cflag->flags < core_get_config()->chlev_op) {
         if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!HasHalfop(member)))
             SetStatus(nptr, chname, CHFL_HALFOP, 1, bot);
         else if (cflag->automode == CFLAG_AUTO_VOICE && !HasVoice(member))
             SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
 
         hasaccess = 1;
-    } else if (!hasaccess && cflag->flags >= me.chlev_voice && cflag->flags < me.chlev_halfop && !HasVoice(member)) {
+    } else if (!hasaccess && cflag->flags >= core_get_config()->chlev_voice && cflag->flags < core_get_config()->chlev_halfop && !HasVoice(member)) {
         SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
         hasaccess = 1;
-    } else if (cflag->flags == me.chlev_akick) {
+    } else if (cflag->flags == core_get_config()->chlev_akick) {
         KickUser(bot, nptr->nick, chname, "Get out of this chan !");
-    } else if (cflag->flags == me.chlev_akb) {
+    } else if (cflag->flags == core_get_config()->chlev_akb) {
         SendRaw(":%s MODE %s +b *!*@%s", bot, nptr->nick, nptr->hiddenhost);
         KickUser(bot, nptr->nick, chname, "Get out of this chan !");
-    } else if (cflag->flags == me.chlev_nostatus)
+    } else if (cflag->flags == core_get_config()->chlev_nostatus)
         SetStatus(nptr, chname, member->flags, 0, bot);
     }
 }
@@ -671,7 +671,7 @@ void generate_uid(char *dst_uid)
 
     do {
         snprintf(uid, sizeof(uid), "%s%c%c%c%c%c%c",
-                 me.sid,
+                 core_get_config()->sid,
                  uid_int_to_char(random() % 36),
                  uid_int_to_char(random() % 36),
                  uid_int_to_char(random() % 36),

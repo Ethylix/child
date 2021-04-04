@@ -82,7 +82,7 @@ int setcmdlev (char *base, char *type, char *subtype, char *end, int level)
     Command *cmd;
     int ibase,itype=0,isubtype=0;
 
-    if (level > me.level_owner) return 0;
+    if (level > core_get_config()->level_owner) return 0;
 
     if (!Strcmp(base,"nick"))
         ibase = CMD_NICK;

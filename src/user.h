@@ -124,15 +124,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                             SendRaw(":%s QUIT :%s",x,y); \
                       }
 #define fakesay(x,y,z) SendRaw(":%s PRIVMSG %s :%s",x,y,z)
-#define _killuser(x,y,z) SendRaw(":%s KILL %s :%s!%s (%s)",z,x,me.name,z,y)
+#define _killuser(x,y,z) SendRaw(":%s KILL %s :%s!%s (%s)",z,x,core_get_config()->name,z,y)
 #define killuser(x,y,z) { \
                             _killuser(x,y,z); \
                             userquit(x); \
                         }
-#define glineuser(a,b,c,d) SendRaw("TKL + G %s %s %s %ld %ld :%s",a,b,me.name,(c) ? time(NULL) + c : 0,time(NULL),d)
-#define unglineuser(a,b) SendRaw("TKL - G %s %s %s",a,b,me.name)
+#define glineuser(a,b,c,d) SendRaw("TKL + G %s %s %s %ld %ld :%s",a,b,core_get_config()->name,(c) ? time(NULL) + c : 0,time(NULL),d)
+#define unglineuser(a,b) SendRaw("TKL - G %s %s %s",a,b,core_get_config()->name)
 
-#define NoticeToUser(a,b,...) FakeNotice(me.nick,a,b,##__VA_ARGS__)
+#define NoticeToUser(a,b,...) FakeNotice(core_get_config()->nick,a,b,##__VA_ARGS__)
 
 #define Global(a, ...) send_global("*",a,##__VA_ARGS__)
 

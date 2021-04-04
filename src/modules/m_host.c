@@ -37,10 +37,10 @@ void host_list (Nick *);
 
 void child_init()
 {
-    addBaseCommand("host",do_host,me.level_oper);
+    addBaseCommand("host",do_host,core_get_config()->level_oper);
 
-    addHostCommand("set",host_set,me.level_oper);
-    addHostCommand("list",host_list,me.level_oper);
+    addHostCommand("set",host_set,core_get_config()->level_oper);
+    addHostCommand("list",host_list,core_get_config()->level_oper);
 }
 
 void child_cleanup()
@@ -62,7 +62,7 @@ void do_host(Nick *nptr, User *uptr, char *all)
     SeperateWord(arg2);
     
     if (!arg2 || *arg2 == '\0') {
-        NoticeToUser(nptr,"Type \2/msg %s help host\2 for more informations", me.nick);
+        NoticeToUser(nptr,"Type \2/msg %s help host\2 for more informations", core_get_config()->nick);
         return;
     }
     

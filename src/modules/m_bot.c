@@ -581,7 +581,7 @@ void bot_kb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname,nptr->hiddenhost);
         KickUser(bot,nptr->nick,wchan->chname,"Requested");
     } else {
-        if (!Strcmp(arg2,me.nick)) {
+        if (!Strcmp(arg2,core_get_config()->nick)) {
             SendRaw(":%s MODE %s +b %s*!*@*",bot,wchan->chname,nptr->nick);
             KickUser(bot,nptr->nick,wchan->chname,"Don't touch !");
             return;
@@ -782,11 +782,11 @@ void bot_admin (Nick *nptr, User *uptr __unused, Chan *chptr __unused, Wchan *wc
     HASHMAP_FOREACH_ENTRY_VALUE(core_get_users(), entry, uptr2) {
         nptr2 = find_nick(uptr2->nick);
         if (nptr2 && IsOper(nptr2) && uptr2->authed == 1) {
-            if (uptr2->level >= me.level_root)
+            if (uptr2->level >= core_get_config()->level_root)
                 FakeNotice(bot,nptr,"%s     Oper + Services Root Administrator",uptr2->nick);
-            else if (uptr2->level >= me.level_admin)
+            else if (uptr2->level >= core_get_config()->level_admin)
                 FakeNotice(bot,nptr,"%s     Oper + Services Administrator",uptr2->nick);
-            else if (uptr2->level >= me.level_oper)
+            else if (uptr2->level >= core_get_config()->level_oper)
                 FakeNotice(bot,nptr,"%s     Oper + Services Operator",uptr2->nick);
             else
                 FakeNotice(bot,nptr,"%s     Oper",uptr2->nick);

@@ -220,39 +220,39 @@ void m_join (char *sender, char *tail)
                 flagged = 1;
             }
             hasaccess = 1;
-        } else if (GetFlag(uptr,chptr) >= me.chlev_admin) {
+        } else if (GetFlag(uptr,chptr) >= core_get_config()->chlev_admin) {
             if (member->automode == CFLAG_AUTO_ON || member->automode == CFLAG_AUTO_OP) {
                 SetStatus(nptr,str_ptr,CHFL_PROTECT|CHFL_OP,1,bot);
                 flagged = 1;
             }
             hasaccess = 1;
-        } else if (GetFlag(uptr,chptr) >= me.chlev_op) {
+        } else if (GetFlag(uptr,chptr) >= core_get_config()->chlev_op) {
             if (member->automode == CFLAG_AUTO_ON || member->automode == CFLAG_AUTO_OP) {
                 SetStatus(nptr,str_ptr,CHFL_OP,1,bot);
                 flagged = 1;
             }
             hasaccess = 1;
-        } else if (GetFlag(uptr,chptr) >= me.chlev_halfop) {
+        } else if (GetFlag(uptr,chptr) >= core_get_config()->chlev_halfop) {
             if (member->automode == CFLAG_AUTO_ON || member->automode == CFLAG_AUTO_OP) {
                 SetStatus(nptr,str_ptr,CHFL_HALFOP,1,bot);
                 flagged = 1;
             }
             hasaccess = 1;
-        } else if (GetFlag(uptr,chptr) >= me.chlev_voice) {
+        } else if (GetFlag(uptr,chptr) >= core_get_config()->chlev_voice) {
             if (member->automode != CFLAG_AUTO_OFF) {
                 SetStatus(nptr,str_ptr,CHFL_VOICE,1,bot);
                 flagged = 1;
             }
             hasaccess = 1;
-        } else if (GetFlag(uptr,chptr) == me.chlev_akick) {
+        } else if (GetFlag(uptr,chptr) == core_get_config()->chlev_akick) {
             KickUser(bot,uptr->nick,str_ptr,"Get out of this chan !"); hasaccess = 1;
-        } else if (GetFlag(uptr,chptr) == me.chlev_akb) {
+        } else if (GetFlag(uptr,chptr) == core_get_config()->chlev_akb) {
             SendRaw(":%s MODE %s +b *!*@%s",bot,str_ptr,nptr->hiddenhost);
             KickUser(bot,uptr->nick,str_ptr,"Get out of this chan !"); hasaccess = 1;
-        } else if (GetFlag(uptr,chptr) == me.chlev_nostatus)
+        } else if (GetFlag(uptr,chptr) == core_get_config()->chlev_nostatus)
             hasaccess = 1;
 
-        if (hasaccess && !flagged && GetFlag(uptr,chptr) >= me.chlev_voice && member->automode != CFLAG_AUTO_OFF) {
+        if (hasaccess && !flagged && GetFlag(uptr,chptr) >= core_get_config()->chlev_voice && member->automode != CFLAG_AUTO_OFF) {
             if (member->automode == CFLAG_AUTO_VOICE)
                 SetStatus(nptr,str_ptr,CHFL_VOICE,1,bot);
         }
@@ -351,9 +351,9 @@ void m_kill (char *sender, char *tail)
     nptr = find_nick(nick);
 
     if (!nptr) {
-        if (!Strcmp(nick, me.nick)) {
-            generate_uid(me.uid);
-            fakeuser(me.nick, me.ident, me.host, me.uid, MY_UMODES);
+        if (!Strcmp(nick, core_get_config()->nick)) {
+            generate_uid(get_core()->uid);
+            fakeuser(core_get_config()->nick, core_get_config()->ident, core_get_config()->host, get_core()->uid, MY_UMODES);
         } else if ((bot = find_bot(nick)) != NULL) {
             generate_uid(bot->uid);
             fakeuser(bot->nick, bot->ident, bot->host, bot->uid, BOTSERV_UMODES);
@@ -368,7 +368,7 @@ void m_kill (char *sender, char *tail)
             if (!HasOption(chptr, COPT_NOJOIN) || chptr->chanbot != NULL)
                 JoinChannel(channel_botname(chptr), chptr->channelname);
         }
-        killuser(sender,"That is something not recommended...",me.nick);
+        killuser(sender,"That is something not recommended...",core_get_config()->nick);
         return;
     }
 
@@ -609,7 +609,7 @@ void m_mode (char *sender, char *tail)
                         member = find_member(wchan, nptr2);
                         if (!member) { warg++; continue; }
                         uptr = find_user(nptr2->nick);
-                        if (GetFlag(uptr,chptr) == me.chlev_nostatus && IsAuthed(uptr)) {
+                        if (GetFlag(uptr,chptr) == core_get_config()->chlev_nostatus && IsAuthed(uptr)) {
                             int w = 0;
                             switch (*modes) {
                                 case 'q':
@@ -649,7 +649,7 @@ void m_mode (char *sender, char *tail)
                             break;
                         case 'a':
                             if (chptr) {
-                                if ((GetFlag(uptr,chptr) < me.chlev_admin || !IsAuthed(uptr)) && HasOption(chptr, COPT_STRICTOP)) {
+                                if ((GetFlag(uptr,chptr) < core_get_config()->chlev_admin || !IsAuthed(uptr)) && HasOption(chptr, COPT_STRICTOP)) {
                                     SetStatus(nptr2,chan,CHFL_PROTECT,0,bot);
                                     warg++;
                                     break;
@@ -661,8 +661,8 @@ void m_mode (char *sender, char *tail)
                             break;
                         case 'o':
                             if (chptr) {
-                                if ((members_num(wchan) == 1 && (GetFlag(uptr,chptr) < me.chlev_op || !IsAuthed(uptr))) ||
-                                    ((GetFlag(uptr,chptr) < me.chlev_op || !IsAuthed(uptr)) &&
+                                if ((members_num(wchan) == 1 && (GetFlag(uptr,chptr) < core_get_config()->chlev_op || !IsAuthed(uptr))) ||
+                                    ((GetFlag(uptr,chptr) < core_get_config()->chlev_op || !IsAuthed(uptr)) &&
                                     chptr->options & HasOption(chptr, COPT_STRICTOP))) {
                                     SetStatus(nptr2,chan,CHFL_OP,0,bot);
                                     warg++;
@@ -675,7 +675,7 @@ void m_mode (char *sender, char *tail)
                             break;
                         case 'h':
                             if (chptr) {
-                                if ((GetFlag(uptr,chptr) < me.chlev_halfop || !IsAuthed(uptr)) && HasOption(chptr, COPT_STRICTOP)) {
+                                if ((GetFlag(uptr,chptr) < core_get_config()->chlev_halfop || !IsAuthed(uptr)) && HasOption(chptr, COPT_STRICTOP)) {
                                     SetStatus(nptr2,chan,CHFL_HALFOP,0,bot);
                                     warg++;
                                     break;
@@ -739,7 +739,7 @@ void m_mode (char *sender, char *tail)
 
                             if (!member) { warg++; break; }
                             if (chptr) {
-                                if (Strcmp(uptr->nick, sender) && GetFlag(uptr,chptr) >= me.chlev_admin && IsAuthed(uptr) && HasOption(chptr, COPT_PROTECTOPS)) {
+                                if (Strcmp(uptr->nick, sender) && GetFlag(uptr,chptr) >= core_get_config()->chlev_admin && IsAuthed(uptr) && HasOption(chptr, COPT_PROTECTOPS)) {
                                     SetStatus(nptr2,chan,CHFL_PROTECT,1,bot);
                                     warg++;
                                     break;
@@ -758,7 +758,7 @@ void m_mode (char *sender, char *tail)
 
                             if (!member) { warg++; break; }
                             if (chptr) {
-                                if (Strcmp(uptr->nick, sender) && GetFlag(uptr,chptr) >= me.chlev_op && IsAuthed(uptr) && HasOption(chptr, COPT_PROTECTOPS)) {
+                                if (Strcmp(uptr->nick, sender) && GetFlag(uptr,chptr) >= core_get_config()->chlev_op && IsAuthed(uptr) && HasOption(chptr, COPT_PROTECTOPS)) {
                                     SetStatus(nptr2,chan,CHFL_OP,1,bot);
                                     warg++;
                                     break;
@@ -905,10 +905,10 @@ void m_protoctl(char *command, char *tail)
     }
 
     if (sid) {
-        strncpy(me.remote_sid, sid, SIDLEN);
-        if (*me.remote_server && !find_server(me.remote_server)) {
-            if (!add_server(me.remote_server, me.remote_sid, /*hub=*/NULL)) {
-                operlog("Failed to create server instance for remote %s (%s)", me.remote_server, me.remote_sid);
+        strncpy(get_core()->remote_sid, sid, SIDLEN);
+        if (*get_core()->remote_server && !find_server(get_core()->remote_server)) {
+            if (!add_server(get_core()->remote_server, get_core()->remote_sid, /*hub=*/NULL)) {
+                operlog("Failed to create server instance for remote %s (%s)", get_core()->remote_server, get_core()->remote_sid);
             }
         }
 
@@ -957,7 +957,7 @@ void m_privmsg (char *sender, char *tail)
 
     if (target[0] != '#' && !IsOper(nptr)) {
         if (nptr->ignored) {
-            if (time(NULL) - nptr->ignoretime > me.ignoretime) {
+            if (time(NULL) - nptr->ignoretime > core_get_config()->ignoretime) {
                 nptr->ignored = 0;
                 nptr->ignoretime = 0;
             } else
@@ -965,11 +965,11 @@ void m_privmsg (char *sender, char *tail)
         } else if (nptr->msgtime == 0 || nptr->msgnb == 0) {
             nptr->msgtime = time(NULL);
             nptr->msgnb = 1;
-        } else if (time(NULL) - nptr->msgtime <= me.maxmsgtime && nptr->msgnb >= me.maxmsgnb) {
+        } else if (time(NULL) - nptr->msgtime <= core_get_config()->maxmsgtime && nptr->msgnb >= core_get_config()->maxmsgnb) {
             nptr->ignored = 1;
             nptr->ignoretime = time(NULL);
             return;
-        } else if (time(NULL) - nptr->msgtime > me.maxmsgtime && nptr->msgnb <= me.maxmsgnb) {
+        } else if (time(NULL) - nptr->msgtime > core_get_config()->maxmsgtime && nptr->msgnb <= core_get_config()->maxmsgnb) {
             nptr->msgtime = time(NULL);
             nptr->msgnb = 1;
         } else
@@ -1007,9 +1007,9 @@ void m_privmsg (char *sender, char *tail)
     }
 
     char mymask[256];
-    snprintf(mymask,256,"%s@%s",me.nick,me.name);
+    snprintf(mymask,256,"%s@%s",core_get_config()->nick,core_get_config()->name);
 
-    if (Strcmp(target,me.nick) && Strcmp(target,mymask) && Strcmp(target, me.uid))
+    if (Strcmp(target,core_get_config()->nick) && Strcmp(target,mymask) && Strcmp(target, get_core()->uid))
         return;
 
     if (!Strcmp(arg1,"\1VERSION\1")) {
@@ -1096,12 +1096,12 @@ void m_register_user_v3 (char *command, char *tail)
     clones = howmanyclones(clientip);
     if (trust) {
         if (clones >= trust->limit) {
-            _killuser(nick,"Max clones limit exceeded",me.nick);
+            _killuser(nick,"Max clones limit exceeded",core_get_config()->nick);
             return;
         }
     } else {
-        if (clones >= me.maxclones) {
-            _killuser(nick,"Max clones limit exceeded",me.nick);
+        if (clones >= core_get_config()->maxclones) {
+            _killuser(nick,"Max clones limit exceeded",core_get_config()->nick);
             return;
         }
     }
@@ -1190,12 +1190,12 @@ void m_uid (char *sender, char *tail)
     clones = howmanyclones(clientip);
     if (trust) {
         if (clones >= trust->limit) {
-            _killuser(nick,"Max clones limit exceeded",me.nick);
+            _killuser(nick,"Max clones limit exceeded",core_get_config()->nick);
             return;
         }
     } else {
-        if (clones >= me.maxclones) {
-            _killuser(nick,"Max clones limit exceeded",me.nick);
+        if (clones >= core_get_config()->maxclones) {
+            _killuser(nick,"Max clones limit exceeded",core_get_config()->nick);
             return;
         }
     }
@@ -1350,11 +1350,11 @@ void m_sid(char *sender, char *tail)
 
 void m_server(char *command, char *tail __unused)
 {
-    strncpy(me.remote_server, command, SERVERNAMELEN);
+    strncpy(get_core()->remote_server, command, SERVERNAMELEN);
 
-    if (*me.remote_sid && !find_server(me.remote_sid)) {
-        if (!add_server(me.remote_server, me.remote_sid, /*hub=*/NULL)) {
-            operlog("Failed to create server instance for remote %s (%s)", me.remote_server, me.remote_sid);
+    if (*get_core()->remote_sid && !find_server(get_core()->remote_sid)) {
+        if (!add_server(get_core()->remote_server, get_core()->remote_sid, /*hub=*/NULL)) {
+            operlog("Failed to create server instance for remote %s (%s)", get_core()->remote_server, get_core()->remote_sid);
         }
     }
 }
