@@ -25,7 +25,7 @@ START_TEST(test_parse_ping)
 }
 END_TEST
 
-Suite *parse_ping_suite(void)
+Suite *make_parseline_suite(void)
 {
     Suite *s;
     TCase *tc;
@@ -37,20 +37,4 @@ Suite *parse_ping_suite(void)
     suite_add_tcase(s, tc);
 
     return s;
-}
-
-int main(void)
-{
-    Suite *s;
-    SRunner *sr;
-    int number_failed;
-
-    s = parse_ping_suite();
-    sr = srunner_create(s);
-
-    srunner_run_all(sr, CK_NORMAL);
-    number_failed = srunner_ntests_failed(sr);
-    srunner_free(sr);
-
-    return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

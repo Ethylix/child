@@ -17,7 +17,7 @@
 #  For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 
 
-INCLUDE( FindPkgConfig )
+# INCLUDE( FindPkgConfig )
 
 # Take care about check.pc settings
 PKG_SEARCH_MODULE( CHECK check )

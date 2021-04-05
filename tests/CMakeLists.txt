@@ -4,12 +4,14 @@ find_package(Check REQUIRED)
 find_package(Threads REQUIRED)
 include_directories(${CHECK_INCLUDE_DIRS})
 
-macro(CHILD_ADD_TEST testName testFile)
-  add_executable(${testName} ${testFile})
-  target_link_libraries(${testName} ${CHECK_LIBRARIES} Threads::Threads "-Wl,--whole-archive" childcore "-Wl,--no-whole-archive")
-  add_test(NAME ${testName} COMMAND ${testName})
-endmacro()
+set(TEST_SOURCES
+  check_check.c
+  check_check.h
+  check_hashmap.c
+  check_parseline.c
+  check_nick_api.c
+)
 
-CHILD_ADD_TEST(check_hashmap check_hashmap.c)
-CHILD_ADD_TEST(check_parseline check_parseline.c)
-CHILD_ADD_TEST(check_nick_api check_nick_api.c)
+add_executable(check_child ${TEST_SOURCES})
+target_link_libraries(check_child ${CHECK_LIBRARIES} Threads::Threads "-Wl,--whole-archive" childcore "-Wl,--no-whole-archive")
+add_test(NAME check_child COMMAND check_child WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
