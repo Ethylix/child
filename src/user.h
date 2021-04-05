@@ -24,40 +24,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "llist.h"
 #include "mem.h"
 #include "net.h"
+#include "nick.h"
 
 #include <time.h>
 
-#define NICKLEN 35
-#define HOSTLEN 60
 #define EMAILLEN 100
 
-#define UIDLEN 9
-
 #define TIMEOUT_DFLT 60
-
-#define BOTSERV_UMODES "oSq"
-#define MY_UMODES "oSq"
-
-#define UMODE_o 0x0001
-#define UMODE_a 0x0002
-#define UMODE_A 0x0004
-#define UMODE_r 0x0008
-#define UMODE_B 0x0010
-#define UMODE_N 0x0020
-#define UMODE_S 0x0040
-#define UMODE_q 0x0080
-#define UMODE_z 0x0100
-#define UMODE_SUPERADMIN 0x0200 /* fake umode */
-
-#define UMODE_OPER UMODE_o
-#define UMODE_SADMIN UMODE_a
-#define UMODE_ADMIN UMODE_A
-#define UMODE_REGISTERED UMODE_r
-#define UMODE_BOT UMODE_B
-#define UMODE_NADMIN UMODE_N
-#define UMODE_SERVICE UMODE_S
-#define UMODE_NOKICK UMODE_q
-#define UMODE_SSL UMODE_z
 
 #define UOPT_PROTECT    0x0001
 #define UOPT_PRIVATE    0x0002
@@ -71,40 +44,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define SetOption(x, y) ((x)->options |= (y))
 #define ClearOption(x, y) ((x)->options &= ~(y))
 #define HasOption(x, y) ((x)->options & (y))
-
-#define SetUmode(x, y) ((x)->umodes |= (y))
-#define ClearUmode(x, y) ((x)->umodes &= ~(y))
-#define HasUmode(x, y) ((x)->umodes & (y))
-
-#define IsOper(x) HasUmode(x, UMODE_OPER)
-#define IsAdmin(x) HasUmode(x, UMODE_ADMIN)
-#define IsSAdmin(x) HasUmode(x, UMODE_SADMIN)
-#define IsNAdmin(x) HasUmode(x, UMODE_NADMIN)
-#define IsBot(x) HasUmode(x, UMODE_BOT)
-#define IsService(x) HasUmode(x, UMODE_SERVICE)
-#define IsNokick(x) HasUmode(x, UMODE_NOKICK)
-#define IsSSL(x) HasUmode(x, UMODE_SSL)
-#define IsRegistered(x) HasUmode(x, UMODE_REGISTERED)
-
-#define SetOper(x) SetUmode(x, UMODE_OPER)
-#define SetAdmin(x) SetUmode(x, UMODE_ADMIN)
-#define SetSAdmin(x) SetUmode(x, UMODE_SADMIN)
-#define SetNAdmin(x) SetUmode(x, UMODE_NADMIN)
-#define SetBot(x) SetUmode(x, UMODE_BOT)
-#define SetService(x) SetUmode(x, UMODE_SERVICE)
-#define SetNokick(x) SetUmode(x, UMODE_NOKICK)
-#define SetSSL(x) SetUmode(x, UMODE_SSL)
-#define SetRegistered(x) SetUmode(x, UMODE_REGISTERED)
-
-#define ClearOper(x) ClearUmode(x, UMODE_OPER)
-#define ClearAdmin(x) ClearUmode(x, UMODE_ADMIN)
-#define ClearSAdmin(x) ClearUmode(x, UMODE_SADMIN)
-#define ClearNAdmin(x) ClearUmode(x, UMODE_NADMIN)
-#define ClearBot(x) ClearUmode(x, UMODE_BOT)
-#define ClearService(x) ClearUmode(x, UMODE_SERVICE)
-#define ClearNokick(x) ClearUmode(x, UMODE_NOKICK)
-#define ClearSSL(x) ClearUmode(x, UMODE_SSL)
-#define ClearRegistered(x) ClearUmode(x, UMODE_REGISTERED)
 
 #define IsUserSuspended(x) HasOption(x, UOPT_SUSPENDED)
 #define IsUserNoexpire(x) HasOption(x, UOPT_NOEXPIRE)
@@ -153,21 +92,6 @@ typedef struct clone {
     int count;
 } Clone;
 
-typedef struct nick {
-    char nick[NICKLEN + 1]; /* hash key */
-    char ident[NICKLEN + 1];
-    char host[HOSTLEN + 1];
-    char uid[UIDLEN + 1];
-    char hiddenhost[HOSTLEN + 1];
-    char reshost[HOSTLEN + 1];
-    long int umodes;
-    int msgtime,msgnb;
-    int ignored,ignoretime;
-    int loginattempts,lasttry;
-    struct llist_head wchans;
-    struct llist_head server_head;
-} Nick;
-
 typedef struct guest {
     char nick[NICKLEN+1]; /* hash key */
     int nickconn;
@@ -187,17 +111,13 @@ typedef struct fakeuser {
 } Fake;
 
 User *find_user(const char *);
-Nick *find_nick(const char *);
 Guest *find_guest(const char *);
 Link *find_link(const char *);
 Link *find_link2 (char *, char *);
 User *AddUser (char *, int);
-Nick *AddNick (char *, char *, char *, char *, char *, long int, char *);
 Guest *AddGuest (char *, int, int);
 Link *AddLink (char *, char *);
 void DeleteAccount (User *);
-void DeleteWildNick (Nick *);
-void clear_nicks(void);
 void DeleteGuest (char *);
 void clear_guests(void);
 void DeleteLink (char *);

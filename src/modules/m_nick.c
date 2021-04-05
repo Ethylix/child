@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "child.h"
 #include "commands.h"
 #include "core.h"
+#include "core_api.h"
 #include "hashmap.h"
 #include "logging.h"
 #include "mem.h"
@@ -261,7 +262,7 @@ void nick_ghost (Nick *nptr, User *uptr __unused, char *all)
         return;
     }   
     
-    nptr2 = find_nick(arg3);
+    nptr2 = get_core_api()->find_nick(arg3);
     if (!nptr2) {
         NoticeToUser(nptr,"This user is not online");
         return;

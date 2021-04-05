@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "child.h"
 #include "commands.h"
 #include "core.h"
+#include "core_api.h"
 #include "hashmap.h"
 #include "mem.h"
 #include "modules.h"
@@ -184,7 +185,7 @@ void bot_protect (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
     if (!arg2 || *arg2 == '\0') {
         if (!HasProtect(member)) SetStatus(nptr,wchan->chname,CHFL_PROTECT,1,channel_botname(chptr));
     } else {
-        nptr2 = find_nick(arg2);
+        nptr2 = get_core_api()->find_nick(arg2);
         if (!nptr2) return;
 
         if ((member = find_member(wchan, nptr2)) == NULL)
@@ -211,7 +212,7 @@ void bot_deprotect (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all
     if (!arg2 || *arg2 == '\0') {
         if (HasProtect(member)) SetStatus(nptr,wchan->chname,CHFL_PROTECT,0,channel_botname(chptr));
     } else {
-        nptr2 = find_nick(arg2);
+        nptr2 = get_core_api()->find_nick(arg2);
         if (!nptr2) return;
 
         if ((member = find_member(wchan, nptr2)) == NULL)
@@ -238,7 +239,7 @@ void bot_op (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
     if (!arg2 || *arg2 == '\0') { 
         if (!HasOp(member)) SetStatus(nptr,wchan->chname,CHFL_OP,1,channel_botname(chptr));
     } else {
-        nptr2 = find_nick(arg2);
+        nptr2 = get_core_api()->find_nick(arg2);
         if (!nptr2) return;
 
         if ((member = find_member(wchan, nptr2)) == NULL)
@@ -264,7 +265,7 @@ void bot_deop (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
     if (!arg2 || *arg2 == '\0') { 
         if (HasOp(member)) SetStatus(nptr,wchan->chname,CHFL_OP,0,channel_botname(chptr));
     } else {
-        nptr2 = find_nick(arg2);
+        nptr2 = get_core_api()->find_nick(arg2);
         if (!nptr2) return;
 
        if ((member = find_member(wchan, nptr2)) == NULL)
@@ -291,7 +292,7 @@ void bot_halfop (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         if (!HasHalfop(member)) SetStatus(nptr,wchan->chname,CHFL_HALFOP,1,channel_botname(chptr));
     } else {
         if (!ChannelCanOp(uptr, chptr) && !IsFounder(uptr, chptr)) return;
-        nptr2 = find_nick(arg2);
+        nptr2 = get_core_api()->find_nick(arg2);
         if (!nptr2) return;
 
         if ((member = find_member(wchan, nptr2)) == NULL)
@@ -318,7 +319,7 @@ void bot_dehalfop (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         if (HasHalfop(member)) SetStatus(nptr,wchan->chname,CHFL_HALFOP,0,channel_botname(chptr));
     } else {
         if (!ChannelCanOp(uptr, chptr) && !IsFounder(uptr, chptr)) return;
-        nptr2 = find_nick(arg2);
+        nptr2 = get_core_api()->find_nick(arg2);
         if (!nptr2) return;
 
         if ((member = find_member(wchan, nptr2)) == NULL)
@@ -345,7 +346,7 @@ void bot_voice (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         if (!HasVoice(member)) SetStatus(nptr,wchan->chname,CHFL_VOICE,1,channel_botname(chptr));
     } else {
         if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
-        nptr2 = find_nick(arg2);
+        nptr2 = get_core_api()->find_nick(arg2);
         if (!nptr2) return;
 
         if ((member = find_member(wchan, nptr2)) == NULL)
@@ -372,7 +373,7 @@ void bot_devoice (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         if (HasVoice(member)) SetStatus(nptr,wchan->chname,CHFL_VOICE,0,channel_botname(chptr));
     } else {
         if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
-        nptr2 = find_nick(arg2);
+        nptr2 = get_core_api()->find_nick(arg2);
         if (!nptr2) return;
 
         if ((member = find_member(wchan, nptr2)) == NULL)
@@ -599,7 +600,7 @@ void bot_kb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
             return;
         }
 
-        nptr2 = find_nick(arg2);
+        nptr2 = get_core_api()->find_nick(arg2);
         if (!nptr2) return;
 
         uptr2 = find_user(arg2);
@@ -651,7 +652,7 @@ void bot_ban (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
     if (!arg2 || *arg2 == '\0') { 
         SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname,nptr->hiddenhost);
     } else {
-        nptr2 = find_nick(arg2);
+        nptr2 = get_core_api()->find_nick(arg2);
         if (!nptr2) {
             SendRaw(":%s MODE %s +b %s",bot,wchan->chname,arg2);
         } else {
@@ -713,7 +714,7 @@ void bot_seen (Nick *nptr __unused, User *uptr __unused, Chan *chptr __unused, W
         return;
     }
 
-    nptr2 = find_nick(arg2);
+    nptr2 = get_core_api()->find_nick(arg2);
     uptr2 = find_user(arg2);
     if (!uptr2 && nptr2) {
         FakeMsg(bot,wchan->chname,"%s is connected but not registered", nptr2->nick);
@@ -780,7 +781,7 @@ void bot_admin (Nick *nptr, User *uptr __unused, Chan *chptr __unused, Wchan *wc
     const char *bot = channel_botname(chptr);
 
     HASHMAP_FOREACH_ENTRY_VALUE(core_get_users(), entry, uptr2) {
-        nptr2 = find_nick(uptr2->nick);
+        nptr2 = get_core_api()->find_nick(uptr2->nick);
         if (nptr2 && IsOper(nptr2) && uptr2->authed == 1) {
             if (uptr2->level >= core_get_config()->level_root)
                 FakeNotice(bot,nptr,"%s     Oper + Services Root Administrator",uptr2->nick);
@@ -846,7 +847,7 @@ void bot_tb (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan __unused
 
     bzero(effective_mask, 256);
     if (!IsMask(mask)) {
-        if ((nptr2 = find_nick(mask)) != NULL)
+        if ((nptr2 = get_core_api()->find_nick(mask)) != NULL)
             snprintf(effective_mask, 256, "*!*@%s", nptr2->hiddenhost);
         else
             snprintf(effective_mask, 256, "%s!*@*", mask);

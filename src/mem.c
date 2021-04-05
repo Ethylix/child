@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "botserv.h"
 #include "channel.h"
 #include "commands.h"
+#include "core_api.h"
 #include "modules.h"
 #include "string_utils.h"
 #include "trust.h"
@@ -36,7 +37,7 @@ void cleanup_reconnect()
     clear_wchans();
     clear_limits();
     clear_guests();
-    clear_nicks();
+    get_core_api()->clear_nicks();
     clear_fakes();
 }
 

@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "botserv.h"
 #include "child.h"
 #include "core.h"
+#include "core_api.h"
 #include "hashmap.h"
 #include "mem.h"
 #include "net.h"
@@ -100,7 +101,7 @@ int GetFlag(User *uptr, Chan *chptr)
     Cflag *cflag;
 
     Nick *nptr;
-    nptr = find_nick(uptr->nick);
+    nptr = get_core_api()->find_nick(uptr->nick);
     if (nptr) {
         if (HasUmode(nptr, UMODE_SUPERADMIN))
             return CHLEV_OWNER;
@@ -374,7 +375,7 @@ void KickUser (const char *who, const char *nick, const char *chan, const char *
     bzero(tmp, 1024);
     ircsprintf(tmp, 1023, reason, val);
 
-    nptr = find_nick(nick);
+    nptr = get_core_api()->find_nick(nick);
     if (!nptr) return;
 
     if (IsNokick(nptr)) return;
@@ -754,7 +755,7 @@ int IsFounder (User *uptr, Chan *chptr)
     if ((cflag = find_cflag(chptr, uptr)) == NULL)
         return IsFounder(get_link_master(uptr), chptr);
 
-    if ((nptr = find_nick(uptr->nick)) != NULL) {
+    if ((nptr = get_core_api()->find_nick(uptr->nick)) != NULL) {
         if (HasUmode(nptr, UMODE_SUPERADMIN))
             return 1;
     }

@@ -5,6 +5,7 @@ set(HEADERS
   child.h
   commands.h
   core.h
+  core_api.h
   db.h
   hashmap.h
   llist.h
@@ -12,6 +13,7 @@ set(HEADERS
   mem.h
   modules.h
   net.h
+  nick.h
   server.h
   string_utils.h
   trust.h
@@ -25,6 +27,7 @@ set(LIB_SOURCES
   channel.c
   commands.c
   core.c
+  core_api.c
   db.c
   hashmap.c
   loadconf.c
@@ -33,6 +36,7 @@ set(LIB_SOURCES
   mem.c
   modules.c
   net.c
+  nick.c
   parseline.c
   server.c
   string_utils.c

@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "child.h"
 #include "commands.h"
 #include "core.h"
+#include "core_api.h"
 #include "hashmap.h"
 #include "logging.h"
 #include "modules.h"
@@ -534,7 +535,7 @@ void chan_op (Nick *nptr, User *uptr, Chan *chptr, char *all)
     if (!arg4 || *arg4 == '\0')
         SetStatus(nptr,arg3,CHFL_OP,1,channel_botname(chptr));
     else {
-        nptr2 = find_nick(arg4);
+        nptr2 = get_core_api()->find_nick(arg4);
         if (!nptr2) return;
         SetStatus(nptr2,arg3,CHFL_OP,1,channel_botname(chptr));
     }   
@@ -566,7 +567,7 @@ void chan_deop (Nick *nptr, User *uptr, Chan *chptr, char *all)
     if (!arg4 || *arg4 == '\0')
         SetStatus(nptr,arg3,CHFL_OP,0,channel_botname(chptr));
     else {
-        nptr2 = find_nick(arg4);
+        nptr2 = get_core_api()->find_nick(arg4);
         if (!nptr2) return;
         SetStatus(nptr2,arg3,CHFL_OP,0,channel_botname(chptr));
     }
@@ -602,7 +603,7 @@ void chan_voice (Nick *nptr, User *uptr, Chan *chptr, char *all)
             NoticeToUser(nptr, "Access denied");
             return;
         }
-        nptr2 = find_nick(arg4);
+        nptr2 = get_core_api()->find_nick(arg4);
         if (!nptr2) return;
         SetStatus(nptr2,arg3,CHFL_VOICE,1,channel_botname(chptr));
     }
@@ -638,7 +639,7 @@ void chan_halfop (Nick *nptr, User *uptr, Chan *chptr, char *all)
             NoticeToUser(nptr, "Access denied");
             return;
         }
-        nptr2 = find_nick(arg4);
+        nptr2 = get_core_api()->find_nick(arg4);
         if (!nptr2) return;
         SetStatus(nptr2,arg3,CHFL_HALFOP,1,channel_botname(chptr));
     }   
@@ -674,7 +675,7 @@ void chan_dehalfop (Nick *nptr, User *uptr, Chan *chptr, char *all)
             NoticeToUser(nptr, "Access denied");
             return;
         }
-        nptr2 = find_nick(arg4);
+        nptr2 = get_core_api()->find_nick(arg4);
         if (!nptr2) return;
         SetStatus(nptr2,arg3,CHFL_HALFOP,0,channel_botname(chptr));
     }
@@ -710,7 +711,7 @@ void chan_devoice (Nick *nptr, User *uptr, Chan *chptr, char *all)
             NoticeToUser(nptr, "Access denied");
             return;
         }
-        nptr2 = find_nick(arg4);
+        nptr2 = get_core_api()->find_nick(arg4);
         if (!nptr2) return;
         SetStatus(nptr2,arg3,CHFL_VOICE,0,channel_botname(chptr));
     }

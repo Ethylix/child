@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "config.h"
 #include "commands.h"
 #include "core.h"
+#include "core_api.h"
 #include "db.h"
 #include "hashmap.h"
 #include "logging.h"
@@ -251,7 +252,7 @@ void oper_userlist (Nick *nptr, User *uptr __unused, char *all)
     HASHMAP_FOREACH_ENTRY_VALUE(core_get_users(), entry, uptr2) {
         if (arg3 && *arg3 != '\0') {
             if (Strstr(uptr2->nick,arg3) || Strstr(uptr2->vhost,arg3)) {
-                nptr2 = find_nick(uptr2->nick);
+                nptr2 = get_core_api()->find_nick(uptr2->nick);
                 if (nptr2) {
                     if (uptr2->authed == 1)
                         sprintf(tmp,"%s     %d     Authed      %s!%s@%s",uptr2->nick,uptr2->level,nptr2->nick,nptr2->ident,nptr2->host);
@@ -263,7 +264,7 @@ void oper_userlist (Nick *nptr, User *uptr __unused, char *all)
                 count++;
             }
         } else {
-            nptr2 = find_nick(uptr2->nick);
+            nptr2 = get_core_api()->find_nick(uptr2->nick);
             if (nptr2) {
                 if (uptr2->authed == 1)
                     sprintf(tmp,"%s     %d      Authed      %s!%s@%s",uptr2->nick,uptr2->level,nptr2->nick,nptr2->ident,nptr2->host);
@@ -494,7 +495,7 @@ void oper_forceauth (Nick *nptr, User *uptr __unused, char *all)
         return;
     }   
         
-    if (!find_nick(arg3)) {
+    if (!get_core_api()->find_nick(arg3)) {
         NoticeToUser(nptr,"This nick does not exist");
         return;
     }   

@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "child.h"   
 #include "commands.h"
 #include "core.h"
+#include "core_api.h"
 #include "hashmap.h"
 #include "logging.h"
 #include "modules.h"
@@ -123,7 +124,7 @@ void m_chghost (char *sender __unused, char *tail)
     newhost = SeperateWord(target);
     SeperateWord(newhost);
 
-    nptr = find_nick(target);
+    nptr = get_core_api()->find_nick(target);
     if (!nptr) return;
     strncpy(nptr->hiddenhost,newhost,HOSTLEN);
 }
@@ -137,7 +138,7 @@ void m_chgident (char *sender __unused, char *tail)
     newident = SeperateWord(target);
     SeperateWord(newident);
 
-    nptr = find_nick(target);
+    nptr = get_core_api()->find_nick(target);
     if (!nptr) return;
     strncpy(nptr->ident,newident,NICKLEN);
 }
@@ -170,7 +171,7 @@ void m_join (char *sender, char *tail)
     if (*chanjoined == ':')
         chanjoined++;
 
-    nptr = find_nick(sender);
+    nptr = get_core_api()->find_nick(sender);
     if (!nptr)
         return;
 
@@ -320,14 +321,14 @@ void m_kick (char *sender, char *tail)
 
         JoinChannel(bot, chan);
         KickUser(bot,sender,chan,"are you mad ?");
-        nptr = find_nick(sender);
+        nptr = get_core_api()->find_nick(sender);
         if (!nptr) return;
         DeleteUserFromWchan(nptr,wchan);
         return;
     }
 
 skip_rejoin:
-    nptr = find_nick(nick);
+    nptr = get_core_api()->find_nick(nick);
     if (!nptr) return;
 
     DeleteUserFromWchan(nptr,wchan);
@@ -349,7 +350,7 @@ void m_kill (char *sender, char *tail)
     if (!nick || *nick == '\0')
         return;
 
-    nptr = find_nick(nick);
+    nptr = get_core_api()->find_nick(nick);
 
     if (!nptr) {
         if (!Strcmp(nick, core_get_config()->nick)) {
@@ -397,7 +398,7 @@ void m_umode (char *sender, char *tail)
     if (!nick || !umode || *nick == '\0' || *umode == '\0')
 	return;
 
-    nptr = find_nick(nick);
+    nptr = get_core_api()->find_nick(nick);
     if (!nptr)
 	return;
 
@@ -458,7 +459,7 @@ void m_mode (char *sender, char *tail)
         if (nick[0] == '#')
             return;
 
-        nptr = find_nick(nick);
+        nptr = get_core_api()->find_nick(nick);
         if (!nptr)
             return;
 
@@ -605,7 +606,7 @@ void m_mode (char *sender, char *tail)
                 len = strlen(modes);
                 for (i=0;*modes && i<=len; i++,modes++) {
                     if (*modes == 'q' || *modes == 'a' || *modes == 'o' || *modes == 'h' || *modes == 'v') {
-                        nptr2 = find_nick(args[warg]);
+                        nptr2 = get_core_api()->find_nick(args[warg]);
                         if (!nptr2) { warg++; continue; }
                         member = find_member(wchan, nptr2);
                         if (!member) { warg++; continue; }
@@ -712,7 +713,7 @@ void m_mode (char *sender, char *tail)
                 for (i=0; *modes && i<=len; i++,modes++) {
                     if (*modes == 'q' || *modes == 'a' || *modes == 'o' || *modes == 'h' || *modes == 'v') {
                         // TODO(target0): add error handling.
-                        nptr2 = find_nick(args[warg]);
+                        nptr2 = get_core_api()->find_nick(args[warg]);
                         member = find_member(wchan, nptr2);
                         uptr = find_user(nptr2->nick);
                     }
@@ -811,7 +812,7 @@ void m_nick (char *sender, char *tail)
     newnick = tail;
     SeperateWord(newnick);
 
-    nptr = find_nick(sender);
+    nptr = get_core_api()->find_nick(sender);
 
     strncpy(oldnick,nptr->nick,NICKLEN - 1);
     oldnick[NICKLEN - 1] = '\0';
@@ -855,7 +856,7 @@ void m_nick (char *sender, char *tail)
         uptr->lastseen = time(NULL);
     }
 
-    nptr = find_nick(sender);
+    nptr = get_core_api()->find_nick(sender);
     parv[0] = oldnick;
 
     RunHooks(HOOK_NICKCHANGE,nptr,uptr2,NULL,parv);
@@ -871,7 +872,7 @@ void m_part (char *sender, char *tail)
     chan = tail;
     SeperateWord(chan);
 
-    nptr = find_nick(sender);
+    nptr = get_core_api()->find_nick(sender);
     if (!nptr) return;
     wchan = find_wchan(chan);
     if (!wchan) return;
@@ -953,7 +954,7 @@ void m_privmsg (char *sender, char *tail)
     if (!ch_ptr || *ch_ptr == '\0')
         return;
 
-    nptr = find_nick(sender);
+    nptr = get_core_api()->find_nick(sender);
     if (!nptr) return;
 
     if (target[0] != '#' && !IsOper(nptr)) {
@@ -1040,7 +1041,7 @@ void m_quit (char *sender)
     User *uptr;
 
     sender++;
-    nptr = find_nick(sender);
+    nptr = get_core_api()->find_nick(sender);
     if (!nptr)
         return;
 
@@ -1117,7 +1118,7 @@ void m_register_user_v3 (char *command, char *tail)
     if (IsCharInString('q',umode)) modes |= UMODE_NOKICK;
     if (IsCharInString('z',umode)) modes |= UMODE_SSL;
 
-    nptr = AddNick(nick,ident,host,uid,hiddenhost,modes,clientip);
+    nptr = get_core_api()->new_nick(nick,ident,host,uid,hiddenhost,modes,clientip);
 
     User *uptr;
     uptr = find_user(nptr->nick);
@@ -1211,7 +1212,7 @@ void m_uid (char *sender, char *tail)
     if (IsCharInString('q',umode)) modes |= UMODE_NOKICK;
     if (IsCharInString('z',umode)) modes |= UMODE_SSL;
 
-    nptr = AddNick(nick,ident,host,uid,hiddenhost,modes,clientip);
+    nptr = get_core_api()->new_nick(nick,ident,host,uid,hiddenhost,modes,clientip);
     LLIST_INSERT_TAIL(&server->nicks, &nptr->server_head);
 
     User *uptr;
@@ -1242,7 +1243,7 @@ void m_sethost (char *sender, char *tail)
     newhost = tail;
     SeperateWord(newhost);
 
-    nptr = find_nick(sender);
+    nptr = get_core_api()->find_nick(sender);
     if (!nptr) return;
     strncpy(nptr->hiddenhost,newhost,HOSTLEN);
 }
@@ -1256,7 +1257,7 @@ void m_setident (char *sender, char *tail)
     newident = tail;
     SeperateWord(newident);
 
-    nptr = find_nick(sender);
+    nptr = get_core_api()->find_nick(sender);
     if (!nptr) return;
     strncpy(nptr->ident,newident,NICKLEN);
 }
@@ -1427,7 +1428,7 @@ void m_sjoin(char *sender, char *tail)
             case '\'': // +I
                 break;
             default:
-                nptr = find_nick(sjbuf_elem);
+                nptr = get_core_api()->find_nick(sjbuf_elem);
                 if (!nptr) {
                     operlog("Failed to resolve nick/uid %s in SJOIN buffer for chan %s", sjbuf_elem, chname);
                 }

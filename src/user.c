@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "channel.h"
 #include "child.h"
 #include "core.h"
+#include "core_api.h"
 #include "hashmap.h"
 #include "mem.h"
 #include "net.h"
@@ -46,20 +47,6 @@ User *find_user(const char *name)
         return NULL;
 
     return HASHMAP_ENTRY_VALUE(core_get_users(), entry);
-}
-
-Nick *find_nick(const char *name)
-{
-    Nick *tmp;
-    struct hashmap_entry *entry;
-
-    // TODO(target0): do a proper O(1) lookup.
-    HASHMAP_FOREACH_ENTRY_VALUE(core_get_nicks(), entry, tmp) {
-        if (!Strcmp(tmp->nick,name) || !Strcmp(tmp->uid,name))
-            return tmp;
-    }
-
-    return NULL;
 }
 
 Guest *find_guest(const char *name)
@@ -140,52 +127,6 @@ User *AddUser (char *nick, int level)
     return new_user;
 }
 
-Nick *AddNick(char *nick, char *ident, char *host, char *uid, char *hiddenhost, long int umodes, char *reshost)
-{
-    Nick *new_nick;
-
-    new_nick = (Nick *)malloc(sizeof(Nick));
-    memset(new_nick, 0, sizeof(*new_nick));
-
-    strncpy(new_nick->nick,nick,NICKLEN);
-    strncpy(new_nick->ident,ident,NICKLEN);
-    strncpy(new_nick->host,host,HOSTLEN);
-    strncpy(new_nick->uid,uid,UIDLEN);
-    strncpy(new_nick->hiddenhost,hiddenhost,HOSTLEN);
-    strncpy(new_nick->reshost,reshost,HOSTLEN);
-    new_nick->umodes = umodes;
-    new_nick->msgnb = 0;
-    new_nick->msgtime = 0;
-    new_nick->ignored = 0;
-    new_nick->ignoretime = 0;
-    new_nick->loginattempts = 0;
-    new_nick->lasttry = 0;
-    LLIST_INIT(&new_nick->wchans);
-
-    if (!HASHMAP_INSERT(core_get_nicks(), new_nick->nick, new_nick, NULL)) {
-        fprintf(stderr, "Failed to insert new nick \"%s\" into hashmap (duplicate entry?)\n", new_nick->nick);
-        free(new_nick);
-        return NULL;
-    }
-
-    Clone *clone;
-    if ((clone = find_clone(reshost)) != NULL)
-        clone->count++;
-    else {
-        clone = (Clone *)malloc(sizeof(Clone));
-        memset(clone, 0, sizeof(*clone));
-
-        strncpy(clone->host, reshost, HOSTLEN);
-        clone->count = 1;
-        if (!HASHMAP_INSERT(core_get_clones(), clone->host, clone, NULL)) {
-            fprintf(stderr, "Failed to insert new clone \"%s\" into hashmap (duplicate entry?)\n", clone->host);
-            free(clone);
-        }
-    }
-
-    return new_nick;
-}
-
 Guest *AddGuest (char *nick, int timeout, int nickconn)
 {
     Guest *new_guest;
@@ -258,7 +199,7 @@ void DeleteAccount (User *user)
     if (!HASHMAP_ERASE(core_get_users(), user->nick))
         return;
 
-    if (find_nick(user->nick) && get_core()->eos)
+    if (get_core_api()->find_nick(user->nick) && get_core()->eos)
         SendRaw("SVSMODE %s -r",user->nick);
     if (HasOption(user, UOPT_PROTECT)) DeleteGuest(user->nick);
     free(user);
@@ -424,7 +365,7 @@ void userquit (char *nick)
     User *uptr;
     Nick *nptr;
 
-    nptr = find_nick(nick);
+    nptr = get_core_api()->find_nick(nick);
     if (!nptr) return;
 
     uptr = find_user(nick);
@@ -559,7 +500,7 @@ void sync_cflag(const Cflag *cflag)
     Nick *nptr;
     const char *bot;
 
-    if ((nptr = find_nick(cflag->user->nick)) == NULL)
+    if ((nptr = get_core_api()->find_nick(cflag->user->nick)) == NULL)
         return;
 
     if ((wchan = find_wchan(chname)) == NULL)
@@ -643,7 +584,7 @@ int IsSuperAdmin (User *uptr)
 {
     Nick *nptr;
 
-    if ((nptr = find_nick(uptr->nick)) == NULL)
+    if ((nptr = get_core_api()->find_nick(uptr->nick)) == NULL)
         return 0;
 
     if (!IsAuthed(uptr))
@@ -677,7 +618,7 @@ void generate_uid(char *dst_uid)
                  uid_int_to_char(random() % 36),
                  uid_int_to_char(random() % 36),
                  uid_int_to_char(random() % 36));
-    } while (find_nick(uid));
+    } while (get_core_api()->find_nick(uid));
 
     strncpy(dst_uid, uid, UIDLEN + 1);
 }
