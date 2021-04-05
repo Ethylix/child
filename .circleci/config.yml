@@ -1,7 +1,7 @@
 jobs:
   build:
     docker:
-      - image: gcc:7.5
+      - image: gcc:9
     environment:
       DEBIAN_FRONTEND: noninteractive
       CK_TAP_LOG_FILE_NAME: tests/results.tap
