@@ -1,7 +1,7 @@
 jobs:
   build:
     docker:
-      - image: rikorose/gcc-cmake:9
+      - image: rikorose/gcc-cmake:gcc-9
     environment:
       DEBIAN_FRONTEND: noninteractive
       CK_TAP_LOG_FILE_NAME: tests/results.tap
