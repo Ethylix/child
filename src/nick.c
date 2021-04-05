@@ -61,6 +61,7 @@ static Nick *new_nick(char *nick, char *ident, char *host, char *uid, char *hidd
     new_nick->loginattempts = 0;
     new_nick->lasttry = 0;
     LLIST_INIT(&new_nick->wchans);
+    LLIST_INIT(&new_nick->server_head);
 
     if (!HASHMAP_INSERT(core_get_nicks(), new_nick->nick, new_nick, NULL)) {
         fprintf(stderr, "Failed to insert new nick \"%s\" into hashmap (duplicate entry?)\n", new_nick->nick);

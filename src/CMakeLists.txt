@@ -53,7 +53,7 @@ target_link_libraries(childcore OpenSSL::Crypto ${MYSQL_LIBRARIES} ${DL_LIBRARY}
 target_include_directories(childcore PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
 
 add_executable(child ${HEADERS} ${BIN_SOURCES})
-target_link_libraries(child childcore)
+target_link_libraries(child "-Wl,--whole-archive" childcore "-Wl,--no-whole-archive")
 target_include_directories(child PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
 set_target_properties(child PROPERTIES ENABLE_EXPORTS 1)
 

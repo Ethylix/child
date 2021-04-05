@@ -39,7 +39,7 @@ void loadconf(int what)
     if (!config_file) {
         fprintf(stderr,"Configuration file not found !\n");
         if (!what)
-            child_clean();
+            exit(EXIT_FAILURE);
     }
 
     /* then we read one line at a time and search for values */
