@@ -6,8 +6,7 @@ jobs:
       DEBIAN_FRONTEND: noninteractive
       CK_TAP_LOG_FILE_NAME: tests/results.tap
     steps:
-      - run: wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
-      - run: apt update && apt install -y cmake check
+      - run: wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null && apt install -y software-properties-common && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main' && apt update && apt install -y cmake check
       - checkout:
       - run: cmake .
       - run: make
