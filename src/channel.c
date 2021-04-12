@@ -128,7 +128,7 @@ int GetFlag(User *uptr, Chan *chptr)
     return cflag->flags;
 }
 
-Chan *CreateChannel (char *name, char *owner, int lastseen)
+Chan *CreateChannel (const char *name, const char *owner, int lastseen)
 {
     Chan *new_chan;
     new_chan = (Chan *)malloc(sizeof(Chan));

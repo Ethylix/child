@@ -29,6 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 
 #define EMAILLEN 100
+#define MD5_LEN  32
 
 #define TIMEOUT_DFLT 60
 
@@ -78,7 +79,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 typedef struct user_ {
     char nick[NICKLEN + 1]; /* hash key */
     int authed,level;
-    char md5_pass[35];
+    char md5_pass[MD5_LEN + 1];
     int lastseen,timeout;
     long int options;
     char vhost[HOSTLEN + 1];
@@ -114,9 +115,9 @@ User *find_user(const char *);
 Guest *find_guest(const char *);
 Link *find_link(const char *);
 Link *find_link2 (char *, char *);
-User *AddUser (char *, int);
+User *AddUser (const char *, int);
 Guest *AddGuest (char *, int, int);
-Link *AddLink (char *, char *);
+Link *AddLink (const char *, const char *);
 void DeleteAccount (User *);
 void DeleteGuest (char *);
 void clear_guests(void);

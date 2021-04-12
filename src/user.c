@@ -99,7 +99,7 @@ Fake *find_fake(const char *nick_or_uid)
     return NULL;
 }
 
-User *AddUser (char *nick, int level)
+User *AddUser (const char *nick, int level)
 {
     User *new_user;
     new_user = (User *)malloc(sizeof(User));
@@ -146,7 +146,7 @@ Guest *AddGuest (char *nick, int timeout, int nickconn)
     return new_guest;
 }
 
-Link *AddLink(char *master, char *slave)
+Link *AddLink(const char *master, const char *slave)
 {
     Link *new_link;
     new_link = (Link *)malloc(sizeof(Link));

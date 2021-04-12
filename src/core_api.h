@@ -28,7 +28,7 @@ struct core_api {
     Nick* (*find_nick)(const char *name_or_uid);
     Nick* (*new_nick)(char *nick, char *ident, char *host, char *uid, char *hiddenhost, long int umodes, char *reshost);
     void (*delete_nick)(Nick *nptr);
-    void (*clear_nicks)();
+    void (*clear_nicks)(void);
 
     // User functions (registered users).
 
@@ -37,6 +37,9 @@ struct core_api {
     // Chan functions (registered channels).
 
     // Events.
+
+    // Database.
+    int (*load_all_db)(void);
 };
 
 struct core_api *get_core_api(void);

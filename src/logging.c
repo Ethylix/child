@@ -38,7 +38,7 @@ void mylog (char *file, char *msg, ...)
 
     tm = time(NULL);
 
-    snprintf(tmp,1023,"[ %s] %s\n",ctime(&tm),buf);
+    snprintf(tmp,1019,"[ %s] %s\n",ctime(&tm),buf);
 
     /* The ctime() function returns the result with a trailing '\n' */
 

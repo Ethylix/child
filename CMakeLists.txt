@@ -4,7 +4,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 project(Child C)
 set(CHILD_VERSION "2.0-dev")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -Wall -W -O2")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -Wall -W -O2 -Wno-stringop-truncation")
 set(CMAKE_CTEST_ARGUMENTS "--verbose")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)

@@ -215,7 +215,7 @@ Wchan *find_wchan(const char *);
 Cflag *find_cflag(const Chan *, const User *);
 Cflag *find_cflag_recursive(const Chan *, const User *);
 int GetFlag (User *, Chan *);
-Chan *CreateChannel (char *, char *, int);
+Chan *CreateChannel (const char *, const char *, int);
 Wchan *CreateWchan(char *);
 void DeleteChannel(Chan *);
 void DeleteWchan(Wchan *);

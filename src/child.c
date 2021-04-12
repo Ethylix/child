@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "channel.h"
 #include "commands.h"
 #include "core.h"
+#include "core_api.h"
 #include "db.h"
 #include "logging.h"
 #include "modules.h"
@@ -280,7 +281,10 @@ int main(int argc, char **argv)
     }
 
     if (get_core()->verbose) printf("Connected to mysql DB\n");
-    loadalldb();
+    if (get_core_api()->load_all_db() < 0) {
+        fprintf(stderr, "Failed to load database, exiting.\n");
+        child_clean();
+    }
     if (get_core()->verbose) printf("Logging in to server\n");
     SendInitToServer();
     get_core()->connected = 1;
