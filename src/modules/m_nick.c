@@ -338,7 +338,8 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
         NoticeToUser(nptr,"Please set a valid email address with /msg C nick set email email@domain.xx");
 
     user->lastseen = time(NULL);
-    SendRaw("SVSMODE %s +r",nptr->nick);
+    SendRaw("SVS2MODE %s +r",nptr->nick);
+    SendRaw("SVSLOGIN * %s %s",nptr->nick,nptr->nick);
     if (user->vhost[0] != '\0') {
         SendRaw("CHGHOST %s %s",nptr->nick,user->vhost);
         strncpy(nptr->hiddenhost, user->vhost, HOSTLEN);
