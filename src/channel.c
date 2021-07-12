@@ -40,6 +40,9 @@ Chan *find_channel(const char *name)
 {
     struct hashmap_entry *entry;
 
+    if (!name)
+        return NULL;
+
     if (!HASHMAP_FIND(core_get_chans(), name, &entry))
         return NULL;
 
@@ -79,6 +82,10 @@ Cflag *find_cflag_recursive(const Chan *chptr, const User *uptr)
             return NULL;
         if ((uptr2 = find_user(l->master)) == NULL)
             return NULL;
+        if (uptr == uptr2) {
+            fprintf(stderr, "Impossible recursive link master=%s, slave=%s\n", l->master, l->slave);
+            return NULL;
+        }
         return find_cflag_recursive(chptr, uptr2);
     }
 
