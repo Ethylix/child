@@ -184,7 +184,7 @@ void m_join (char *sender, char *tail)
     if (!nptr)
         return;
 
-    uptr = find_user(nptr->nick);
+    uptr = find_account(nptr);
 
     char chans_copied[1024];
     bzero(chans_copied,1024);
@@ -411,7 +411,7 @@ void m_umode (char *sender, char *tail)
     if (!nptr)
 	return;
 
-    uptr = find_user(nptr->nick);
+    uptr = find_account(nptr);
     if (umode[0] == '+') {
         if (IsCharInString('o',umode)) {
             SetOper(nptr);
@@ -472,7 +472,7 @@ void m_mode (char *sender, char *tail)
         if (!nptr)
             return;
 
-        uptr = find_user(nptr->nick);
+        uptr = find_account(nptr);
         umode++;
         if (umode[0] == '+') {
             if (IsCharInString('o',umode)) {
@@ -619,7 +619,7 @@ void m_mode (char *sender, char *tail)
                         if (!nptr2) { warg++; continue; }
                         member = find_member(wchan, nptr2);
                         if (!member) { warg++; continue; }
-                        uptr = find_user(nptr2->nick);
+                        uptr = find_account(nptr2);
                         if (GetFlag(uptr,chptr) == me.chlev_nostatus && IsAuthed(uptr)) {
                             int w = 0;
                             switch (*modes) {
@@ -724,7 +724,7 @@ void m_mode (char *sender, char *tail)
                         // TODO(target0): add error handling.
                         nptr2 = find_nick(args[warg]);
                         member = find_member(wchan, nptr2);
-                        uptr = find_user(nptr2->nick);
+                        uptr = find_account(nptr2);
                     }
 
                     switch(*modes) {
@@ -992,7 +992,7 @@ void m_privmsg (char *sender, char *tail)
         wchan = find_wchan(target);
     }
 
-    uptr = find_user(nptr->nick);
+    uptr = find_account(nptr);
 
     args[0] = target;
     char parv_tab[1024];
@@ -1054,7 +1054,7 @@ void m_quit (char *sender)
     if (!nptr)
         return;
 
-    uptr = find_user(nptr->nick);
+    uptr = find_account(nptr);
 
     if (RunHooks(HOOK_QUIT,nptr,uptr,NULL,NULL) == MOD_STOP)
         return;
@@ -1130,7 +1130,7 @@ void m_register_user_v3 (char *command, char *tail)
     nptr = AddNick(nick,ident,host,uid,hiddenhost,modes,clientip);
 
     User *uptr;
-    uptr = find_user(nptr->nick);
+    uptr = find_account(nptr);
     if (uptr) {
         if (IsRegistered(nptr))
             uptr->authed = 1;
@@ -1225,7 +1225,7 @@ void m_uid (char *sender, char *tail)
     LLIST_INSERT_TAIL(&server->nicks, &nptr->server_head);
 
     User *uptr;
-    uptr = find_user(nptr->nick);
+    uptr = find_account(nptr);
     if (uptr) {
         if (IsRegistered(nptr))
             uptr->authed = 1;
@@ -1463,7 +1463,7 @@ void m_sjoin(char *sender, char *tail)
         if (!chptr)
             continue;
 
-        uptr = find_user(nptr->nick);
+        uptr = find_account(nptr);
         if (!uptr || !uptr->authed)
             continue;
 

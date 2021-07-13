@@ -40,6 +40,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 extern int eos;
 
+/** Look an account up from a Nick 
+ * @param   nick    pointer to a Nick
+ * @returns an User struct
+ * @note    This is an helper function to ease the migration to an account based 
+ *          paradigm.
+ */
+User *find_account(const Nick *nptr) 
+{
+    return *nptr->svid ? find_user(nptr->svid) : find_user(nptr->nick);
+}
+
 User *find_user(const char *name)
 {
     struct hashmap_entry *entry;
@@ -442,7 +453,7 @@ void userquit (char *nick)
     nptr = find_nick(nick);
     if (!nptr) return;
 
-    uptr = find_user(nick);
+    uptr = find_account(nptr);
     if (uptr) {
         if (uptr->authed == 1) {
             uptr->authed = 0;

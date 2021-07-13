@@ -189,6 +189,7 @@ typedef struct fakeuser {
     char uid[UIDLEN + 1];
 } Fake;
 
+User *find_account(const Nick *);
 User *find_user(const char *);
 Nick *find_nick(const char *);
 Guest *find_guest(const char *);
