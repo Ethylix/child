@@ -33,6 +33,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #define UIDLEN 9
 
+#define SVIDLEN 35
+
 #define TIMEOUT_DFLT 60
 
 #define BOTSERV_UMODES "oSq"
@@ -158,6 +160,7 @@ typedef struct nick {
     char ident[NICKLEN + 1];
     char host[HOSTLEN + 1];
     char uid[UIDLEN + 1];
+    char svid[SVIDLEN + 1];
     char hiddenhost[HOSTLEN + 1];
     char reshost[HOSTLEN + 1];
     long int umodes;

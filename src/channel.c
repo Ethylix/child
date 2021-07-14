@@ -517,7 +517,7 @@ int IsAclOnChan (Chan *chptr)
         return 0;
 
     LLIST_FOREACH_ENTRY(&wchan->members, member, wchan_head) {
-        if ((uptr = find_user(member->nick->nick)) == NULL)
+        if ((uptr = find_user(member->nick->svid)) == NULL)
             continue;
         if (!IsAuthed(uptr))
             continue;
@@ -652,7 +652,7 @@ void acl_resync(Chan *chptr)
 
     LLIST_FOREACH_ENTRY(&wchan->members, member, wchan_head) {
         nptr = member->nick;
-        if ((uptr = find_user(nptr->nick)) == NULL)
+        if ((uptr = find_user(nptr->svid)) == NULL)
             continue;
 
         cflag = find_cflag(chptr, uptr);

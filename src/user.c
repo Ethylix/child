@@ -430,7 +430,7 @@ void userquit (char *nick)
     nptr = find_nick(nick);
     if (!nptr) return;
 
-    uptr = find_user(nick);
+    uptr = find_user(nptr->svid);
     if (uptr) {
         if (uptr->authed == 1) {
             uptr->authed = 0;
