@@ -846,7 +846,7 @@ void m_nick (char *sender, char *tail)
 
     uptr2 = find_user(newnick);
     if (uptr2) {
-        if (uptr && (find_link2(oldnick,newnick) || find_link2(newnick,oldnick)) && uptr->authed == 1) {
+        if (uptr && (find_link2(oldnick, newnick) || find_link2(newnick, oldnick)) && uptr->authed == 1) {
             uptr->authed = 0;
             uptr->lastseen = time(NULL);
             uptr2->authed = 1;
@@ -855,14 +855,17 @@ void m_nick (char *sender, char *tail)
         } else {
             if (uptr && uptr->authed == 1)
                 SendRaw("SVSMODE %s -r",newnick);
-            NoticeToUser(nptr,"This nick is registered. Please identify yourself or take another nick.");
-            if (HasOption(uptr2,UOPT_PROTECT)) AddGuest(newnick,uptr2->timeout,time(NULL));
+            NoticeToUser(nptr, "This nick is registered. Please identify yourself or take another nick.");
+            if (HasOption(uptr2, UOPT_PROTECT))
+                AddGuest(newnick, uptr2->timeout, time(NULL));
         }
     }
 
     if (uptr) {
         uptr->authed = 0;
         uptr->lastseen = time(NULL);
+        SendRaw("SVSLOGIN %s %s 0",me.server,newnick);
+        nptr->svid[0] = '\0';
     }
 
     nptr = find_nick(sender);
