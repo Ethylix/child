@@ -303,8 +303,8 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
     if (user->authed == 1) {
         NoticeToUser(nptr,"You are already identified");
         return;
-    }   
-        
+    }
+
     char *pass = md5_hash(arg3);
     if (Strcmp(pass,user->md5_pass)) {
         NoticeToUser(nptr,"Wrong password");
