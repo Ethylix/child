@@ -8,18 +8,28 @@ services:
     volumes:
       - ./doc/schema.sql:/docker-entrypoint-initdb.d/schema.sql
       
-  child:
+  childdebug:
     build: ./
+    privileged: true
+    user: child
     volumes:
-      - ./docker/child.conf:/opt/child/child.conf
+      - type: bind
+        source: ./
+        target: /opt/child/
+      - type: bind
+        source: ./docker/child.conf
+        target: /opt/child/child.conf
+    ports:
+      - 9999:9999
     depends_on:
       - unrealircd
       - mysql
 
   unrealircd:
-    image: bbriggs/unrealircd:4.2.4.1
+    build: ./docker/unrealircd/
     ports:
       - 6667:6667
-      - 6999
+      - 6697:6697
+      - 6999:6999
     volumes:
-      - ./docker/unrealircd.conf:/data/unrealircd/conf/unrealircd.conf
+      - ./docker/unrealircd/unrealircd.conf:/data/unrealircd/conf/unrealircd.conf
