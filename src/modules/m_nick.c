@@ -421,8 +421,7 @@ void nick_register (Nick *nptr, User *uptr, char *all)
 
     if (me.emailreg == 1) {
         bzero(email, 512);
-        sprintf(email, "From: Child <%s>\r\nTo: %s <%s>\r\nSubject: Account information\r\n\r\nYour user info:\r\n\tLogin: %s\r\n\tPassword: %s\r\n\r\nYou can auth with the following command: /msg %s nick identify %s\r\n", me.sendfrom, user->nick, user->email, user->nick, newpass, me.nick, newpass);
-        sendmail(user->email, email);
+        sprintf(email, "From: %s\r\nTo: %s\r\nSubject: GeekNode IRC account registration\r\n\r\nYour user info:\r\n\tLogin: %s\r\n\tGenerated password: %s\r\n\r\nYou can auth with the following command: /msg %s nick identify %s\r\n", me.sendfrom, user->email, user->nick, newpass, me.nick, newpass);        sendmail(user->email, email);
         NoticeToUser(nptr, "A password has been generated and sent to your specified e-mail address (this mean that the password you've specified doesn't work).");
     } else {        
         user->authed = 1;
