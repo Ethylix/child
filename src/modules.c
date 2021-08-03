@@ -36,6 +36,9 @@ Module *find_module(const char *name)
 {
     struct hashmap_entry *entry;
 
+    if (!name)
+        return NULL;
+
     if (!HASHMAP_FIND(core_get_modules(), name, &entry))
         return NULL;
 

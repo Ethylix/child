@@ -40,6 +40,9 @@ Chan *find_channel(const char *name)
 {
     struct hashmap_entry *entry;
 
+    if (!name)
+        return NULL;
+
     if (!HASHMAP_FIND(core_get_chans(), name, &entry))
         return NULL;
 
@@ -49,6 +52,9 @@ Chan *find_channel(const char *name)
 Wchan *find_wchan(const char *name)
 {
     struct hashmap_entry *entry;
+
+    if (!name)
+        return NULL;
 
     if (!HASHMAP_FIND(core_get_wchans(), name, &entry))
         return NULL;

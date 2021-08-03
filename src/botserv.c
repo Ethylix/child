@@ -83,6 +83,9 @@ Bot *find_bot(const char *nick)
 {
     struct hashmap_entry *entry;
 
+    if (!nick)
+        return NULL;
+
     if (!HASHMAP_FIND(core_get_bots(), nick, &entry))
         return NULL;
 

@@ -44,6 +44,9 @@ User *find_user(const char *name)
 {
     struct hashmap_entry *entry;
 
+    if (!name)
+        return NULL;
+
     if (!HASHMAP_FIND(core_get_users(), name, &entry))
         return NULL;
 
@@ -68,6 +71,9 @@ Guest *find_guest(const char *name)
 {
     struct hashmap_entry *entry;
 
+    if (!name)
+        return NULL;
+
     if (!HASHMAP_FIND(core_get_guests(), name, &entry))
         return NULL;
 
@@ -79,6 +85,9 @@ Guest *find_guest(const char *name)
 Link *find_link(const char *slave)
 {
     struct hashmap_entry *entry;
+
+    if (!slave)
+        return NULL;
 
     if (!HASHMAP_FIND(core_get_links(), slave, &entry))
         return NULL;
@@ -388,6 +397,9 @@ void send_global (char *target, char *msg, ...)
 Clone *find_clone (char *host)
 {
     struct hashmap_entry *entry;
+
+    if (!host)
+        return NULL;
 
     if (!HASHMAP_FIND(core_get_clones(), host, &entry))
         return NULL;

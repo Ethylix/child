@@ -34,6 +34,9 @@ Trust *find_trust_strict (char *host)
 {
     struct hashmap_entry *entry;
 
+    if (!host)
+        return NULL;
+
     if (!HASHMAP_FIND(core_get_trusts(), host, &entry))
         return NULL;
 
