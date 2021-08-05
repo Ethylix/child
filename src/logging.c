@@ -18,34 +18,33 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#ifndef _CHILD_H
-#define _CHILD_H
+#include "logging.h"
 
+#include "string_utils.h"
 
-#include <config.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
 
-#include "server.h"
-#include "user.h"
+void mylog (char *file, char *msg, ...)
+{
+    char tmp[1024];
+    char buf[1024];
+    va_list val;
+    FILE *index;
+    time_t tm;
+    ircsprintf(buf,1023,msg,val);
 
-#define HASHMAX 65000
-#define CONF_LOAD   0
-#define CONF_REHASH 1
+    tm = time(NULL);
 
-#define DEFAULT_CONFFILE "child.conf"
+    snprintf(tmp,1019,"[ %s] %s\n",ctime(&tm),buf);
 
-char *strcasestr (const char *, const char *);
+    /* The ctime() function returns the result with a trailing '\n' */
 
-void child_die (int);
-void child_restart (int);
-void child_clean (void) __attribute__((noreturn));
-
-/* loadconf.c */
-void loadconf (int);
-
-/* md5.c */
-char *md5_hash (char *);
-
-/* parseline.c */
-int ParseLine (void);
-
-#endif
+    *(strstr(tmp,"\n")) = ' ';
+    index = fopen(file,"a+");
+    if (!index) return;
+    fputs(tmp,index);
+    fclose(index);
+}

@@ -24,7 +24,7 @@ USA.
 
 #include "channel.h"
 #include "mem.h"
-#include "user.h"
+#include "nick.h"
 
 typedef struct bot {
     char nick[NICKLEN+1]; /* hash key */

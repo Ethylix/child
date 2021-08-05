@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "botserv.h"
 #include "child.h"
 #include "core.h"
+#include "core_api.h"
 #include "hashmap.h"
 #include "mem.h"
 #include "net.h"
@@ -33,8 +34,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-extern int eos;
 
 Chan *find_channel(const char *name)
 {
@@ -112,7 +111,7 @@ int GetFlag(User *uptr, Chan *chptr)
     Cflag *cflag;
 
     Nick *nptr;
-    nptr = find_nick(uptr->nick);
+    nptr = get_core_api()->find_nick(uptr->nick);
     if (nptr) {
         if (HasUmode(nptr, UMODE_SUPERADMIN))
             return CHLEV_OWNER;
@@ -139,7 +138,7 @@ int GetFlag(User *uptr, Chan *chptr)
     return cflag->flags;
 }
 
-Chan *CreateChannel (char *name, char *owner, int lastseen)
+Chan *CreateChannel (const char *name, const char *owner, int lastseen)
 {
     Chan *new_chan;
     new_chan = (Chan *)malloc(sizeof(Chan));
@@ -202,7 +201,7 @@ Limit *AddLimit(Chan *chptr)
     Limit *limit = chptr->active_autolimit;
 
     if (limit) {
-        limit->time = time(NULL)+me.limittime;
+        limit->time = time(NULL)+core_get_config()->limittime;
         return limit;
     }
 
@@ -210,7 +209,7 @@ Limit *AddLimit(Chan *chptr)
     memset(limit, 0, sizeof(*limit));
 
     limit->chan = chptr;
-    limit->time = time(NULL)+me.limittime;
+    limit->time = time(NULL)+core_get_config()->limittime;
     chptr->active_autolimit = limit;
 
     LLIST_INSERT_TAIL(core_get_limits(), &limit->list_head);
@@ -250,7 +249,7 @@ void DeleteChannel (Chan *chan)
 {
     HASHMAP_ERASE(core_get_chans(), chan->channelname);
 
-    if (eos)
+    if (get_core()->eos)
         PartChannel(chan);
 
     free(chan);
@@ -386,7 +385,7 @@ void KickUser (const char *who, const char *nick, const char *chan, const char *
     bzero(tmp, 1024);
     ircsprintf(tmp, 1023, reason, val);
 
-    nptr = find_nick(nick);
+    nptr = get_core_api()->find_nick(nick);
     if (!nptr) return;
 
     if (IsNokick(nptr)) return;
@@ -404,7 +403,7 @@ void JoinChannel(const char *who, const char *name)
     if (!chptr) return;
     if (chptr->mlock[0] != '\0')
         SendRaw(":%s MODE %s %s", who, name, chptr->mlock);
-    if (!Strcmp(channel_botname(chptr),me.nick) && HasOption(chptr, COPT_NOJOIN))
+    if (!Strcmp(channel_botname(chptr),core_get_config()->nick) && HasOption(chptr, COPT_NOJOIN))
         return;
 
     SendRaw(":%s JOIN %s",who,name);
@@ -553,13 +552,13 @@ void checkexpired()
     struct hashmap_entry *entry, *tmp_entry;
 
     HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_users(), entry, tmp_entry, uptr) {
-        if (((time(NULL) - uptr->lastseen) >= 60*60*24*me.nick_expire) && uptr->authed != 1
-                && uptr->level < me.level_oper && !(IsUserNoexpire(uptr)))
+        if (((time(NULL) - uptr->lastseen) >= 60*60*24*core_get_config()->nick_expire) && uptr->authed != 1
+                && uptr->level < core_get_config()->level_oper && !(IsUserNoexpire(uptr)))
             userdrop(uptr);
     }
 
     HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_chans(), entry, tmp_entry, chptr) {
-        if (((time(NULL) - chptr->lastseen) >= 60*60*24*me.chan_expire) && !(IsChanNoexpire(chptr)) && !(IsAclOnChan(chptr)))
+        if (((time(NULL) - chptr->lastseen) >= 60*60*24*core_get_config()->chan_expire) && !(IsChanNoexpire(chptr)) && !(IsAclOnChan(chptr)))
             chandrop(chptr);
     }
 }
@@ -604,7 +603,7 @@ const char *channel_botname(const Chan *chan)
     if (chan->chanbot != NULL)
         return chan->chanbot->nick;
 
-    return me.nick;
+    return core_get_config()->nick;
 }
 
 void joinallchans()
@@ -627,7 +626,7 @@ void joinallchans()
 
 void chandrop (Chan *chptr)
 {
-    if (eos)
+    if (get_core()->eos)
         PartChannel(chptr);
     DeleteUsersFromChannel(chptr);
     DeleteChannel(chptr);
@@ -744,14 +743,14 @@ int GetUFlagsFromLevel (int level)
 {
     if (level == CHLEV_OWNER) return UFLAG_CHANOWNER;
     else if (level == CHLEV_COOWNER) return UFLAG_CHANCOOWNER;
-    else if (level < CHLEV_COOWNER && level >= me.chlev_sadmin) return UFLAG_CHANSADMIN;
-    else if (level < me.chlev_sadmin && level >= me.chlev_admin) return UFLAG_CHANADMIN;
-    else if (level < me.chlev_admin && level >= me.chlev_op) return UFLAG_CHANOP;
-    else if (level < me.chlev_op && level >= me.chlev_halfop) return UFLAG_CHANHALFOP;
-    else if (level < me.chlev_halfop && level >= me.chlev_voice) return UFLAG_CHANVOICE;
-    else if (level < me.chlev_voice && level >= me.chlev_invite) return UFLAG_INVITE;
-    else if (level < 0 && level >= me.chlev_nostatus) return UFLAG_NOOP;
-    else if (level < me.chlev_nostatus && level >= me.chlev_akick) return UFLAG_AUTOKICK;
+    else if (level < CHLEV_COOWNER && level >= core_get_config()->chlev_sadmin) return UFLAG_CHANSADMIN;
+    else if (level < core_get_config()->chlev_sadmin && level >= core_get_config()->chlev_admin) return UFLAG_CHANADMIN;
+    else if (level < core_get_config()->chlev_admin && level >= core_get_config()->chlev_op) return UFLAG_CHANOP;
+    else if (level < core_get_config()->chlev_op && level >= core_get_config()->chlev_halfop) return UFLAG_CHANHALFOP;
+    else if (level < core_get_config()->chlev_halfop && level >= core_get_config()->chlev_voice) return UFLAG_CHANVOICE;
+    else if (level < core_get_config()->chlev_voice && level >= core_get_config()->chlev_invite) return UFLAG_INVITE;
+    else if (level < 0 && level >= core_get_config()->chlev_nostatus) return UFLAG_NOOP;
+    else if (level < core_get_config()->chlev_nostatus && level >= core_get_config()->chlev_akick) return UFLAG_AUTOKICK;
     else return UFLAG_AUTOKICKBAN;
 }
 
@@ -766,7 +765,7 @@ int IsFounder (User *uptr, Chan *chptr)
     if ((cflag = find_cflag(chptr, uptr)) == NULL)
         return IsFounder(get_link_master(uptr), chptr);
 
-    if ((nptr = find_nick(uptr->nick)) != NULL) {
+    if ((nptr = get_core_api()->find_nick(uptr->nick)) != NULL) {
         if (HasUmode(nptr, UMODE_SUPERADMIN))
             return 1;
     }
@@ -819,7 +818,7 @@ int ChannelCanProtect (User *uptr, Chan *chptr)
     if (HasOption(chptr, COPT_AXXFLAGS))
         return (cflag->uflags & UFLAG_PROTECT || IsFounder(uptr, chptr));
 
-    return (cflag->flags >= me.chlev_admin);
+    return (cflag->flags >= core_get_config()->chlev_admin);
 }
 
 int ChannelCanOp (User *uptr, Chan *chptr)
@@ -841,7 +840,7 @@ int ChannelCanOp (User *uptr, Chan *chptr)
     if (HasOption(chptr, COPT_AXXFLAGS))
         return (cflag->uflags & UFLAG_OP || IsFounder(uptr, chptr));
 
-    return (cflag->flags >= me.chlev_op);
+    return (cflag->flags >= core_get_config()->chlev_op);
 }
 
 int ChannelCanHalfop (User *uptr, Chan *chptr)
@@ -863,7 +862,7 @@ int ChannelCanHalfop (User *uptr, Chan *chptr)
     if (HasOption(chptr, COPT_AXXFLAGS))
         return (cflag->uflags & UFLAG_HALFOP || cflag->uflags & UFLAG_OP || IsFounder(uptr, chptr));
 
-    return (cflag->flags >= me.chlev_halfop);
+    return (cflag->flags >= core_get_config()->chlev_halfop);
 }
 
 int ChannelCanVoice (User *uptr, Chan *chptr)
@@ -885,7 +884,7 @@ int ChannelCanVoice (User *uptr, Chan *chptr)
     if (HasOption(chptr, COPT_AXXFLAGS))
         return (cflag->uflags & UFLAG_VOICE || cflag->uflags & UFLAG_HALFOP || cflag->uflags & UFLAG_OP || IsFounder(uptr, chptr));
 
-    return (cflag->flags >= me.chlev_voice);
+    return (cflag->flags >= core_get_config()->chlev_voice);
 }
 
 int ChannelCanInvite (User *uptr, Chan *chptr)
@@ -907,7 +906,7 @@ int ChannelCanInvite (User *uptr, Chan *chptr)
     if (HasOption(chptr, COPT_AXXFLAGS))
         return (cflag->uflags & UFLAG_INVITE || IsFounder(uptr, chptr));
 
-    return (cflag->flags >= me.chlev_invite);
+    return (cflag->flags >= core_get_config()->chlev_invite);
 }
 
 int ChannelCanSet (User *uptr, Chan *chptr)
@@ -929,7 +928,7 @@ int ChannelCanSet (User *uptr, Chan *chptr)
     if (HasOption(chptr, COPT_AXXFLAGS))
         return (cflag->uflags & UFLAG_SET || IsFounder(uptr, chptr));
 
-    return (cflag->flags >= me.chlev_sadmin);
+    return (cflag->flags >= core_get_config()->chlev_sadmin);
 }
 
 int ChannelCanTopic (User *uptr, Chan *chptr)
@@ -951,7 +950,7 @@ int ChannelCanTopic (User *uptr, Chan *chptr)
     if (HasOption(chptr, COPT_AXXFLAGS))
         return (cflag->uflags & UFLAG_TOPIC || IsFounder(uptr, chptr));
 
-    return (cflag->flags >= me.chlev_op);
+    return (cflag->flags >= core_get_config()->chlev_op);
 }
 
 int ChannelCanACL (User *uptr, Chan *chptr)
@@ -973,7 +972,7 @@ int ChannelCanACL (User *uptr, Chan *chptr)
     if (HasOption(chptr, COPT_AXXFLAGS))
         return (cflag->uflags & UFLAG_ACL || IsFounder(uptr, chptr));
 
-    return (cflag->flags >= me.chlev_admin);
+    return (cflag->flags >= core_get_config()->chlev_admin);
 }
 
 int ChannelCanReadACL (User *uptr, Chan *chptr)
@@ -986,7 +985,7 @@ int ChannelCanReadACL (User *uptr, Chan *chptr)
     if (IsSuperAdmin(uptr))
         return 1;
 
-    if (IsAuthed(uptr) && uptr->level >= me.level_oper)
+    if (IsAuthed(uptr) && uptr->level >= core_get_config()->level_oper)
         return 1;
 
     if ((cflag = find_cflag(chptr, uptr)) == NULL)

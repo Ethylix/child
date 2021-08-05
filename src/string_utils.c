@@ -141,8 +141,6 @@ char *gen_rand_string (char *dst, char *range, int size)
     char text[256];
     int i;
  
-    init_srandom();
-   
     bzero(text,256);
     parse_range(text,range);
     

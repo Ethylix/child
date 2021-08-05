@@ -21,7 +21,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "child.h"
 #include "commands.h"
 #include "core.h"
+#include "core_api.h"
 #include "hashmap.h"
+#include "logging.h"
 #include "modules.h"
 #include "net.h"
 #include "string_utils.h"
@@ -30,8 +32,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 #include <string.h>
 
-extern commandlist command_list;
-
 void do_host (Nick *, User *, char *);
 void do_help (Nick *, User *, char *);
 void host_set (Nick *, User *, char *);
@@ -39,10 +39,10 @@ void host_list (Nick *);
 
 void child_init()
 {
-    addBaseCommand("host",do_host,me.level_oper);
+    addBaseCommand("host",do_host,core_get_config()->level_oper);
 
-    addHostCommand("set",host_set,me.level_oper);
-    addHostCommand("list",host_list,me.level_oper);
+    addHostCommand("set",host_set,core_get_config()->level_oper);
+    addHostCommand("list",host_list,core_get_config()->level_oper);
 }
 
 void child_cleanup()
@@ -64,7 +64,7 @@ void do_host(Nick *nptr, User *uptr, char *all)
     SeperateWord(arg2);
     
     if (!arg2 || *arg2 == '\0') {
-        NoticeToUser(nptr,"Type \2/msg %s help host\2 for more informations", me.nick);
+        NoticeToUser(nptr,"Type \2/msg %s help host\2 for more informations", core_get_config()->nick);
         return;
     }
     
@@ -77,7 +77,7 @@ void do_host(Nick *nptr, User *uptr, char *all)
     all = SeperateWord(all);
     
     Command *cmd;
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HOST)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg2) && cmd->type == CMD_HOST) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,all);
@@ -113,13 +113,13 @@ void host_set (Nick *nptr, User *uptr __unused, char *all)
         memset(uptr2->vhost,'\0',HOSTLEN);
         NoticeToUser(nptr,"Vhost for \2%s\2 deleted",arg3);
         operlog("%s removed vhost from %s",nptr->nick,arg3);
-        if (find_nick(arg3))
+        if (get_core_api()->find_nick(arg3))
             SendRaw("SVSMODE %s -x+x",arg3);
     } else {
         strncpy(uptr2->vhost,arg4,HOSTLEN);
         NoticeToUser(nptr,"Vhost for \2%s\2 set to \2%s\2",arg3,arg4);
         operlog("%s set vhost for %s to %s",nptr->nick,arg3,arg4);
-        if (find_nick(arg3))
+        if (get_core_api()->find_nick(arg3))
             SendRaw("CHGHOST %s %s",arg3,arg4);
     }
 }

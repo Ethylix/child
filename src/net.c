@@ -21,7 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "net.h"
 
 #include "child.h"
-#include "filter.h"
+#include "core.h"
+#include "logging.h"
 #include "mem.h"
 #include "string_utils.h"
 
@@ -39,10 +40,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 #include <unistd.h>
 
-extern int vv;
-extern int sock;
-extern int eos;
-
 static jmp_buf timeout_jump;
 
 void timeout()
@@ -50,33 +47,11 @@ void timeout()
     longjmp(timeout_jump,1);
 }
 
-#ifdef USE_GNUTLS
-static void close_secure_connection()
-{
-    gnutls_deinit(session);
-    gnutls_certificate_free_credentials(xcred);
-    gnutls_global_deinit();
-}
-#endif
-
 int ConnectToServer()
 {
-    int n;
+    int n, sock;
     struct addrinfo hints,hints2;
     struct addrinfo *res = NULL,*res2 = NULL;
-
-#ifdef USE_GNUTLS
-    if (me.ssl) {
-        const int cert_type_priority[3] = { GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP, 0 };
-
-        gnutls_global_init();
-        gnutls_certificate_allocate_credentials(&xcred);
-        gnutls_init(&session,GNUTLS_CLIENT);
-        gnutls_set_default_priority(session);
-        gnutls_certificate_type_set_priority(session, cert_type_priority);
-        gnutls_credentials_set(session, GNUTLS_CRD_CERTIFICATE,xcred);
-    }
-#endif
 
     hints.ai_flags = 0;
     hints.ai_family = PF_UNSPEC;
@@ -88,9 +63,9 @@ int ConnectToServer()
     hints.ai_next = NULL;
 
     char port[6];
-    sprintf(port,"%d",me.port);
+    sprintf(port,"%d",core_get_config()->port);
 
-    n = getaddrinfo(me.server,port,&hints,&res);
+    n = getaddrinfo(core_get_config()->server,port,&hints,&res);
     if (n != 0) {
         fprintf(stderr,"getaddrinfo: %s\n",gai_strerror(n));
         if (n == EAI_SYSTEM) perror("getaddrinfo");
@@ -100,7 +75,7 @@ int ConnectToServer()
     sock = socket(res->ai_family,res->ai_socktype,res->ai_protocol);
     if (sock < 0) { perror("socket"); freeaddrinfo(res); return 0; }
 
-    if (*me.bindip) {
+    if (*core_get_config()->bindip) {
         hints2.ai_flags = AI_PASSIVE;
         hints2.ai_family = PF_UNSPEC;
         hints2.ai_socktype = SOCK_STREAM;
@@ -110,7 +85,7 @@ int ConnectToServer()
         hints2.ai_canonname = NULL;
         hints2.ai_next = NULL;
 
-        n = getaddrinfo(me.bindip,NULL,&hints2,&res2);
+        n = getaddrinfo(core_get_config()->bindip,NULL,&hints2,&res2);
         if (n != 0) {
             fprintf(stderr,"getaddrinfo: %s\n",gai_strerror(n));
             if (n == EAI_SYSTEM) perror("getaddrinfo");
@@ -120,9 +95,6 @@ int ConnectToServer()
         if (bind(sock,res2->ai_addr,res2->ai_addrlen) < 0) {
             perror("bind");
             operlog("bind() error: %s",strerror(errno));
-#ifdef USE_GNUTLS
-            if (me.ssl) close_secure_connection();
-#endif
             freeaddrinfo(res);
             freeaddrinfo(res2);
             return 0;
@@ -134,7 +106,7 @@ int ConnectToServer()
     if (setjmp(timeout_jump) == 1) {
         close(sock);
         freeaddrinfo(res);
-        if (*me.bindip) freeaddrinfo(res2);
+        if (*core_get_config()->bindip) freeaddrinfo(res2);
         return -1;
     }
 
@@ -143,11 +115,8 @@ int ConnectToServer()
         alarm(0);
         signal(SIGALRM,SIG_DFL);
         operlog("connect() error: %s",strerror(errno));
-#ifdef USE_GNUTLS
-        if (me.ssl) close_secure_connection();
-#endif
         freeaddrinfo(res);
-        if (*me.bindip) freeaddrinfo(res2);
+        if (*core_get_config()->bindip) freeaddrinfo(res2);
         close(sock);
         return 0;
     }
@@ -155,42 +124,31 @@ int ConnectToServer()
     alarm(0);
     signal(SIGALRM,SIG_DFL);
     freeaddrinfo(res);
-    if (*me.bindip) freeaddrinfo(res2);
+    if (*core_get_config()->bindip) freeaddrinfo(res2);
 
-#ifdef USE_GNUTLS
-    if (me.ssl) {
-        gnutls_transport_set_ptr(session, (gnutls_transport_ptr_t)sock);
-        int ret = gnutls_handshake(session);
-        if (ret < 0) {
-            fprintf(stderr,"Handshake failed\n");
-            gnutls_perror(ret);
-            operlog("Handshake failed for secure connection");
-            close_secure_connection();
-            return 0;
-        }
-    }
-#endif
     fcntl(sock,F_SETFL,O_NONBLOCK);
+
+    get_core()->sock = sock;
 
     return 1;
 }
 
 void SendInitToServer()
 {
-    SendRaw("PASS :%s",me.linkpass);
-    SendRaw("PROTOCTL EAUTH=%s SID=%s", me.name, me.sid);
+    SendRaw("PASS :%s",core_get_config()->linkpass);
+    SendRaw("PROTOCTL EAUTH=%s SID=%s", core_get_config()->name, core_get_config()->sid);
     SendRaw("PROTOCTL NOQUIT NICKv2 SJOIN SJ3 CLK TKLEXT TKLEXT2 NICKIP ESVID MLOCK EXTSWHOIS");
-    SendRaw("SERVER %s 1 :Child IRC Services",me.name);
-    SendRaw("SQLINE %s :Reserved for services",me.nick);
-    generate_uid(me.uid);
-    fakeuser(me.nick, me.ident, me.host, me.uid, MY_UMODES);
+    SendRaw("SERVER %s 1 :Child IRC Services",core_get_config()->name);
+    SendRaw("SQLINE %s :Reserved for services",core_get_config()->nick);
+    generate_uid(get_core()->uid);
+    fakeuser(core_get_config()->nick, core_get_config()->ident, core_get_config()->host, get_core()->uid, MY_UMODES);
 }
 
 void DisconnectFromServer ()
 {
     SendRaw("SQUIT");
     operlog("Disconnect from server (SQUIT)");
-    eos = 0;
+    get_core()->eos = false;
 }
 
 void flush_sendq()
@@ -202,12 +160,7 @@ void flush_sendq()
 
     len = outdata.writebytes;
 
-#ifdef USE_GNUTLS
-    if (me.ssl)
-        bytes = gnutls_record_send(session, outdata.outbuf, len);
-    else
-#endif
-    bytes = send(sock, outdata.outbuf, len, 0);
+    bytes = send(get_core()->sock, outdata.outbuf, len, 0);
 
     memmove(outdata.outbuf, outdata.outbuf + bytes, len - bytes);
     outdata.outbuf[len-bytes] = 0;
@@ -223,7 +176,7 @@ void SendRaw (char *msg, ...)
     char *outptr;
     ircsprintf(buf,1023,msg,val);
 
-    if (vv) printf(">> %s\n",buf);
+    if (get_core()->vv) printf(">> %s\n",buf);
     snprintf(tmp,1024,"%s\r\n",buf);
 
     len = strlen(tmp);
@@ -246,11 +199,6 @@ void SendRaw (char *msg, ...)
         return;
 #endif
     }
-
-#ifdef USE_FILTER
-    if ((filter_check(buf, DIRECT_OUT)) == RULE_DROP)
-        return;
-#endif
 
     outptr = outdata.outbuf + outdata.writebytes;
 
@@ -275,12 +223,7 @@ int ReadChunk(void)
         indata.chunkbufentry = indata.chunkbuf;
     }
 
-#ifdef USE_GNUTLS
-    if (me.ssl)
-        readbytes = gnutls_record_recv(session, indata.chunkbufentry, (CHUNKSIZE - oldbytes) - 10);
-    else
-#endif
-    readbytes = read(sock, indata.chunkbufentry, (CHUNKSIZE - oldbytes) - 10);
+    readbytes = read(get_core()->sock, indata.chunkbufentry, (CHUNKSIZE - oldbytes) - 10);
     if (readbytes == 0 || readbytes == -1)
         return 0;
 
@@ -340,11 +283,7 @@ int ReadLine (char *cur, char *next)
 
 void CloseAllSock()
 {
-    close(sock);
-#ifdef USE_GNUTLS
-    if (me.ssl)
-        close_secure_connection();
-#endif
+    close(get_core()->sock);
 }
 
 int match_ipmask (int addr, int mask, int bits)

@@ -29,9 +29,9 @@ typedef struct trust {
     int limit;
 } Trust;
 
-Trust *find_trust_strict (char *);
-Trust *find_trust (char *);
-Trust *AddTrust (char *, int);
+Trust *find_trust_strict (const char *);
+Trust *find_trust (const char *);
+Trust *AddTrust (const char *, int);
 void DeleteTrust (Trust *);
 
 #endif

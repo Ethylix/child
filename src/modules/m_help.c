@@ -19,16 +19,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 #include "child.h"
+#include "core.h"
 #include "commands.h"
 #include "modules.h"
 #include "string_utils.h"
 
 #include <stdlib.h>
 #include <string.h>
-
-extern commandlist command_list;
-
-extern int raws;
 
 #define ACTUAL_CMDLEN 16
 
@@ -133,11 +130,6 @@ void help_oper_modlist (Nick *);
 void help_oper_rehash (Nick *);
 void help_oper_setraws (Nick *);
 void help_oper_cmdlev (Nick *);
-#ifdef USE_FILTER
-void help_oper_ruleslist (Nick *);
-void help_oper_reloadrules (Nick *);
-void help_oper_setfilter (Nick *);
-#endif
 void help_oper_superadmin (Nick *);
 void help_oper_sglobal (Nick *);
 void help_oper_fakelist (Nick *);
@@ -150,14 +142,14 @@ void child_init(Module *module)
 
     addBaseCommand("help",do_help,0);
 
-    addCommand("host",CMD_HELP,help_host,me.level_oper);
-    addCommand("oper",CMD_HELP,help_oper,me.level_oper);
+    addCommand("host",CMD_HELP,help_host,core_get_config()->level_oper);
+    addCommand("oper",CMD_HELP,help_oper,core_get_config()->level_oper);
     addCommand("nick",CMD_HELP,help_nick,0);
     addCommand("chan",CMD_HELP,help_chan,0);
     addCommand("bot",CMD_HELP,help_bot,0);
 
-    addHelpHostCommand("list",help_host_list,"List all users having a vhost",me.level_oper);
-    addHelpHostCommand("set",help_host_set,"Set or remove a vhost",me.level_oper);
+    addHelpHostCommand("list",help_host_list,"List all users having a vhost",core_get_config()->level_oper);
+    addHelpHostCommand("set",help_host_set,"Set or remove a vhost",core_get_config()->level_oper);
 
     addHelpNickCommand("unlink",help_nick_unlink,"Unlink your nick",0);
     addHelpNickCommand("set",help_nick_set,"Set some options",0);
@@ -196,7 +188,7 @@ void child_init(Module *module)
     addHelpChanCommand("drop",help_chan_drop,"Drop a channel",0);
     addHelpChanCommand("devoice",help_chan_devoice,"Take voice",0);
     addHelpChanCommand("deop",help_chan_deop,"Take op",0);
-    addHelpChanCommand("delbot",help_chan_delbot,"Remove a bot",me.level_oper);
+    addHelpChanCommand("delbot",help_chan_delbot,"Remove a bot",core_get_config()->level_oper);
     addHelpChanCommand("dehalfop",help_chan_dehalfop,"Take halfop",0);
     addHelpChanCommand("clearmodes",help_chan_clearmodes,"Remove all channel modes",0);
     addHelpChanCommand("clearchan",help_chan_clearchan,"Clear channel",0);
@@ -204,7 +196,7 @@ void child_init(Module *module)
     addHelpChanCommand("botlist",help_chan_botlist,"List available bots",0);
     addHelpChanCommand("banlist",help_chan_banlist,"List services channel bans",0);
     addHelpChanCommand("assign",help_chan_assign,"Assign a bot to a channel",0);
-    addHelpChanCommand("addbot",help_chan_addbot,"Add a bot",me.level_oper);
+    addHelpChanCommand("addbot",help_chan_addbot,"Add a bot",core_get_config()->level_oper);
     addHelpChanCommand("access",help_chan_access,"Manage access list",0);
     addHelpChanSetCommand("strictop",help_chan_set_strictop,"Enable/disable strict opping",0);
     addHelpChanSetCommand("secure",help_chan_set_secure,"Aop/avoice only identified users",0);
@@ -250,51 +242,42 @@ void child_init(Module *module)
     addHelpBotCommand("!ban","Ban someone");
     addHelpBotCommand("!admin","Display online irc operators");
 
-    addHelpOperCommand("userlist",help_oper_userlist,"Search a registered user",me.level_oper);
-    addHelpOperCommand("trustlist",help_oper_trustlist,"List trusts",me.level_admin);
-    addHelpOperCommand("trustdel",help_oper_trustdel,"Remove a trust",me.level_admin);
-    addHelpOperCommand("trustadd",help_oper_trustadd,"Add a trust",me.level_admin);
-    addHelpOperCommand("suspend",help_oper_suspend,"Suspend/unsuspend a user/channel",me.level_admin);
-    addHelpOperCommand("superadmin",help_oper_superadmin,"Set/unset superadmin status",me.level_root);
-    addHelpOperCommand("stats",help_oper_stats,"Display network stats",me.level_oper);
-    addHelpOperCommand("sglobal",help_oper_sglobal,"Send a server-wide notice",me.level_oper);
-    addHelpOperCommand("setraws",help_oper_setraws,"Enable/disable raws",me.level_owner);
-#ifdef USE_FILTER
-    addHelpOperCommand("setfilter",help_oper_setfilter,"Enable/disable filter",me.level_root);
-#endif
-    addHelpOperCommand("savedb",help_oper_savedb,"Save database",me.level_root);
-#ifdef USE_FILTER
-    addHelpOperCommand("ruleslist",help_oper_ruleslist,"List filter rules",me.level_root);
-#endif
-    addHelpOperCommand("restart",help_oper_restart,"Restart services",me.level_root);
-    addHelpOperCommand("regexpcheck",help_oper_regexpcheck,"Check users affected by a regexp",me.level_oper);
-#ifdef USE_FILTER
-    addHelpOperCommand("reloadrules",help_oper_reloadrules,"Reload filter rules",me.level_root);
-#endif
-    addHelpOperCommand("rehash",help_oper_rehash,"Rehash configuration",me.level_root);
-    addHelpOperCommand("raw",help_oper_raw,"Send a raw",me.level_root);
-    addHelpOperCommand("operlist",help_oper_operlist,"Display online irc operators",me.level_oper);
-    addHelpOperCommand("noexpire",help_oper_noexpire,"Set/unset the user/channel noexpire flag",me.level_admin);
-    addHelpOperCommand("nicklist",help_oper_nicklist,"Search an online nick",me.level_oper);
-    addHelpOperCommand("modunload",help_oper_modunload,"Unload a module",me.level_root);
-    addHelpOperCommand("modload",help_oper_modload,"Load a module",me.level_root);
-    addHelpOperCommand("modlist",help_oper_modlist,"List loaded modules",me.level_root);
-    addHelpOperCommand("killall",help_oper_killall,"Kill all users matching a mask",me.level_admin);
-    addHelpOperCommand("jupe",help_oper_jupe,"Jupe a server",me.level_admin);
-    addHelpOperCommand("global",help_oper_global,"Send a global notice",me.level_oper);
-    addHelpOperCommand("glinechan",help_oper_glinechan,"Gline a whole channel",me.level_admin);
-    addHelpOperCommand("glineall",help_oper_glineall,"Gline all users matching a mask",me.level_admin);
-    addHelpOperCommand("forceauth",help_oper_forceauth,"Force a nick to auth",me.level_root);
-    addHelpOperCommand("fakeuser",help_oper_fakeuser,"Create a fake user",me.level_oper);
-    addHelpOperCommand("fakesay",help_oper_fakesay,"Make a fake user say something",me.level_oper);
-    addHelpOperCommand("fakenick",help_oper_fakenick,"Change the nick of a fake user",me.level_oper);
-    addHelpOperCommand("fakelist",help_oper_fakelist,"List fakeusers",me.level_oper);
-    addHelpOperCommand("fakekill",help_oper_fakekill,"Make a fake user quit",me.level_oper);
-    addHelpOperCommand("fakejoin",help_oper_fakejoin,"Make a fake user join a channel",me.level_oper);
-    addHelpOperCommand("die",help_oper_die,"Die services",me.level_root);
-    addHelpOperCommand("cmdlev",help_oper_cmdlev,"Change the level of a command",me.level_owner);
-    addHelpOperCommand("chanlist",help_oper_chanlist,"Search a registered channel",me.level_oper);
-    addHelpOperCommand("changelev",help_oper_changelev,"Change a user's level",me.level_admin);
+    addHelpOperCommand("userlist",help_oper_userlist,"Search a registered user",core_get_config()->level_oper);
+    addHelpOperCommand("trustlist",help_oper_trustlist,"List trusts",core_get_config()->level_admin);
+    addHelpOperCommand("trustdel",help_oper_trustdel,"Remove a trust",core_get_config()->level_admin);
+    addHelpOperCommand("trustadd",help_oper_trustadd,"Add a trust",core_get_config()->level_admin);
+    addHelpOperCommand("suspend",help_oper_suspend,"Suspend/unsuspend a user/channel",core_get_config()->level_admin);
+    addHelpOperCommand("superadmin",help_oper_superadmin,"Set/unset superadmin status",core_get_config()->level_root);
+    addHelpOperCommand("stats",help_oper_stats,"Display network stats",core_get_config()->level_oper);
+    addHelpOperCommand("sglobal",help_oper_sglobal,"Send a server-wide notice",core_get_config()->level_oper);
+    addHelpOperCommand("setraws",help_oper_setraws,"Enable/disable raws",core_get_config()->level_owner);
+    addHelpOperCommand("savedb",help_oper_savedb,"Save database",core_get_config()->level_root);
+    addHelpOperCommand("restart",help_oper_restart,"Restart services",core_get_config()->level_root);
+    addHelpOperCommand("regexpcheck",help_oper_regexpcheck,"Check users affected by a regexp",core_get_config()->level_oper);
+    addHelpOperCommand("rehash",help_oper_rehash,"Rehash configuration",core_get_config()->level_root);
+    addHelpOperCommand("raw",help_oper_raw,"Send a raw",core_get_config()->level_root);
+    addHelpOperCommand("operlist",help_oper_operlist,"Display online irc operators",core_get_config()->level_oper);
+    addHelpOperCommand("noexpire",help_oper_noexpire,"Set/unset the user/channel noexpire flag",core_get_config()->level_admin);
+    addHelpOperCommand("nicklist",help_oper_nicklist,"Search an online nick",core_get_config()->level_oper);
+    addHelpOperCommand("modunload",help_oper_modunload,"Unload a module",core_get_config()->level_root);
+    addHelpOperCommand("modload",help_oper_modload,"Load a module",core_get_config()->level_root);
+    addHelpOperCommand("modlist",help_oper_modlist,"List loaded modules",core_get_config()->level_root);
+    addHelpOperCommand("killall",help_oper_killall,"Kill all users matching a mask",core_get_config()->level_admin);
+    addHelpOperCommand("jupe",help_oper_jupe,"Jupe a server",core_get_config()->level_admin);
+    addHelpOperCommand("global",help_oper_global,"Send a global notice",core_get_config()->level_oper);
+    addHelpOperCommand("glinechan",help_oper_glinechan,"Gline a whole channel",core_get_config()->level_admin);
+    addHelpOperCommand("glineall",help_oper_glineall,"Gline all users matching a mask",core_get_config()->level_admin);
+    addHelpOperCommand("forceauth",help_oper_forceauth,"Force a nick to auth",core_get_config()->level_root);
+    addHelpOperCommand("fakeuser",help_oper_fakeuser,"Create a fake user",core_get_config()->level_oper);
+    addHelpOperCommand("fakesay",help_oper_fakesay,"Make a fake user say something",core_get_config()->level_oper);
+    addHelpOperCommand("fakenick",help_oper_fakenick,"Change the nick of a fake user",core_get_config()->level_oper);
+    addHelpOperCommand("fakelist",help_oper_fakelist,"List fakeusers",core_get_config()->level_oper);
+    addHelpOperCommand("fakekill",help_oper_fakekill,"Make a fake user quit",core_get_config()->level_oper);
+    addHelpOperCommand("fakejoin",help_oper_fakejoin,"Make a fake user join a channel",core_get_config()->level_oper);
+    addHelpOperCommand("die",help_oper_die,"Die services",core_get_config()->level_root);
+    addHelpOperCommand("cmdlev",help_oper_cmdlev,"Change the level of a command",core_get_config()->level_owner);
+    addHelpOperCommand("chanlist",help_oper_chanlist,"Search a registered channel",core_get_config()->level_oper);
+    addHelpOperCommand("changelev",help_oper_changelev,"Change a user's level",core_get_config()->level_admin);
 }
 
 void child_cleanup()
@@ -430,11 +413,6 @@ void child_cleanup()
     delHelpOperCommand("die");
     delHelpOperCommand("setraws");
     delHelpOperCommand("cmdlev");
-#ifdef USE_FILTER
-    delHelpOperCommand("reloadrules");
-    delHelpOperCommand("ruleslist");
-    delHelpOperCommand("setfilter");
-#endif
     delHelpOperCommand("superadmin");
     delHelpOperCommand("sglobal");
     delHelpOperCommand("glinechan");
@@ -454,14 +432,14 @@ void do_help (Nick *nptr, User *uptr, char *all)
     if (!arg2 || *arg2 == '\0') {
         NoticeToUser(nptr,"To get help, type one of the following commands :");
         NoticeToUser(nptr," ");
-        NoticeToUser(nptr,"\2/msg %s help nick\2",me.nick);
-        NoticeToUser(nptr,"\2/msg %s help chan\2",me.nick);
-        NoticeToUser(nptr,"\2/msg %s help bot\2",me.nick);
+        NoticeToUser(nptr,"\2/msg %s help nick\2",core_get_config()->nick);
+        NoticeToUser(nptr,"\2/msg %s help chan\2",core_get_config()->nick);
+        NoticeToUser(nptr,"\2/msg %s help bot\2",core_get_config()->nick);
         if (uptr && (uptr->level >= 100) && (IsOper(nptr)) && IsAuthed(uptr)) {
             NoticeToUser(nptr," ");
             NoticeToUser(nptr,"Opers only commands :");
-            NoticeToUser(nptr,"\2/msg %s help host\2",me.nick);
-            NoticeToUser(nptr,"\2/msg %s help oper\2",me.nick);
+            NoticeToUser(nptr,"\2/msg %s help host\2",core_get_config()->nick);
+            NoticeToUser(nptr,"\2/msg %s help oper\2",core_get_config()->nick);
         }
         return;
     }
@@ -473,7 +451,7 @@ void do_help (Nick *nptr, User *uptr, char *all)
     all = SeperateWord(all);
 
     Command *cmd;
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg2) && cmd->type == CMD_HELP) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,all);
@@ -498,7 +476,7 @@ void help_host (Nick *nptr, User *uptr, char *all)
         NoticeToUser(nptr,"Commands available for vhosts management :");
         NoticeToUser(nptr," ");
 
-        LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_HOST)) {
+        LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
             if (cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_HOST) {
                 if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level)) {
                     bzero(padding,ACTUAL_CMDLEN);
@@ -512,7 +490,7 @@ void help_host (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_HOST)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg3) && cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_HOST) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr);
@@ -548,7 +526,7 @@ void help_nick (Nick *nptr, User *uptr, char *all)
         NoticeToUser(nptr,"Commands available for nicks management :");
         NoticeToUser(nptr," ");
 
-        LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_NICK)) {
+        LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
             if (cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_NICK) {
                 if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level)) {
                     bzero(padding,ACTUAL_CMDLEN);
@@ -562,7 +540,7 @@ void help_nick (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_NICK)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg3) && cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_NICK) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,all);
@@ -598,7 +576,7 @@ void help_nick_register (Nick *nptr)
 {
     NoticeToUser(nptr,"Syntax: \2NICK REGISTER \037password\037 \037email\037\2");
     NoticeToUser(nptr,"Register your nick with the specified password and email");
-    NoticeToUser(nptr,"Nicks expire after %d days without being used",me.nick_expire);
+    NoticeToUser(nptr,"Nicks expire after %d days without being used",core_get_config()->nick_expire);
 }
 
 void help_nick_drop (Nick *nptr)
@@ -632,7 +610,7 @@ void help_nick_set (Nick *nptr, User *uptr, char *all)
     if (!arg4 || *arg4 == '\0') {
         NoticeToUser(nptr,"Syntax: \2NICK SET \037option\037 \037value\037");
         NoticeToUser(nptr," ");
-        LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_NICK_SET)) {
+        LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
             if (cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_NICK_SET) {
                 if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level)) {
                     bzero(padding,ACTUAL_CMDLEN);
@@ -646,7 +624,7 @@ void help_nick_set (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_NICK_SET)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg4) && cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_NICK_SET) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr);
@@ -712,7 +690,7 @@ void help_nick_set_hidemail (Nick *nptr)
 void help_nick_set_cloak (Nick *nptr)
 {
     NoticeToUser(nptr,"Syntax: \2NICK SET CLOAK [\037on\037|\037off\037]\2");
-    NoticeToUser(nptr,"Enable or disable host cloaking. Your cloak will be \2%s%s\2. Note that the cloak never overrides your vhost.",nptr->nick,me.usercloak);
+    NoticeToUser(nptr,"Enable or disable host cloaking. Your cloak will be \2%s%s\2. Note that the cloak never overrides your vhost.",nptr->nick,core_get_config()->usercloak);
 }
 
 void help_nick_requestpassword (Nick *nptr)
@@ -733,7 +711,7 @@ void help_chan (Nick *nptr, User *uptr, char *all)
         NoticeToUser(nptr,"Commands available for channels management :");
         NoticeToUser(nptr," ");
         
-        LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_CHAN)) {
+        LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
             if (cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_CHAN) {
                 if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level)) {
                     bzero(padding,ACTUAL_CMDLEN);
@@ -747,7 +725,7 @@ void help_chan (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_CHAN)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg3) && cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_CHAN) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,all);
@@ -764,7 +742,7 @@ void help_chan_register (Nick *nptr)
 {
     NoticeToUser(nptr,"Syntax: \2CHAN REGISTER \037#channel\037\2");
     NoticeToUser(nptr,"Register specified channel");
-    NoticeToUser(nptr,"Chans expire after %d days without being used.",me.chan_expire);
+    NoticeToUser(nptr,"Chans expire after %d days without being used.",core_get_config()->chan_expire);
 }
 
 void help_chan_drop (Nick *nptr)
@@ -789,21 +767,21 @@ void help_chan_access (Nick *nptr, User *uptr __unused, char *all)
         NoticeToUser(nptr," ");
         NoticeToUser(nptr,"Following access levels are available :");
         NoticeToUser(nptr,"      %d  Co-Owner. Get +qo modes and inherits channel ownership if the original owner expires.", CHLEV_COOWNER);
-        NoticeToUser(nptr,"      %d   Full control over the channel without DROP nor SET FOUNDER",me.chlev_sadmin);
-        NoticeToUser(nptr,"      %d   can use access add/del command and set some options",me.chlev_admin);
-        NoticeToUser(nptr,"       %d   auto-op",me.chlev_op);
-        NoticeToUser(nptr,"       %d   auto-halfop",me.chlev_halfop);
-        NoticeToUser(nptr,"       %d   auto-voice",me.chlev_voice);
-        NoticeToUser(nptr,"       %d   can use invite command",me.chlev_invite);
-        NoticeToUser(nptr,"      %d   cannot get opped",me.chlev_nostatus);
-        NoticeToUser(nptr,"      %d   auto-kicked",me.chlev_akick);
-        NoticeToUser(nptr,"      %d   auto-banned",me.chlev_akb);
+        NoticeToUser(nptr,"      %d   Full control over the channel without DROP nor SET FOUNDER",core_get_config()->chlev_sadmin);
+        NoticeToUser(nptr,"      %d   can use access add/del command and set some options",core_get_config()->chlev_admin);
+        NoticeToUser(nptr,"       %d   auto-op",core_get_config()->chlev_op);
+        NoticeToUser(nptr,"       %d   auto-halfop",core_get_config()->chlev_halfop);
+        NoticeToUser(nptr,"       %d   auto-voice",core_get_config()->chlev_voice);
+        NoticeToUser(nptr,"       %d   can use invite command",core_get_config()->chlev_invite);
+        NoticeToUser(nptr,"      %d   cannot get opped",core_get_config()->chlev_nostatus);
+        NoticeToUser(nptr,"      %d   auto-kicked",core_get_config()->chlev_akick);
+        NoticeToUser(nptr,"      %d   auto-banned",core_get_config()->chlev_akb);
         NoticeToUser(nptr,"The maximum level is %d.",CHLEV_OWNER-1);
         NoticeToUser(nptr, " ");
         NoticeToUser(nptr,"Usage of AUTO param :");
         NoticeToUser(nptr,"CHAN ACCESS \037#channel\037 AUTO \037nick\037 {op|voice|default|off}");
-        NoticeToUser(nptr,"OP: the user is auto-opped if his/her level >= %d", me.chlev_op);
-        NoticeToUser(nptr,"VOICE: the user is auto-voiced if his/her level >= %d", me.chlev_voice);
+        NoticeToUser(nptr,"OP: the user is auto-opped if his/her level >= %d", core_get_config()->chlev_op);
+        NoticeToUser(nptr,"VOICE: the user is auto-voiced if his/her level >= %d", core_get_config()->chlev_voice);
         NoticeToUser(nptr,"DEFAULT: the user is set the mode corresponding to his level");
         NoticeToUser(nptr,"OFF: no auto-mode is set");
     } else if (!Strcmp(arg1, "flags")) {
@@ -925,7 +903,7 @@ void help_chan_set (Nick *nptr, User *uptr, char *all)
     if (!arg4 || *arg4 == '\0') {
         NoticeToUser(nptr,"Syntax: \2CHAN SET \037#channel\037 \037option\037 \037value\037\2");
         NoticeToUser(nptr," ");
-        LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_CHAN_SET)) {
+        LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
             if (cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_CHAN_SET) {
                 if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level)) {
                     bzero(padding,ACTUAL_CMDLEN);
@@ -939,7 +917,7 @@ void help_chan_set (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_CHAN_SET)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg4) && cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_CHAN_SET) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr);
@@ -975,7 +953,7 @@ void help_chan_set_aop (Nick *nptr)
 void help_chan_set_nojoin (Nick *nptr)
 {
     NoticeToUser(nptr,"Syntax: \2CHAN SET \037#channel\037 nojoin [\037on\037|\037off\037]\2");
-    NoticeToUser(nptr,"When this option is enabled, %s will leave your channel, operating from outside.",me.nick);
+    NoticeToUser(nptr,"When this option is enabled, %s will leave your channel, operating from outside.",core_get_config()->nick);
     NoticeToUser(nptr,"A minimum level of 20 is required.");
 }
 
@@ -983,7 +961,7 @@ void help_chan_set_noauto (Nick *nptr)
 {
     NoticeToUser(nptr,"Syntax: \2CHAN SET \037#channel\037 noauto [\037on\037|\037off\037]\2");
     NoticeToUser(nptr,"Defaultly, when a user join a channel where he has an access, he automatically gets the modes");
-    NoticeToUser(nptr,"correponding to his access. When this option is enabled, %s will not automatically gives modes.",me.nick);
+    NoticeToUser(nptr,"correponding to his access. When this option is enabled, %s will not automatically gives modes.",core_get_config()->nick);
     NoticeToUser(nptr,"A minimum level of 20 is required");
 }
 
@@ -1019,7 +997,7 @@ void help_chan_set_autolimit (Nick *nptr)
 {
     NoticeToUser(nptr,"Syntax: \2CHAN SET \037#channel\037 autolimit [\037limit\037]\2");
     NoticeToUser(nptr,"Forcefully set a limit. The limit depends on the numbers of the members present on the channel");
-    NoticeToUser(nptr,"E.g.: If there is 5 members and an autolimit set to 3, %s will set the limit to 8",me.nick);
+    NoticeToUser(nptr,"E.g.: If there is 5 members and an autolimit set to 3, %s will set the limit to 8",core_get_config()->nick);
 }
 
 void help_chan_set_secure (Nick *nptr)
@@ -1062,7 +1040,7 @@ void help_chan_entrymsg (Nick *nptr)
 void help_chan_assign (Nick *nptr)
 {
     NoticeToUser(nptr,"Syntax: \2CHAN ASSIGN \037#channel\037 \037botnick\037\2");
-    NoticeToUser(nptr,"Assign a bot to a channel. This will automatically set NOJOIN option and make %s leaving the channel.",me.nick);
+    NoticeToUser(nptr,"Assign a bot to a channel. This will automatically set NOJOIN option and make %s leaving the channel.",core_get_config()->nick);
 }
 
 void help_chan_unassign (Nick *nptr)
@@ -1130,7 +1108,7 @@ void help_bot (Nick *nptr, User *uptr, char *all)
     NoticeToUser(nptr,"Commands available in channels :");
     NoticeToUser(nptr," ");
 
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_BOT)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_BOT) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level)) {
                 bzero(padding,ACTUAL_CMDLEN);
@@ -1160,7 +1138,7 @@ void help_oper (Nick *nptr, User *uptr, char *all)
         NoticeToUser(nptr,"Commands available for administration :");
         NoticeToUser(nptr," ");
 
-        LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_OPER)) {
+        LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
             if (cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_OPER) {
                 if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level)) {
                     bzero(padding,ACTUAL_CMDLEN);
@@ -1174,7 +1152,7 @@ void help_oper (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_HELP+CMD_HELP_OPER)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg3) && cmd->type == CMD_HELP && cmd->subtype == CMD_HELP_OPER) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr);
@@ -1288,10 +1266,10 @@ void help_oper_changelev (Nick *nptr)
     NoticeToUser(nptr,"Syntax: \2changelev \037username\037 \037level\037\2");
     NoticeToUser(nptr,"Change the level of a user");
     NoticeToUser(nptr,"Here is the differents levels :");
-    NoticeToUser(nptr,"  \2 1-%d\2     : normal user",me.level_oper-1);
-    NoticeToUser(nptr,"  \2 %d-%d\2  : services operator",me.level_oper,me.level_admin-1);
-    NoticeToUser(nptr,"  \2 %d-%d\2  : services administrator",me.level_admin,me.level_root-1);
-    NoticeToUser(nptr,"  \2 %d-%d\2 : services root administrator",me.level_root,me.level_owner);
+    NoticeToUser(nptr,"  \2 1-%d\2     : normal user",core_get_config()->level_oper-1);
+    NoticeToUser(nptr,"  \2 %d-%d\2  : services operator",core_get_config()->level_oper,core_get_config()->level_admin-1);
+    NoticeToUser(nptr,"  \2 %d-%d\2  : services administrator",core_get_config()->level_admin,core_get_config()->level_root-1);
+    NoticeToUser(nptr,"  \2 %d-%d\2 : services root administrator",core_get_config()->level_root,core_get_config()->level_owner);
 }
 
 void help_oper_noexpire (Nick *nptr)
@@ -1315,7 +1293,7 @@ void help_oper_forceauth (Nick *nptr)
 void help_oper_raw (Nick *nptr)
 {
     NoticeToUser(nptr,"Syntax: \2raw \037commands\037\2");
-    NoticeToUser(nptr,"Execute a raw (%s)",raws ? "enabled" : "disabled");
+    NoticeToUser(nptr,"Execute a raw (%s)", get_core()->raws ? "enabled" : "disabled");
     NoticeToUser(nptr,"This command is very DANGEROUS and might be disabled.");
 }
 
@@ -1397,26 +1375,6 @@ void help_oper_cmdlev (Nick *nptr)
     NoticeToUser(nptr,"Change the required level to use a command");
     NoticeToUser(nptr,"Example: cmdlev chan register 100");
 }
-
-#ifdef USE_FILTER
-void help_oper_ruleslist (Nick *nptr)
-{
-    NoticeToUser(nptr,"Syntax: \2ruleslist\2");
-    NoticeToUser(nptr,"List all filter rules");
-}
-
-void help_oper_reloadrules (Nick *nptr)
-{
-    NoticeToUser(nptr,"Syntax: \2reloadrules\2");
-    NoticeToUser(nptr,"Reload filter rules");
-}
-
-void help_oper_setfilter (Nick *nptr)
-{
-    NoticeToUser(nptr,"Syntax: \2setfilter [0|1]\2");
-    NoticeToUser(nptr,"Display or set the filter status (disabled or enabled, 0 or 1)");
-}
-#endif
 
 void help_oper_superadmin (Nick *nptr)
 {

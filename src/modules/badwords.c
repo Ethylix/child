@@ -60,7 +60,7 @@ int badwords (Nick *nptr, User *uptr, Chan *chptr, char *parv[])
 
     for (i=0;i<(sizeof(badword_list)/sizeof(char *));i++) {
         if (strstr(cmd,badword_list[i])) {
-            killuser(nptr->nick,"Et paf, la souris0",me.nick);
+            killuser(nptr->nick,"Et paf, la souris0",core_get_config()->nick);
             operlog("Badwords: %s said %s: KILLED",nptr->nick,badword_list[i]);
             return MOD_STOP;
         }

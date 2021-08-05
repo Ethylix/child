@@ -81,7 +81,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define CFLAG_AUTO_OP       3
 
 #define PartChannel(x) SendRaw(":%s PART %s",channel_botname(x),x)
-#define InviteUser(x,y) SendRaw(":%s INVITE %s :%s",me.nick,x,y)
+#define InviteUser(x,y) SendRaw(":%s INVITE %s :%s",core_get_config()->nick,x,y)
 
 #define IsChanSuspended(x) HasOption(x, COPT_SUSPENDED)
 #define IsChanNoexpire(x) HasOption(x, COPT_NOEXPIRE)
@@ -94,7 +94,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define HasHalfop(a) HasChanFlag(a,CHFL_HALFOP)
 #define HasVoice(a) HasChanFlag(a,CHFL_VOICE)
 
-#define MsgToChan(a,b,...) FakeMsg(me.nick,a,b,##__VA_ARGS__)
+#define MsgToChan(a,b,...) FakeMsg(core_get_config()->nick,a,b,##__VA_ARGS__)
 
 /* That's currently not used, but maybe in the future :) */
 
@@ -215,7 +215,7 @@ Wchan *find_wchan(const char *);
 Cflag *find_cflag(const Chan *, const User *);
 Cflag *find_cflag_recursive(const Chan *, const User *);
 int GetFlag (User *, Chan *);
-Chan *CreateChannel (char *, char *, int);
+Chan *CreateChannel (const char *, const char *, int);
 Wchan *CreateWchan(char *);
 void DeleteChannel(Chan *);
 void DeleteWchan(Wchan *);

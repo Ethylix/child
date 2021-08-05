@@ -23,7 +23,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "child.h"
 #include "commands.h"
 #include "core.h"
+#include "core_api.h"
 #include "hashmap.h"
+#include "logging.h"
 #include "modules.h"
 #include "net.h"
 #include "string_utils.h"
@@ -31,8 +33,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-extern commandlist command_list;
 
 void do_chan (Nick *, User *, char *);
 void do_help (Nick *, User *, char *);
@@ -102,7 +102,7 @@ void child_init()
     addChanCommand("drop",chan_drop,1);
     addChanCommand("devoice",chan_devoice,1);
     addChanCommand("deop",chan_deop,1);
-    addChanCommand("delbot",chan_delbot,me.level_oper);
+    addChanCommand("delbot",chan_delbot,core_get_config()->level_oper);
     addChanCommand("dehalfop",chan_dehalfop,1);
     addChanCommand("clearmodes",chan_clearmodes,1);
     addChanCommand("clearchan",chan_clearchan,1);
@@ -110,7 +110,7 @@ void child_init()
     addChanCommand("botlist",chan_botlist,1);
     addChanCommand("banlist",chan_banlist,1);
     addChanCommand("assign",chan_assign,1);
-    addChanCommand("addbot",chan_addbot,me.level_oper);
+    addChanCommand("addbot",chan_addbot,core_get_config()->level_oper);
     addChanCommand("access",chan_access,1);
     addChanSetCommand("strictop",chan_set_strictop,1);
     addChanSetCommand("secure",chan_set_secure,1);
@@ -192,7 +192,7 @@ void do_chan (Nick *nptr, User *uptr, char *all)
     chptr = find_channel(arg3);
 
     if (!arg2 || *arg2 == '\0') {
-        NoticeToUser(nptr,"Type \2/msg %s help chan\2 for more informations",me.nick);
+        NoticeToUser(nptr,"Type \2/msg %s help chan\2 for more informations",core_get_config()->nick);
         return;
     }
 
@@ -205,7 +205,7 @@ void do_chan (Nick *nptr, User *uptr, char *all)
     all = SeperateWord(all);
 
     Command *cmd;
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_CHAN)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg2) && cmd->type == CMD_CHAN) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,chptr,all);
@@ -236,8 +236,8 @@ void chan_register (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
 
-    if (chansreg(nptr->nick) >= me.chanperuser && uptr->level < me.level_oper) {
-        NoticeToUser(nptr,"You have registered too many channels (%i max).",me.chanperuser);
+    if (chansreg(nptr->nick) >= core_get_config()->chanperuser && uptr->level < core_get_config()->level_oper) {
+        NoticeToUser(nptr,"You have registered too many channels (%i max).",core_get_config()->chanperuser);
         return;
     }
 
@@ -257,7 +257,7 @@ void chan_register (Nick *nptr, User *uptr, Chan *chptr, char *all)
 
     nchptr = CreateChannel(arg3,uptr->nick,0);
     nchptr->regtime = time(NULL);
-    JoinChannel(me.nick,arg3);
+    JoinChannel(core_get_config()->nick,arg3);
 
     NoticeToUser(nptr,"Channel registered");
 }
@@ -277,12 +277,12 @@ void chan_drop (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
         
-    if (!IsFounder(uptr,chptr) && (uptr->level < me.level_oper || !IsOper(nptr))) {
+    if (!IsFounder(uptr,chptr) && (uptr->level < core_get_config()->level_oper || !IsOper(nptr))) {
         NoticeToUser(nptr,"Access denied"); 
         return;
     }   
         
-    if (!IsFounder(uptr,chptr) && uptr->level >= me.level_oper && IsOper(nptr)) {
+    if (!IsFounder(uptr,chptr) && uptr->level >= core_get_config()->level_oper && IsOper(nptr)) {
         globops("%s used \2DROP\2 on channel %s",nptr->nick,arg3);
         operlog("%s dropped channel %s",nptr->nick,arg3);
     }
@@ -323,7 +323,7 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
             return;
         }
 
-        if (GetFlag(uptr,chptr) < me.chlev_admin && !IsFounder(uptr,chptr) && (uptr->level < me.level_oper || !IsOper(nptr))) {
+        if (GetFlag(uptr,chptr) < core_get_config()->chlev_admin && !IsFounder(uptr,chptr) && (uptr->level < core_get_config()->level_oper || !IsOper(nptr))) {
             NoticeToUser(nptr,"Access denied");
             return;
         }
@@ -334,13 +334,13 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
             return;
         }
 
-        if (GetFlag(uptr2,chptr) >= GetFlag(uptr,chptr) && !IsFounder(uptr,chptr) && (uptr->level < me.level_oper || !IsOper(nptr))) {
+        if (GetFlag(uptr2,chptr) >= GetFlag(uptr,chptr) && !IsFounder(uptr,chptr) && (uptr->level < core_get_config()->level_oper || !IsOper(nptr))) {
             NoticeToUser(nptr,"You cannot modify the access level of someone outranking you");
             return;
         }
 
         int newlevel = strtol(arg6,NULL,10);
-        if (newlevel >= GetFlag(uptr,chptr) && !IsFounder(uptr,chptr) && (uptr->level < me.level_oper || !IsOper(nptr))) {
+        if (newlevel >= GetFlag(uptr,chptr) && !IsFounder(uptr,chptr) && (uptr->level < core_get_config()->level_oper || !IsOper(nptr))) {
             NoticeToUser(nptr,"You cannot add a user with a level higher than yours");
             return;
         }
@@ -374,7 +374,7 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
             NoticeToUser(nptr, "Syntax: \2CHAN ACCESS \037#channel\037 {add|auto|del|list} [\037nick\037 [\037level\037]]\2");
             return;
         }
-        if (GetFlag(uptr,chptr) < 3 && !IsFounder(uptr,chptr) && (uptr->level < me.level_oper || !IsOper(nptr))) {
+        if (GetFlag(uptr,chptr) < 3 && !IsFounder(uptr,chptr) && (uptr->level < core_get_config()->level_oper || !IsOper(nptr))) {
             NoticeToUser(nptr,"Access denied");
             return;
         }
@@ -399,7 +399,7 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
                 NoticeToUser(nptr,"Syntax: \2CHAN ACCESS \037#channel\037 auto [\037op\037|\037voice\037|\037default\037|\037off\037]\2");
                 return;
             }
-            if (GetFlag(uptr2,chptr) < me.chlev_halfop && cflag->automode == CFLAG_AUTO_OP)
+            if (GetFlag(uptr2,chptr) < core_get_config()->chlev_halfop && cflag->automode == CFLAG_AUTO_OP)
                 cflag->automode = CFLAG_AUTO_VOICE;
             NoticeToUser(nptr,"Automode successfully set.");
         } else
@@ -417,7 +417,7 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
             return;
         }
 
-        if (GetFlag(uptr,chptr) < me.chlev_admin && !IsFounder(uptr,chptr) && (uptr->level < me.level_oper || !IsOper(nptr))) {
+        if (GetFlag(uptr,chptr) < core_get_config()->chlev_admin && !IsFounder(uptr,chptr) && (uptr->level < core_get_config()->level_oper || !IsOper(nptr))) {
             NoticeToUser(nptr,"Access denied");
             return;
         }
@@ -433,7 +433,7 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
             return;
         }
 
-        if (GetFlag(uptr2,chptr) >= GetFlag(uptr,chptr) && (uptr->level < me.level_oper || !IsOper(nptr)) && !IsFounder(uptr,chptr)) {
+        if (GetFlag(uptr2,chptr) >= GetFlag(uptr,chptr) && (uptr->level < core_get_config()->level_oper || !IsOper(nptr)) && !IsFounder(uptr,chptr)) {
             NoticeToUser(nptr,"You cannot remove a user outranking you");
             return;
         }
@@ -447,7 +447,7 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
         NoticeToUser(nptr,"The user %s has been removed from %s",arg5,arg3);
         return;
     } else if (!Strcmp(arg4,"list")) {
-        if (GetFlag(uptr,chptr) < 1 && !IsFounder(uptr,chptr) && (uptr->level < me.level_oper || !IsOper(nptr))) {
+        if (GetFlag(uptr,chptr) < 1 && !IsFounder(uptr,chptr) && (uptr->level < core_get_config()->level_oper || !IsOper(nptr))) {
             NoticeToUser(nptr,"Access denied");
             return;
         }
@@ -535,7 +535,7 @@ void chan_op (Nick *nptr, User *uptr, Chan *chptr, char *all)
     if (!arg4 || *arg4 == '\0')
         SetStatus(nptr,arg3,CHFL_OP,1,channel_botname(chptr));
     else {
-        nptr2 = find_nick(arg4);
+        nptr2 = get_core_api()->find_nick(arg4);
         if (!nptr2) return;
         SetStatus(nptr2,arg3,CHFL_OP,1,channel_botname(chptr));
     }   
@@ -567,7 +567,7 @@ void chan_deop (Nick *nptr, User *uptr, Chan *chptr, char *all)
     if (!arg4 || *arg4 == '\0')
         SetStatus(nptr,arg3,CHFL_OP,0,channel_botname(chptr));
     else {
-        nptr2 = find_nick(arg4);
+        nptr2 = get_core_api()->find_nick(arg4);
         if (!nptr2) return;
         SetStatus(nptr2,arg3,CHFL_OP,0,channel_botname(chptr));
     }
@@ -603,7 +603,7 @@ void chan_voice (Nick *nptr, User *uptr, Chan *chptr, char *all)
             NoticeToUser(nptr, "Access denied");
             return;
         }
-        nptr2 = find_nick(arg4);
+        nptr2 = get_core_api()->find_nick(arg4);
         if (!nptr2) return;
         SetStatus(nptr2,arg3,CHFL_VOICE,1,channel_botname(chptr));
     }
@@ -639,7 +639,7 @@ void chan_halfop (Nick *nptr, User *uptr, Chan *chptr, char *all)
             NoticeToUser(nptr, "Access denied");
             return;
         }
-        nptr2 = find_nick(arg4);
+        nptr2 = get_core_api()->find_nick(arg4);
         if (!nptr2) return;
         SetStatus(nptr2,arg3,CHFL_HALFOP,1,channel_botname(chptr));
     }   
@@ -675,7 +675,7 @@ void chan_dehalfop (Nick *nptr, User *uptr, Chan *chptr, char *all)
             NoticeToUser(nptr, "Access denied");
             return;
         }
-        nptr2 = find_nick(arg4);
+        nptr2 = get_core_api()->find_nick(arg4);
         if (!nptr2) return;
         SetStatus(nptr2,arg3,CHFL_HALFOP,0,channel_botname(chptr));
     }
@@ -711,7 +711,7 @@ void chan_devoice (Nick *nptr, User *uptr, Chan *chptr, char *all)
             NoticeToUser(nptr, "Access denied");
             return;
         }
-        nptr2 = find_nick(arg4);
+        nptr2 = get_core_api()->find_nick(arg4);
         if (!nptr2) return;
         SetStatus(nptr2,arg3,CHFL_VOICE,0,channel_botname(chptr));
     }
@@ -764,7 +764,7 @@ void chan_set (Nick *nptr, User *uptr, Chan *chptr, char *all)
     all = SeperateWord(all);
 
     Command *cmd;
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_CHAN+CMD_CHAN_SET)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg4) && cmd->type == CMD_CHAN && cmd->subtype == CMD_CHAN_SET) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,chptr,all);
@@ -795,11 +795,11 @@ void chan_set_nojoin (Nick *nptr, User *uptr, Chan *chptr, char *all)
     if (!Strcmp(arg1,"on")) {
         SetOption(chptr, COPT_NOJOIN);
         NoticeToUser(nptr,"The option \2NOJOIN\2 has been set to \2on\2 for \2%s\2",chptr->channelname);
-        SendRaw(":%s PART %s :I won't idle any more on this lame channel.",me.nick,chptr->channelname);
+        SendRaw(":%s PART %s :I won't idle any more on this lame channel.",core_get_config()->nick,chptr->channelname);
     } else if (!Strcmp(arg1,"off")) {
         ClearOption(chptr, COPT_NOJOIN); 
         NoticeToUser(nptr,"The option \2NOJOIN\2 has been set to \2off\2 for \2%s\2",chptr->channelname);
-        JoinChannel(me.nick,chptr->channelname);
+        JoinChannel(core_get_config()->nick,chptr->channelname);
     } else
         NoticeToUser(nptr,"Syntax: \2CHAN SET #channel nojoin {on|off}\2");
 }
@@ -1061,7 +1061,7 @@ void chan_set_founder (Nick *nptr, User *uptr, Chan *chptr, char *all)
     User *uptr2;
     SeperateWord(arg1);
 
-    if (!IsTrueOwner(uptr,chptr) && (uptr->level < me.level_oper || !IsOper(nptr))) {
+    if (!IsTrueOwner(uptr,chptr) && (uptr->level < core_get_config()->level_oper || !IsOper(nptr))) {
         NoticeToUser(nptr,"Access denied");
         return;
     }
@@ -1098,7 +1098,7 @@ void chan_info (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
 
-    if (HasOption(chptr, COPT_PRIVATE) && !ChannelCanReadACL(uptr,chptr) && !IsFounder(uptr,chptr) && (uptr->level < me.level_oper || !IsOper(nptr))) {
+    if (HasOption(chptr, COPT_PRIVATE) && !ChannelCanReadACL(uptr,chptr) && !IsFounder(uptr,chptr) && (uptr->level < core_get_config()->level_oper || !IsOper(nptr))) {
         NoticeToUser(nptr,"The channel %s is private.",arg3); 
         return;
     }   
@@ -1344,7 +1344,7 @@ void chan_assign (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
 
-    if (!IsFounder(uptr,chptr) && (uptr->level < me.level_oper || !IsOper(nptr))) {
+    if (!IsFounder(uptr,chptr) && (uptr->level < core_get_config()->level_oper || !IsOper(nptr))) {
         NoticeToUser(nptr,"Access denied");
         return;
     }
@@ -1384,7 +1384,7 @@ void chan_unassign (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
 
-    if (!IsFounder(uptr,chptr) && (uptr->level < me.level_oper || !IsOper(nptr))) {
+    if (!IsFounder(uptr,chptr) && (uptr->level < core_get_config()->level_oper || !IsOper(nptr))) {
         NoticeToUser(nptr,"Access denied");
         return;
     }
@@ -1396,7 +1396,7 @@ void chan_unassign (Nick *nptr, User *uptr, Chan *chptr, char *all)
 
     SendRaw(":%s PART %s :Channel unassigned", chptr->chanbot->nick, arg1);
     chptr->chanbot = NULL;
-    NoticeToUser(nptr,"Channel unassigned. You can now either let the channel without bot or make %s join it with command /msg %s chan set %s nojoin off",me.nick,me.nick,arg1);
+    NoticeToUser(nptr,"Channel unassigned. You can now either let the channel without bot or make %s join it with command /msg %s chan set %s nojoin off",core_get_config()->nick,core_get_config()->nick,arg1);
 }
 
 void chan_botlist (Nick *nptr)

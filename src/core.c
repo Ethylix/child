@@ -5,6 +5,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
+#include <unistd.h>
 
 #define ASSIGN_OR_DIE_IF_NULL(name, value) \
     { \
@@ -53,6 +55,19 @@ static void destroy_key_str(void *key)
     free(key);
 }
 
+static void init_srandom(void)
+{
+#ifdef HAVE_SRANDOMDEV
+    srandomdev();
+#else
+    /* this piece of code comes from srandomdev() source */
+    struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+    srandom(getpid() ^ tv.tv_sec ^ tv.tv_usec);
+#endif
+}
+
 void init_core(void) {
     struct hashmap_descriptor desc =
         {
@@ -61,6 +76,8 @@ void init_core(void) {
             .create_key = create_key_str,
             .destroy_key = destroy_key_str,
         };
+
+    init_srandom();
 
     ASSIGN_OR_DIE_IF_NULL(core, malloc(sizeof(struct core)));
 
@@ -81,6 +98,7 @@ void init_core(void) {
     LLIST_INIT(&core->limits);
     LLIST_INIT(&core->timebans);
     LLIST_INIT(&core->servers);
+    LLIST_INIT(&core->commands);
 }
 
 void free_core(void) {

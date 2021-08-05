@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "channel.h"
 #include "child.h"
 #include "core.h"
+#include "core_api.h"
 #include "hashmap.h"
 #include "mem.h"
 #include "net.h"
@@ -38,19 +39,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 #include <unistd.h>
 
-extern int eos;
-
-/** Look an account up from a Nick 
- * @param   nick    pointer to a Nick
- * @returns an User struct
- * @note    This is an helper function to ease the migration to an account based 
- *          paradigm.
- */
-User *find_account(const Nick *nptr) 
-{
-    return *nptr->svid ? find_user(nptr->svid) : find_user(nptr->nick);
-}
-
 User *find_user(const char *name)
 {
     struct hashmap_entry *entry;
@@ -62,20 +50,6 @@ User *find_user(const char *name)
         return NULL;
 
     return HASHMAP_ENTRY_VALUE(core_get_users(), entry);
-}
-
-Nick *find_nick(const char *name)
-{
-    Nick *tmp;
-    struct hashmap_entry *entry;
-
-    // TODO(target0): do a proper O(1) lookup.
-    HASHMAP_FOREACH_ENTRY_VALUE(core_get_nicks(), entry, tmp) {
-        if (!Strcmp(tmp->nick,name) || !Strcmp(tmp->uid,name))
-            return tmp;
-    }
-
-    return NULL;
 }
 
 Guest *find_guest(const char *name)
@@ -134,7 +108,7 @@ Fake *find_fake(const char *nick_or_uid)
     return NULL;
 }
 
-User *AddUser (char *nick, int level)
+User *AddUser (const char *nick, int level)
 {
     User *new_user;
     new_user = (User *)malloc(sizeof(User));
@@ -162,52 +136,6 @@ User *AddUser (char *nick, int level)
     return new_user;
 }
 
-Nick *AddNick(char *nick, char *ident, char *host, char *uid, char *hiddenhost, long int umodes, char *reshost)
-{
-    Nick *new_nick;
-
-    new_nick = (Nick *)malloc(sizeof(Nick));
-    memset(new_nick, 0, sizeof(*new_nick));
-
-    strncpy(new_nick->nick,nick,NICKLEN);
-    strncpy(new_nick->ident,ident,NICKLEN);
-    strncpy(new_nick->host,host,HOSTLEN);
-    strncpy(new_nick->uid,uid,UIDLEN);
-    strncpy(new_nick->hiddenhost,hiddenhost,HOSTLEN);
-    strncpy(new_nick->reshost,reshost,HOSTLEN);
-    new_nick->umodes = umodes;
-    new_nick->msgnb = 0;
-    new_nick->msgtime = 0;
-    new_nick->ignored = 0;
-    new_nick->ignoretime = 0;
-    new_nick->loginattempts = 0;
-    new_nick->lasttry = 0;
-    LLIST_INIT(&new_nick->wchans);
-
-    if (!HASHMAP_INSERT(core_get_nicks(), new_nick->nick, new_nick, NULL)) {
-        fprintf(stderr, "Failed to insert new nick \"%s\" into hashmap (duplicate entry?)\n", new_nick->nick);
-        free(new_nick);
-        return NULL;
-    }
-
-    Clone *clone;
-    if ((clone = find_clone(reshost)) != NULL)
-        clone->count++;
-    else {
-        clone = (Clone *)malloc(sizeof(Clone));
-        memset(clone, 0, sizeof(*clone));
-
-        strncpy(clone->host, reshost, HOSTLEN);
-        clone->count = 1;
-        if (!HASHMAP_INSERT(core_get_clones(), clone->host, clone, NULL)) {
-            fprintf(stderr, "Failed to insert new clone \"%s\" into hashmap (duplicate entry?)\n", clone->host);
-            free(clone);
-        }
-    }
-
-    return new_nick;
-}
-
 Guest *AddGuest (char *nick, int timeout, int nickconn)
 {
     Guest *new_guest;
@@ -227,7 +155,7 @@ Guest *AddGuest (char *nick, int timeout, int nickconn)
     return new_guest;
 }
 
-Link *AddLink(char *master, char *slave)
+Link *AddLink(const char *master, const char *slave)
 {
     Link *new_link;
     new_link = (Link *)malloc(sizeof(Link));
@@ -280,7 +208,7 @@ void DeleteAccount (User *user)
     if (!HASHMAP_ERASE(core_get_users(), user->nick))
         return;
 
-    if (find_nick(user->nick) && eos)
+    if (get_core_api()->find_nick(user->nick) && get_core()->eos)
         SendRaw("SVSMODE %s -r",user->nick);
     if (HasOption(user, UOPT_PROTECT)) DeleteGuest(user->nick);
     free(user);
@@ -402,7 +330,7 @@ void send_global (char *target, char *msg, ...)
 
     ircsprintf(buf,511,msg,val);
 
-    SendRaw(":%s NOTICE $%s :%s", me.nick, target, buf);
+    SendRaw(":%s NOTICE $%s :%s", core_get_config()->nick, target, buf);
 }
 
 Clone *find_clone (char *host)
@@ -435,11 +363,10 @@ void CheckGuests()
     HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_guests(), entry, tmp_entry, guest) {
         // TODO(target0): improve this.
         if ((time(NULL) - guest->nickconn) >= guest->timeout) {
-            init_srandom();
             gv = random()%999999;
             gv += hash(guest->nick);
             gv = gv%999999;
-            SendRaw("SVSNICK %s %s%d %ld",guest->nick,me.guest_prefix,gv,time(NULL));
+            SendRaw("SVSNICK %s %s%d %ld",guest->nick,core_get_config()->guest_prefix,gv,time(NULL));
             DeleteGuest(guest->nick);
         }
     }
@@ -450,7 +377,7 @@ void userquit (char *nick)
     User *uptr;
     Nick *nptr;
 
-    nptr = find_nick(nick);
+    nptr = get_core_api()->find_nick(nick);
     if (!nptr) return;
 
     uptr = find_account(nptr);
@@ -511,7 +438,7 @@ int sendmail(char *to, char *mail)
     if (pid == 0) { /* child pid */
         FILE *fp;
         char cmd[256];
-        snprintf(cmd,256,"%s %s",me.sendmail,to);
+        snprintf(cmd,256,"%s %s",core_get_config()->sendmail,to);
         if ((fp = popen(cmd,"w")) == NULL)
             return 0;
 
@@ -585,7 +512,7 @@ void sync_cflag(const Cflag *cflag)
     Nick *nptr;
     const char *bot;
 
-    if ((nptr = find_nick(cflag->user->nick)) == NULL)
+    if ((nptr = get_core_api()->find_nick(cflag->user->nick)) == NULL)
         return;
 
     if ((wchan = find_wchan(chname)) == NULL)
@@ -623,36 +550,36 @@ void sync_cflag(const Cflag *cflag)
             SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
 
         hasaccess = 1;
-    } else if (!hasaccess && !(cflag->flags == CHLEV_OWNER) && cflag->flags >= me.chlev_admin) {
+    } else if (!hasaccess && !(cflag->flags == CHLEV_OWNER) && cflag->flags >= core_get_config()->chlev_admin) {
         if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!HasProtect(member) || !HasOp(member)))
             SetStatus(nptr, chname, CHFL_PROTECT|CHFL_OP, 1, bot);
         else if (cflag->automode == CFLAG_AUTO_VOICE && !HasVoice(member))
             SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
 
         hasaccess = 1;
-    } else if (!hasaccess && cflag->flags >= me.chlev_op && cflag->flags < me.chlev_admin) {
+    } else if (!hasaccess && cflag->flags >= core_get_config()->chlev_op && cflag->flags < core_get_config()->chlev_admin) {
         if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!HasOp(member)))
             SetStatus(nptr, chname, CHFL_OP, 1, bot);
         else if (cflag->automode == CFLAG_AUTO_VOICE && !HasVoice(member))
             SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
 
         hasaccess = 1;
-    } else if (!hasaccess && cflag->flags >= me.chlev_halfop && cflag->flags < me.chlev_op) {
+    } else if (!hasaccess && cflag->flags >= core_get_config()->chlev_halfop && cflag->flags < core_get_config()->chlev_op) {
         if ((cflag->automode == CFLAG_AUTO_OP || cflag->automode == CFLAG_AUTO_ON) && (!HasHalfop(member)))
             SetStatus(nptr, chname, CHFL_HALFOP, 1, bot);
         else if (cflag->automode == CFLAG_AUTO_VOICE && !HasVoice(member))
             SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
 
         hasaccess = 1;
-    } else if (!hasaccess && cflag->flags >= me.chlev_voice && cflag->flags < me.chlev_halfop && !HasVoice(member)) {
+    } else if (!hasaccess && cflag->flags >= core_get_config()->chlev_voice && cflag->flags < core_get_config()->chlev_halfop && !HasVoice(member)) {
         SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
         hasaccess = 1;
-    } else if (cflag->flags == me.chlev_akick) {
+    } else if (cflag->flags == core_get_config()->chlev_akick) {
         KickUser(bot, nptr->nick, chname, "Get out of this chan !");
-    } else if (cflag->flags == me.chlev_akb) {
+    } else if (cflag->flags == core_get_config()->chlev_akb) {
         SendRaw(":%s MODE %s +b *!*@%s", bot, nptr->nick, nptr->hiddenhost);
         KickUser(bot, nptr->nick, chname, "Get out of this chan !");
-    } else if (cflag->flags == me.chlev_nostatus)
+    } else if (cflag->flags == core_get_config()->chlev_nostatus)
         SetStatus(nptr, chname, member->flags, 0, bot);
     }
 }
@@ -669,7 +596,7 @@ int IsSuperAdmin (User *uptr)
 {
     Nick *nptr;
 
-    if ((nptr = find_nick(uptr->nick)) == NULL)
+    if ((nptr = get_core_api()->find_nick(uptr->nick)) == NULL)
         return 0;
 
     if (!IsAuthed(uptr))
@@ -696,14 +623,14 @@ void generate_uid(char *dst_uid)
 
     do {
         snprintf(uid, sizeof(uid), "%s%c%c%c%c%c%c",
-                 me.sid,
+                 core_get_config()->sid,
                  uid_int_to_char(random() % 36),
                  uid_int_to_char(random() % 36),
                  uid_int_to_char(random() % 36),
                  uid_int_to_char(random() % 36),
                  uid_int_to_char(random() % 36),
                  uid_int_to_char(random() % 36));
-    } while (find_nick(uid));
+    } while (get_core_api()->find_nick(uid));
 
     strncpy(dst_uid, uid, UIDLEN + 1);
 }

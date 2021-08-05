@@ -22,9 +22,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "config.h"
 #include "commands.h"
 #include "core.h"
+#include "core_api.h"
 #include "db.h"
-#include "filter.h"
 #include "hashmap.h"
+#include "logging.h"
 #include "modules.h"
 #include "net.h"
 #include "string_utils.h"
@@ -34,14 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-extern commandlist command_list;
-#ifdef USE_FILTER
-extern rulelist rule_list;
-#endif
-
-extern int raws;
-extern int startuptime;
 
 void do_oper (Nick *, User *, char *);
 void do_help (Nick *, User *, char *);
@@ -80,11 +73,6 @@ void oper_die (Nick *, User *, char *);
 void oper_noexpire (Nick *, User *, char *);
 void oper_suspend (Nick *, User *, char *);
 void oper_cmdlev (Nick *, User *, char *);
-#ifdef USE_FILTER
-void oper_reloadrules (Nick *);
-void oper_ruleslist (Nick *);
-void oper_setfilter (Nick *, User *, char *);
-#endif
 void oper_superadmin (Nick *, User *, char *);
 void oper_fakelist (Nick *);
 void oper_glinechan (Nick *, User *, char *);
@@ -93,56 +81,47 @@ void oper_regexpcheck (Nick *, User *, char *);
 void child_init(Module *module)
 {
     module->nodreload = 1;
-    addBaseCommand("oper",do_oper,me.level_oper);
+    addBaseCommand("oper",do_oper,core_get_config()->level_oper);
 
-    addOperCommand("userlist",oper_userlist,me.level_oper);
-    addOperCommand("trustlist",oper_trustlist,me.level_admin);
-    addOperCommand("trustdel",oper_trustdel,me.level_admin);
-    addOperCommand("trustadd",oper_trustadd,me.level_admin);
-    addOperCommand("suspend",oper_suspend,me.level_admin);
-    addOperCommand("superadmin",oper_superadmin,me.level_root);
-    addOperCommand("stats",oper_stats,me.level_oper);
-    addOperCommand("sglobal",oper_sglobal,me.level_oper);
-    addOperCommand("setraws",oper_setraws,me.level_owner);
-#ifdef USE_FILTER
-    addOperCommand("setfilter",oper_setfilter,me.level_root);
-#endif
-    addOperCommand("savedb",oper_savedb,me.level_root);
-#ifdef USE_FILTER
-    addOperCommand("ruleslist",oper_ruleslist,me.level_root);
-#endif
-    addOperCommand("restart",oper_restart,me.level_root);
-    addOperCommand("regexpcheck",oper_regexpcheck,me.level_oper);
-#ifdef USE_FILTER
-    addOperCommand("reloadrules",oper_reloadrules,me.level_root);
-#endif
-    addOperCommand("rehash",oper_rehash,me.level_root);
-    addOperCommand("raw",oper_raw,me.level_root);
-    addOperCommand("operlist",oper_operlist,me.level_oper);
-    addOperCommand("noexpire",oper_noexpire,me.level_admin);
-    addOperCommand("nicklist",oper_nicklist,me.level_oper);
-    addOperCommand("modunload",oper_modunload,me.level_root);
-    addOperCommand("modload",oper_modload,me.level_root);
-    addOperCommand("modlist",oper_modlist,me.level_root);
-    addOperCommand("massfakeuser",oper_massfakeuser,me.level_admin);
-    addOperCommand("massfakekill",oper_massfakekill,me.level_admin);
-    addOperCommand("massfakejoin",oper_massfakejoin,me.level_admin);
-    addOperCommand("killall",oper_killall,me.level_admin);
-    addOperCommand("glinechan",oper_glinechan,me.level_admin);
-    addOperCommand("glineall",oper_glineall,me.level_admin);
-    addOperCommand("jupe",oper_jupe,me.level_admin);
-    addOperCommand("global",oper_global,me.level_oper);
-    addOperCommand("forceauth",oper_forceauth,me.level_root);
-    addOperCommand("fakeuser",oper_fakeuser,me.level_oper);
-    addOperCommand("fakesay",oper_fakesay,me.level_oper);
-    addOperCommand("fakenick",oper_fakenick,me.level_oper);
-    addOperCommand("fakelist",oper_fakelist,me.level_oper);
-    addOperCommand("fakekill",oper_fakekill,me.level_oper);
-    addOperCommand("fakejoin",oper_fakejoin,me.level_oper);
-    addOperCommand("die",oper_die,me.level_root);
-    addOperCommand("cmdlev",oper_cmdlev,me.level_owner);
-    addOperCommand("chanlist",oper_chanlist,me.level_oper);
-    addOperCommand("changelev",oper_changelev,me.level_admin);
+    addOperCommand("userlist",oper_userlist,core_get_config()->level_oper);
+    addOperCommand("trustlist",oper_trustlist,core_get_config()->level_admin);
+    addOperCommand("trustdel",oper_trustdel,core_get_config()->level_admin);
+    addOperCommand("trustadd",oper_trustadd,core_get_config()->level_admin);
+    addOperCommand("suspend",oper_suspend,core_get_config()->level_admin);
+    addOperCommand("superadmin",oper_superadmin,core_get_config()->level_root);
+    addOperCommand("stats",oper_stats,core_get_config()->level_oper);
+    addOperCommand("sglobal",oper_sglobal,core_get_config()->level_oper);
+    addOperCommand("setraws",oper_setraws,core_get_config()->level_owner);
+    addOperCommand("savedb",oper_savedb,core_get_config()->level_root);
+    addOperCommand("restart",oper_restart,core_get_config()->level_root);
+    addOperCommand("regexpcheck",oper_regexpcheck,core_get_config()->level_oper);
+    addOperCommand("rehash",oper_rehash,core_get_config()->level_root);
+    addOperCommand("raw",oper_raw,core_get_config()->level_root);
+    addOperCommand("operlist",oper_operlist,core_get_config()->level_oper);
+    addOperCommand("noexpire",oper_noexpire,core_get_config()->level_admin);
+    addOperCommand("nicklist",oper_nicklist,core_get_config()->level_oper);
+    addOperCommand("modunload",oper_modunload,core_get_config()->level_root);
+    addOperCommand("modload",oper_modload,core_get_config()->level_root);
+    addOperCommand("modlist",oper_modlist,core_get_config()->level_root);
+    addOperCommand("massfakeuser",oper_massfakeuser,core_get_config()->level_admin);
+    addOperCommand("massfakekill",oper_massfakekill,core_get_config()->level_admin);
+    addOperCommand("massfakejoin",oper_massfakejoin,core_get_config()->level_admin);
+    addOperCommand("killall",oper_killall,core_get_config()->level_admin);
+    addOperCommand("glinechan",oper_glinechan,core_get_config()->level_admin);
+    addOperCommand("glineall",oper_glineall,core_get_config()->level_admin);
+    addOperCommand("jupe",oper_jupe,core_get_config()->level_admin);
+    addOperCommand("global",oper_global,core_get_config()->level_oper);
+    addOperCommand("forceauth",oper_forceauth,core_get_config()->level_root);
+    addOperCommand("fakeuser",oper_fakeuser,core_get_config()->level_oper);
+    addOperCommand("fakesay",oper_fakesay,core_get_config()->level_oper);
+    addOperCommand("fakenick",oper_fakenick,core_get_config()->level_oper);
+    addOperCommand("fakelist",oper_fakelist,core_get_config()->level_oper);
+    addOperCommand("fakekill",oper_fakekill,core_get_config()->level_oper);
+    addOperCommand("fakejoin",oper_fakejoin,core_get_config()->level_oper);
+    addOperCommand("die",oper_die,core_get_config()->level_root);
+    addOperCommand("cmdlev",oper_cmdlev,core_get_config()->level_owner);
+    addOperCommand("chanlist",oper_chanlist,core_get_config()->level_oper);
+    addOperCommand("changelev",oper_changelev,core_get_config()->level_admin);
 }
 
 void child_cleanup()
@@ -183,11 +162,6 @@ void child_cleanup()
     delOperCommand("noexpire");
     delOperCommand("suspend");
     delOperCommand("cmdlev");
-#ifdef USE_FILTER
-    delOperCommand("reloadrules");
-    delOperCommand("ruleslist");
-    delOperCommand("setfilter");
-#endif
     delOperCommand("superadmin");
     delOperCommand("sglobal");
     delOperCommand("fakelist");
@@ -211,7 +185,7 @@ void do_oper (Nick *nptr, User *uptr, char *all)
     }   
     
     if (!arg2 || *arg2 == '\0') {
-        NoticeToUser(nptr,"Type \2/msg %s help oper\2 for more informations",me.nick);
+        NoticeToUser(nptr,"Type \2/msg %s help oper\2 for more informations",core_get_config()->nick);
         return;
     }   
     
@@ -224,7 +198,7 @@ void do_oper (Nick *nptr, User *uptr, char *all)
     all = SeperateWord(all);
     
     Command *cmd;
-    LIST_FOREACH(command_list, cmd, HASH_INT(CMD_OPER)) {
+    LLIST_FOREACH_ENTRY(core_get_commands(), cmd, list_head) {
         if (!Strcmp(cmd->name,arg2) && cmd->type == CMD_OPER) {
             if ((!IsAuthed(uptr) && cmd->level == 0) || (IsAuthed(uptr) && uptr->level >= cmd->level))
                 cmd->func(nptr,uptr,all);
@@ -278,7 +252,7 @@ void oper_userlist (Nick *nptr, User *uptr __unused, char *all)
     HASHMAP_FOREACH_ENTRY_VALUE(core_get_users(), entry, uptr2) {
         if (arg3 && *arg3 != '\0') {
             if (Strstr(uptr2->nick,arg3) || Strstr(uptr2->vhost,arg3)) {
-                nptr2 = find_nick(uptr2->nick);
+                nptr2 = get_core_api()->find_nick(uptr2->nick);
                 if (nptr2) {
                     if (uptr2->authed == 1)
                         sprintf(tmp,"%s     %d     Authed      %s!%s@%s",uptr2->nick,uptr2->level,nptr2->nick,nptr2->ident,nptr2->host);
@@ -290,7 +264,7 @@ void oper_userlist (Nick *nptr, User *uptr __unused, char *all)
                 count++;
             }
         } else {
-            nptr2 = find_nick(uptr2->nick);
+            nptr2 = get_core_api()->find_nick(uptr2->nick);
             if (nptr2) {
                 if (uptr2->authed == 1)
                     sprintf(tmp,"%s     %d      Authed      %s!%s@%s",uptr2->nick,uptr2->level,nptr2->nick,nptr2->ident,nptr2->host);
@@ -349,7 +323,7 @@ void oper_killall (Nick *nptr, User *uptr __unused, char *all)
     HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_nicks(), entry, tmp_entry, nptr2) {
         snprintf(mask, 256, "%s!%s@%s",nptr2->nick,nptr2->ident,nptr2->host);
         if (match_mask(arg3,mask)) {
-            killuser(nptr2->nick,"Clearing users",me.nick);
+            killuser(nptr2->nick,"Clearing users",core_get_config()->nick);
         }
     }
 
@@ -455,7 +429,7 @@ void oper_fakeuser (Nick *nptr, User *uptr __unused, char *all)
         return;
     }   
         
-    if (!Strcmp(arg3,me.nick)) {
+    if (!Strcmp(arg3,core_get_config()->nick)) {
         NoticeToUser(nptr,"That's my nick you sucker.");
         return;
     }
@@ -521,7 +495,7 @@ void oper_forceauth (Nick *nptr, User *uptr __unused, char *all)
         return;
     }   
         
-    if (!find_nick(arg3)) {
+    if (!get_core_api()->find_nick(arg3)) {
         NoticeToUser(nptr,"This nick does not exist");
         return;
     }   
@@ -625,7 +599,7 @@ void oper_massfakeuser (Nick *nptr, User *uptr __unused, char *all)
         
     for(i=start;i<=end;i++) {
         sprintf(name,"%s%d",arg3,i);
-        fakeuser(name, name, me.host, NULL, "i");
+        fakeuser(name, name, core_get_config()->host, NULL, "i");
     }   
         
     operlog("%s executed MASSFAKEUSER :%d clones (%s)",nptr->nick,howmanyfakes,arg3);
@@ -818,7 +792,7 @@ void oper_fakekill (Nick *nptr, User *uptr __unused, char *all)
         return;
     }   
         
-    if (!Strcmp(arg3,me.nick)) {
+    if (!Strcmp(arg3,core_get_config()->nick)) {
         NoticeToUser(nptr,"That's my nick you sucker");
         return;
     }
@@ -873,7 +847,7 @@ void oper_stats (Nick *nptr)
     Nick *nptr2;
     struct hashmap_entry *entry;
 
-    int uptime = time(NULL) - startuptime;
+    int uptime = time(NULL) - get_core()->startuptime;
     int days = uptime / 86400, hours = (uptime / 3600) % 24, mins = (uptime / 60) % 60, secs = uptime % 60;
 
     NoticeToUser(nptr,"There are %d registered users and %d registered channels",
@@ -971,7 +945,7 @@ void oper_global (Nick *nptr, User *uptr __unused, char *all)
         return;
     }
 
-    if (me.anonymous_global)
+    if (core_get_config()->anonymous_global)
         Global("(Global) %s", all);
     else
         Global("(Global) [%s] %s", nptr->nick, all);
@@ -988,7 +962,7 @@ void oper_sglobal (Nick *nptr, User *uptr __unused, char *all)
         return;
     }
 
-    if (me.anonymous_global)
+    if (core_get_config()->anonymous_global)
         send_global(serv, "(sGlobal) %s", message);
     else
         send_global(serv, "(sGlobal) [%s] %s", nptr->nick, message);
@@ -996,7 +970,7 @@ void oper_sglobal (Nick *nptr, User *uptr __unused, char *all)
 
 void oper_raw (Nick *nptr, User *uptr __unused, char *all)
 {
-    if (raws != 1) {
+    if (!get_core()->raws) {
         NoticeToUser(nptr,"The raws are disabled");
         return;
     }
@@ -1022,11 +996,11 @@ void oper_setraws (Nick *nptr, User *uptr __unused, char *all)
     SeperateWord(arg3);
 
     if (!Strcmp(arg3,"1")) {
-        raws = 1;
+        get_core()->raws = true;
         NoticeToUser(nptr,"The raws are now enabled");
         operlog("%s enabled RAWS",nptr->nick);
     } else if (!Strcmp(arg3,"0")) {
-        raws = 0;
+        get_core()->raws = false;
         NoticeToUser(nptr,"The raws are now disabled");
         operlog("%s disabled RAWS",nptr->nick);
     } else
@@ -1045,7 +1019,7 @@ void oper_restart (Nick *nptr, User *uptr __unused, char *all)
     char *arg3 = all;
     SeperateWord(arg3);
 
-    SendRaw(":%s QUIT :Restarting",me.nick);
+    SendRaw(":%s QUIT :Restarting",core_get_config()->nick);
     operlog("%s executed RESTART",nptr->nick);
     if (!arg3 || *arg3 == '\0')
         child_restart(1); 
@@ -1057,7 +1031,7 @@ void oper_die (Nick *nptr, User *uptr __unused, char *all)
     char *arg3 = all;
     SeperateWord(arg3);
 
-    SendRaw(":%s QUIT :I'll be back soon !",me.nick);
+    SendRaw(":%s QUIT :I'll be back soon !",core_get_config()->nick);
     operlog("%s executed DIE",nptr->nick);
     if (!arg3 || *arg3 == '\0')
         child_die(1);
@@ -1234,41 +1208,3 @@ void oper_superadmin (Nick *nptr, User *uptr __unused, char *all)
     } else
         NoticeToUser(nptr, "Syntax: \2superadmin [\037on\037|\037off\037]\2");
 }
-
-#ifdef USE_FILTER
-void oper_ruleslist (Nick *nptr)
-{
-    struct ruleset *rule;
-    NoticeToUser(nptr,"Rules list :");
-    for (rule = rule_list.ltail; rule; rule = rule->lprev)
-        NoticeToUser(nptr,"%s %s%s from %s to %s action %s data \"%s\"", rule->rule == RULE_DROP ? "drop" : "pass",
-                    rule->direction == DIRECT_IN ? "in" : "out", rule->quick ? " quick" : "", rule->from[0] ? rule->from : "(null)",
-                    rule->to[0] ? rule->to : "(null)", rule->action[0] ? rule->action : "(null)", rule->data[0] ? rule->data : "(null)");
-    NoticeToUser(nptr,"End of list.");
-}
-
-void oper_reloadrules (Nick *nptr)
-{
-    if ((loadrulefile()) == 1)
-        NoticeToUser(nptr,"Filter rules reloaded");
-    else
-        NoticeToUser(nptr,"Cannot reload rules");
-}
-
-void oper_setfilter (Nick *nptr, User *uptr __unused, char *all)
-{
-    char *arg1;
-    arg1 = all;
-    SeperateWord(arg1);
-
-    if (!arg1 || *arg1 == '\0')
-        NoticeToUser(nptr,"Filter status: %s", rule_list.enabled ? "enabled" : "disabled");
-    else {
-        if (!Strcmp(arg1,"0") || !Strcmp(arg1,"1")) {
-            rule_list.enabled = atoi(arg1);
-            NoticeToUser(nptr,"Done.");
-        } else
-            NoticeToUser(nptr,"Unknown value %s",arg1);
-    }
-}
-#endif

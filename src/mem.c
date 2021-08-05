@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "botserv.h"
 #include "channel.h"
 #include "commands.h"
-#include "filter.h"
+#include "core_api.h"
 #include "modules.h"
 #include "string_utils.h"
 #include "trust.h"
@@ -32,25 +32,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdio.h>
 #include <string.h>
 
-extern commandlist command_list;
-#ifdef USE_FILTER
-extern rulelist rule_list;
-#endif
-
-void FreeAllMem()
-{
-#ifdef USE_FILTER
-    while (!LIST_EMPTY(rule_list))
-        remove_rule(LIST_HEAD(rule_list));
-#endif
-}
-
 void cleanup_reconnect()
 {
     clear_wchans();
     clear_limits();
     clear_guests();
-    clear_nicks();
+    get_core_api()->clear_nicks();
     clear_fakes();
 }
 
@@ -97,10 +84,6 @@ long get_mem(int which)
 
 void InitMem()
 {
-    LIST_INIT(command_list);
-#ifdef USE_FILTER
-    LIST_INIT(rule_list);
-#endif
     memset(&indata, 0, sizeof(indata));
     memset(&outdata, 0, sizeof(outdata));
 }

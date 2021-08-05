@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 #include <string.h>
 
-Trust *find_trust_strict (char *host)
+Trust *find_trust_strict (const char *host)
 {
     struct hashmap_entry *entry;
 
@@ -43,7 +43,7 @@ Trust *find_trust_strict (char *host)
     return HASHMAP_ENTRY_VALUE(core_get_trusts(), entry);
 }
 
-Trust *find_trust(char *host)
+Trust *find_trust(const char *host)
 {
     char *mask,*bits;
     Trust *tmp;
@@ -74,7 +74,7 @@ Trust *find_trust(char *host)
     return NULL;
 }
 
-Trust *AddTrust(char *host, int limit)
+Trust *AddTrust(const char *host, int limit)
 {
     Trust *new_trust;
     new_trust = (Trust *)malloc(sizeof(Trust));

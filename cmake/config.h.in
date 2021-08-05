@@ -1,2 +1,1 @@
 #define VERSION "@CHILD_VERSION@"
-#cmakedefine USE_FILTER
