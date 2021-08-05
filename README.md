@@ -1,5 +1,5 @@
 # Child
-[![Child](https://circleci.com/gh/Ethylix/child.svg?style=svg)](https://circleci.com/gh/Ethylix/child)
+[![Child](https://circleci.com/gh/Ethylix/child.svg?style=svg)](https://circleci.com/gh/Ethylix/child) [![IRC #cserv on geeknode](https://img.shields.io/badge/geeknode-%23cserv-brightgreen)](irc://irc.geeknode.org:6697/cserv)
 
 Child is an IRC Service for [UnrealIRCD](https://www.unrealircd.com).
 
