@@ -2,7 +2,10 @@
 # entrypoint.sh
 
 set -e
-  
+
+cmake -DCMAKE_BUILD_TYPE=Debug /opt/child
+make
+
 until nc -z unrealircd 6999; do
   >&2 echo "unrealircd is unavailable - sleeping"
   sleep 1
@@ -14,5 +17,5 @@ until nc -z mysql 3306; do
 done
   
 >&2 echo "Dependencies are up - starting child"
-exec /opt/child/child -d -vv
-
+#exec gdbserver localhost:9999 /opt/child/src/child -d -vv
+exec /opt/child/src/child -d -vv

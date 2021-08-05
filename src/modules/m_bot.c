@@ -514,7 +514,7 @@ void bot_rkick (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         LLIST_FOREACH_ENTRY_SAFE(&wchan->members, member, tmp_member, wchan_head) {
             if (member->nick == nptr)
                 continue;
-            uptr2 = find_user(member->nick->nick);
+            uptr2 = find_account(member->nick);
             if (uptr2 && IsAuthed(uptr2)) {
                 if (HasOption(chptr, COPT_AXXFLAGS)) {
                     if (!ChannelCanOverride(uptr, uptr2, chptr)) continue;
@@ -550,7 +550,7 @@ void bot_rkb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
             if (member->nick == nptr)
                 continue;
             if (__match_regex(arg2, member->nick->nick, REG_EXTENDED|REG_NOSUB|REG_ICASE)) {
-                uptr2 = find_user(member->nick->nick);
+                uptr2 = find_account(member->nick);
                 if (uptr2 && IsAuthed(uptr2)) {
                     if (HasOption(chptr, COPT_AXXFLAGS)) {
                         if (!ChannelCanOverride(uptr, uptr2, chptr)) continue;
@@ -602,7 +602,7 @@ void bot_kb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
         nptr2 = find_nick(arg2);
         if (!nptr2) return;
 
-        uptr2 = find_user(arg2);
+        uptr2 = find_account(nptr2);
         if (uptr2 && IsAuthed(uptr2)) {
             if (HasOption(chptr, COPT_AXXFLAGS)) {
                 if (!ChannelCanOverride(uptr, uptr2, chptr)) return;
@@ -866,7 +866,7 @@ void bot_tb (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan __unused
         tb = AddTimeban(chptr, effective_mask, duration, reason);
 
     if (nptr2) {
-        if ((uptr2 = find_user(nptr2->nick)) != NULL) {
+        if ((uptr2 = find_account(nptr2)) != NULL) {
             if (HasOption(chptr, COPT_AXXFLAGS)) {
                 if (!ChannelCanOverride(uptr, uptr2, chptr)) return;
             } else {
@@ -883,7 +883,7 @@ void bot_tb (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan __unused
             snprintf(blah, 256, "%s!%s@%s", nptr2->nick, nptr2->ident, nptr2->hiddenhost);
             snprintf(blah2, 256, "%s!%s@%s", nptr2->nick, nptr2->ident, nptr2->host);
 
-            if ((uptr2 = find_user(member->nick->nick)) != NULL) {
+            if ((uptr2 = find_account(member->nick)) != NULL) {
                 if (HasOption(chptr, COPT_AXXFLAGS)) {
                     if (!ChannelCanOverride(uptr, uptr2, chptr)) continue;
                 } else {

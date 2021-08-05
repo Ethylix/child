@@ -294,18 +294,17 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
         NoticeToUser(nptr,"Syntax: \2NICK IDENTIFY \037password\037\2");
         return;
     }   
-        
     user = find_user(nptr->nick);
     if (!user) {
         NoticeToUser(nptr,"You are not registered");
         return;
     }   
-        
+    
     if (user->authed == 1) {
         NoticeToUser(nptr,"You are already identified");
         return;
-    }   
-        
+    }
+
     char *pass = md5_hash(arg3);
     if (Strcmp(pass,user->md5_pass)) {
         NoticeToUser(nptr,"Wrong password");
@@ -333,6 +332,7 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
     NoticeToUser(nptr,"You are now identified");
     nptr->loginattempts = 0;
     nptr->lasttry = 0;
+    strncpy(nptr->svid, user->nick, SVIDLEN);
 
     if (user->email[0] == '\0')
         NoticeToUser(nptr,"Please set a valid email address with /msg C nick set email email@domain.xx");
@@ -426,7 +426,9 @@ void nick_register (Nick *nptr, User *uptr, char *all)
         NoticeToUser(nptr, "A password has been generated and sent to your specified e-mail address (this mean that the password you've specified doesn't work).");
     } else {        
         user->authed = 1;
-        SendRaw("SVSMODE %s +r",nptr->nick);
+        strncpy(nptr->svid, user->nick, SVIDLEN);
+        SendRaw("SVS2MODE %s +r", nptr->nick);
+        SendRaw("SVSLOGIN %s %s %s", me.server, nptr->nick, nptr->nick);
     }
 }
 

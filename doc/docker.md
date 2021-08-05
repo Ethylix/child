@@ -4,7 +4,7 @@ Our docker-compose file will start:
 - unrealircd
 - child
 
-It provisions mysql with the schema in `schema.sql` and links Child as `services.geeknode.org` to unrealircd (`test.geeknode.org`). You can connect to unrealircd on port `6667` and `/oper test test`.
+It provisions mysql with the schema in `schema.sql` and links Child as `services.geeknode.org` to unrealircd (`test.geeknode.org`). You can connect to unrealircd on port `6697` (tls self-signed) and `/oper test test`.
 
 # Start the stack
 ```
