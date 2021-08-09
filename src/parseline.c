@@ -856,7 +856,7 @@ void m_nick (char *sender, char *tail)
         uptr->authed = 0;
         uptr->lastseen = time(NULL);
         SendRaw("SVSLOGIN %s %s 0", core_get_config()->server, newnick);
-        nptr->svid[0] = '\0';
+        strncpy(nptr->svid, "0", SVIDLEN);
     }
 
     nptr = get_core_api()->find_nick(sender);
@@ -1149,6 +1149,7 @@ void m_uid (char *sender, char *tail)
     char *ident;
     char *host;
     char *uid;
+    char *svid;
     char *hiddenhost;
     char *nickip;
     long int modes=0;
@@ -1167,8 +1168,8 @@ void m_uid (char *sender, char *tail)
     ident = SeperateWord(ident);
     host = SeperateWord(ident);
     uid = SeperateWord(host);
-    umode = SeperateWord(uid);
-    umode = SeperateWord(umode);
+    svid = SeperateWord(uid);
+    umode = SeperateWord(svid);
     hiddenhost = SeperateWord(umode);
     hiddenhost = SeperateWord(hiddenhost);
     nickip = SeperateWord(hiddenhost);
@@ -1216,6 +1217,7 @@ void m_uid (char *sender, char *tail)
     if (IsCharInString('z',umode)) modes |= UMODE_SSL;
 
     nptr = get_core_api()->new_nick(nick,ident,host,uid,hiddenhost,modes,clientip);
+    strncpy(nptr->svid, svid, SVIDLEN);
     LLIST_INSERT_TAIL(&server->nicks, &nptr->server_head);
 
     User *uptr;
