@@ -7,6 +7,7 @@ macro(add_child_module name src)
 #  target_link_libraries(${name} -shared)
 endmacro(add_child_module)
 
+add_child_module(sasl sasl.c)
 add_child_module(secserv secserv.c)
 add_child_module(m_bot m_bot.c)
 add_child_module(m_chan m_chan.c)
