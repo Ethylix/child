@@ -835,28 +835,21 @@ void m_nick (char *sender, char *tail)
 
     if (!Strcmp(newnick,oldnick)) return;
 
+    // If the new nick is a registered account (User) and it is linked to our current account (nptr->svid)
+    // then we add +r (the nick is registered). Otherwise, we protect the new account as needed.
     uptr2 = find_user(newnick);
     if (uptr2) {
         if (uptr && (find_link2(oldnick, newnick) || find_link2(newnick, oldnick)) && uptr->authed == 1) {
-            uptr->authed = 0;
-            uptr->lastseen = time(NULL);
-            uptr2->authed = 1;
             SendRaw("SVSMODE %s +r",newnick);
             uptr2->lastseen = time(NULL);
         } else {
             if (uptr && uptr->authed == 1)
-                SendRaw("SVSMODE %s -r",newnick);
-            NoticeToUser(nptr, "This nick is registered. Please identify yourself or take another nick.");
+                NoticeToUser(nptr, "This nick is registered and you are already logged in, please take another nick.");
+            else
+                NoticeToUser(nptr, "This nick is registered. Please identify yourself or take another nick.");
             if (HasOption(uptr2, UOPT_PROTECT))
                 AddGuest(newnick, uptr2->timeout, time(NULL));
         }
-    }
-
-    if (uptr) {
-        uptr->authed = 0;
-        uptr->lastseen = time(NULL);
-        SendRaw("SVSLOGIN %s %s 0", core_get_config()->server, newnick);
-        strncpy(nptr->svid, "0", SVIDLEN);
     }
 
     nptr = get_core_api()->find_nick(sender);
