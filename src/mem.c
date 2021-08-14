@@ -82,12 +82,6 @@ long get_mem(int which)
     }
 }
 
-void InitMem()
-{
-    memset(&indata, 0, sizeof(indata));
-    memset(&outdata, 0, sizeof(outdata));
-}
-
 int hash(const char *buffer)
 {
     const char *ptr;

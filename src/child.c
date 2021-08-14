@@ -56,11 +56,8 @@ static void sighandler (int signal)
             break;
         case SIGUSR2:
             operlog("Got SIGUSR2, reconnecting to server");
-            get_core()->eos = false;
-            get_core()->retry_attempts = get_core()->connected = 0;
-            get_core()->nextretry = time(NULL)+1;
-            cleanup_reconnect();
-            close(get_core()->sock);
+            get_core_api()->net_disconnect(/*graceful=*/true);
+            gettimeofday(&get_core()->next_connect_time, NULL);
             break;
         case SIGINT:
             operlog("SIGINT signal received, exiting");
@@ -118,9 +115,7 @@ void child_die(int save)
     mysql_close(&get_core()->mysql_handle);
     killallfakes();
     unloadallmod();
-    DisconnectFromServer();
-    flush_sendq();
-    CloseAllSock();
+    get_core_api()->net_disconnect(/*graceful=*/true);
     unlink("child.pid");
     child_clean();
 }
@@ -132,9 +127,8 @@ void child_restart(int save)
     mysql_close(&get_core()->mysql_handle);
     killallfakes();
     unloadallmod();
-    DisconnectFromServer();
-    flush_sendq();
-    CloseAllSock();
+    get_core_api()->net_disconnect(/*graceful=*/true);
+
     char buf[1024];
     char dir[1024];
     if (getcwd(buf,1024) == NULL) {
@@ -151,23 +145,102 @@ void child_restart(int save)
     child_clean();
 }
 
+static void child_run_loop_once(void)
+{
+    struct core_api *api = get_core_api();
+    struct core *core = get_core();
+    struct timeval now;
+    int err;
+
+    gettimeofday(&now, NULL);
+
+    // Connection attempts.
+    if (timerisset(&core->next_connect_time) && timercmp(&now, &core->next_connect_time, >)) {
+        err = api->net_connect();
+        if (!err) {
+            core->connect_retries = 0;
+            timerclear(&core->next_connect_time);
+        } else {
+            core->connect_retries++;
+            if (core->connect_retries > MAX_RECO_ATTEMPTS) {
+                operlog("Maximum reconnection attempts reached, exiting");
+                savealldb();
+                unloadallmod();
+                child_clean();
+            }
+            gettimeofday(&core->next_connect_time, NULL);
+            core->next_connect_time.tv_sec += RECONNECT_DELAY;
+            return;
+        }
+    }
+
+    // Network I/O.
+    err = api->net_poll();
+    if (!err) {
+        char *line;
+
+        while ((line = api->read_line()) != NULL)
+            parse_line(line);
+    } else {
+        api->net_disconnect(/*graceful=*/false);
+        return;
+    }
+
+    // Periodic checks.
+    CheckGuests();
+    CheckLimits();
+    CheckTimebans();
+
+    gettimeofday(&now, NULL);
+
+    if (timerisset(&core->next_expired_check_time) && timercmp(&now, &core->next_expired_check_time, >)) {
+        checkexpired();
+        gettimeofday(&core->next_expired_check_time, NULL);
+        core->next_expired_check_time.tv_sec += 60;
+    }
+
+    if (timerisset(&core->next_savedb_time) && timercmp(&now, &core->next_savedb_time, >)) {
+        savealldb();
+        gettimeofday(&core->next_savedb_time, NULL);
+        core->next_savedb_time.tv_sec += 60*core_get_config()->savedb_interval;
+    }
+}
+
+static void child_run_loop(void)
+{
+    const int min_loop_delay_ms = 10;
+    struct timeval before, after, res;
+    int loop_delay_ms;
+
+    while (!get_core()->stop) {
+        gettimeofday(&before, NULL);
+        child_run_loop_once();
+        gettimeofday(&after, NULL);
+
+        timersub(&before, &after, &res);
+        loop_delay_ms = res.tv_sec*1000 + res.tv_usec/1000;
+
+        // Pace run loops. Avoids using 100% CPU when we are trying to reconnect.
+        // TODO: report loop delay metric as load indicator.
+        if (loop_delay_ms < min_loop_delay_ms)
+            usleep((min_loop_delay_ms - loop_delay_ms)*1000);
+    }
+}
 int main(int argc, char **argv)
 {
-    InitMem();
-    init_core();
-
-    get_core()->startuptime = time(NULL);
-
-    int retval,mysql_lastconn,lastcheck,lastcheck2,timenow;
-    struct pollfd pfd;
-
-    indata.nextline = indata.chunkbufentry = indata.chunkbuf;
-
+    struct sigaction sig, old, sigresethand;
+    struct core_api *api = get_core_api();
+    struct rlimit rlim;
+    struct core *core;
+    int err, timenow;
     int daemonize = 1;
     char op = 0;
-    get_core()->retry_attempts = get_core()->nextretry = get_core()->connected = 0;
 
-    struct sigaction sig, old, sigresethand;
+    init_core();
+    core = get_core();
+
+    core->startuptime = time(NULL);
+
     memset(&sig,0,sizeof(sig));
     memset(&sigresethand,0,sizeof(sigresethand));
     sig.sa_handler = sighandler;
@@ -181,7 +254,6 @@ int main(int argc, char **argv)
     sigaction(SIGPIPE,&sig,&old);
     sigaction(SIGSEGV, &sigresethand, &old);
 
-    struct rlimit rlim;
     if ((getrlimit(RLIMIT_CORE, &rlim)) == -1) {
         perror("getrlimit");
         return -1;
@@ -236,8 +308,8 @@ int main(int argc, char **argv)
     core_get_config()->chlev_akb = -3;
     core_get_config()->emailreg = 0;
 
-    bzero(get_core()->remote_server, SERVERNAMELEN+1);
-    bzero(get_core()->remote_sid, SIDLEN+1);
+    bzero(core->remote_server, SERVERNAMELEN+1);
+    bzero(core->remote_sid, SIDLEN+1);
 
     /* -- */
 
@@ -247,10 +319,10 @@ int main(int argc, char **argv)
                 daemonize = 0;
                 break;
             case 'v':
-                if (get_core()->verbose)
-                    get_core()->vv = true;
+                if (core->verbose)
+                    core->vv = true;
                 else
-                    get_core()->verbose = true;
+                    core->verbose = true;
                 break;
             case 'h':
             default:
@@ -259,20 +331,6 @@ int main(int argc, char **argv)
     }
 
     loadconf(0);
-
-    retval = ConnectToServer();
-    switch(retval) {
-        case -1:
-            fprintf(stderr,"Failed to connect to %s:%d (connection timed out)\n",core_get_config()->server,core_get_config()->port);
-            operlog("Failed to connect to %s:%d (connection timed out)",core_get_config()->server,core_get_config()->port);
-            child_clean();
-        case 0:
-            fprintf(stderr,"Failed to connect to %s:%d\n",core_get_config()->server,core_get_config()->port);
-            operlog("Failed to connect to %s:%d",core_get_config()->server,core_get_config()->port);
-            child_clean();
-    }
-
-    if (get_core()->verbose) printf("Connected to server\n");
 
     if (!connect_to_db()) {
         fprintf(stderr,"Cannot connect to mysql: %s\n", mysql_error(&get_core()->mysql_handle));
@@ -285,14 +343,15 @@ int main(int argc, char **argv)
         fprintf(stderr, "Failed to load database, exiting.\n");
         child_clean();
     }
-    if (get_core()->verbose) printf("Logging in to server\n");
-    SendInitToServer();
-    get_core()->connected = 1;
-    if (get_core()->verbose) printf("Logged in to server\n");
 
-    SendRaw("EOS");
+    err = api->net_connect();
+    if (err < 0) {
+        fprintf(stderr,"Failed to connect to %s:%d\n",core_get_config()->server,core_get_config()->port);
+        operlog("Failed to connect to %s:%d",core_get_config()->server,core_get_config()->port);
+        child_clean();
+    }
+    if (get_core()->verbose) printf("Connected to server\n");
 
-    lastcheck = lastcheck2 = mysql_lastconn = time(NULL);
     if (daemonize) {
         if (daemon(1,0) < 0) {
             fprintf(stderr, "Failed to daemonize: %s\n", strerror(errno));
@@ -301,92 +360,10 @@ int main(int argc, char **argv)
     }
     write_pid();
 
-    for (;;) {
-        if (!get_core()->connected)
-            goto try_reconnect;
+    child_run_loop();
 
-        pfd.fd = get_core()->sock;
-        pfd.events = POLLIN | POLLPRI;
-        if (outdata.writebytes > 0)
-            pfd.events |= POLLOUT;
-        pfd.revents = 0;
-
-        retval = poll(&pfd, 1, 10);
-        if (retval > 0) {
-            if (pfd.revents & POLLOUT)
-                flush_sendq();
-
-            if (pfd.revents & (POLLIN | POLLPRI)) {
-                if (!ReadChunk()) {
-                    if (!get_core()->connected || !get_core()->eos)
-                        continue;
-                    operlog("Connection reset by peer");
-                    savealldb();
-                    get_core()->eos = false;
-                    get_core()->retry_attempts = get_core()->connected = 0;
-                    get_core()->nextretry = time(NULL)+1;
-                    cleanup_reconnect();
-                    close(get_core()->sock);
-                    continue;
-                }
-                while (GetLineFromChunk())
-                    ParseLine();
-            }
-        }
-
-try_reconnect:
-        timenow = time(NULL);
-
-        if (!get_core()->connected && timenow - get_core()->nextretry >= 0) {
-            retval = ConnectToServer();
-            if (retval == -1 || retval == 0) {
-                get_core()->retry_attempts++;
-                operlog("Reconnecting attempt #%d failed (%s)",get_core()->retry_attempts,retval ? "timeout" : "error");
-                if (get_core()->retry_attempts >= MAX_RECO_ATTEMPTS) {
-                    operlog("Maximum reconnection attempts reached, exiting");
-                    savealldb();
-                    unloadallmod();
-                    CloseAllSock();
-                    child_clean();
-                }
-                get_core()->nextretry = timenow + RECONNECT_DELAY;
-            } else {
-                SendInitToServer();
-                get_core()->connected = 1;
-                get_core()->nextretry = 0;
-                SendRaw("EOS");
-                operlog("Reconnected");
-            }
-            if (get_core()->connected) continue;
-        }
-
-        if (timenow - mysql_lastconn >= 60*core_get_config()->savedb_interval) {
-            savealldb();
-            mysql_lastconn = timenow;
-        }
-
-        if (timenow - lastcheck >= 1) {
-            CheckGuests();
-            CheckLimits();
-            CheckTimebans();
-            lastcheck = timenow;
-        }
-
-        if (timenow - lastcheck2 >= 60) {
-            checkexpired();
-            lastcheck2 = timenow;
-        }
-
-        // Avoid burning the CPU while trying to reconnect.
-        if (!get_core()->connected)
-            usleep(10000);
-    }
-
-    operlog("Program shouldn't reach this piece of code, WTF ? Saving DBs and exiting.");
-    savealldb();
-    unloadallmod();
-    CloseAllSock();
-    child_clean();
+    operlog("Returned from main run loop, gracefully exiting.");
+    child_die(/*save=*/1);
 
     return 0;
 }

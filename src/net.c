@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "child.h"
 #include "core.h"
+#include "core_api.h"
 #include "logging.h"
 #include "mem.h"
 #include "string_utils.h"
@@ -42,12 +43,29 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 static jmp_buf timeout_jump;
 
-void timeout()
+static void timeout()
 {
     longjmp(timeout_jump,1);
 }
 
-int ConnectToServer()
+static void net_init(void)
+{
+    struct net *net = core_get_net();
+    struct net_outdata *outdata = &net->outdata;
+    struct net_indata *indata = &net->indata;
+
+    outdata->outbuf[0] = 0;
+    outdata->writebytes = 0;
+
+    indata->chunkbuf[0] = 0;
+    indata->nextline = indata->chunkbuf;
+    indata->currentline = indata->chunkbuf;
+    indata->chunkbufentry = indata->chunkbuf;
+
+    net->fd = -1;
+}
+
+static int net_connect_fd(void)
 {
     int n, sock;
     struct addrinfo hints,hints2;
@@ -69,7 +87,7 @@ int ConnectToServer()
     if (n != 0) {
         fprintf(stderr,"getaddrinfo: %s\n",gai_strerror(n));
         if (n == EAI_SYSTEM) perror("getaddrinfo");
-        return 0;
+        return -1;
     }
 
     sock = socket(res->ai_family,res->ai_socktype,res->ai_protocol);
@@ -89,7 +107,7 @@ int ConnectToServer()
         if (n != 0) {
             fprintf(stderr,"getaddrinfo: %s\n",gai_strerror(n));
             if (n == EAI_SYSTEM) perror("getaddrinfo");
-            return 0;
+            return -1;
         }
 
         if (bind(sock,res2->ai_addr,res2->ai_addrlen) < 0) {
@@ -97,7 +115,7 @@ int ConnectToServer()
             operlog("bind() error: %s",strerror(errno));
             freeaddrinfo(res);
             freeaddrinfo(res2);
-            return 0;
+            return -1;
         }
     }
 
@@ -118,7 +136,7 @@ int ConnectToServer()
         freeaddrinfo(res);
         if (*core_get_config()->bindip) freeaddrinfo(res2);
         close(sock);
-        return 0;
+        return -1;
     }
 
     alarm(0);
@@ -128,52 +146,21 @@ int ConnectToServer()
 
     fcntl(sock,F_SETFL,O_NONBLOCK);
 
-    get_core()->sock = sock;
+    core_get_net()->fd = sock;
 
-    return 1;
+    return 0;
 }
 
-void SendInitToServer()
+static void send_raw(const char *msg, ...)
 {
-    SendRaw("PASS :%s",core_get_config()->linkpass);
-    SendRaw("PROTOCTL EAUTH=%s SID=%s", core_get_config()->name, core_get_config()->sid);
-    SendRaw("PROTOCTL NOQUIT NICKv2 SJOIN SJ3 CLK TKLEXT TKLEXT2 NICKIP ESVID MLOCK EXTSWHOIS");
-    SendRaw("SERVER %s 1 :Child IRC Services",core_get_config()->name);
-    SendRaw("SQLINE %s :Reserved for services",core_get_config()->nick);
-    generate_uid(get_core()->uid);
-    fakeuser(core_get_config()->nick, core_get_config()->ident, core_get_config()->host, get_core()->uid, MY_UMODES);
-}
-
-void DisconnectFromServer ()
-{
-    SendRaw("SQUIT");
-    operlog("Disconnect from server (SQUIT)");
-    get_core()->eos = false;
-}
-
-void flush_sendq()
-{
-    size_t bytes = 0, len;
-
-    if (outdata.writebytes == 0)
-        return;
-
-    len = outdata.writebytes;
-
-    bytes = send(get_core()->sock, outdata.outbuf, len, 0);
-
-    memmove(outdata.outbuf, outdata.outbuf + bytes, len - bytes);
-    outdata.outbuf[len-bytes] = 0;
-    outdata.writebytes = len - bytes;
-}
-
-void SendRaw (char *msg, ...)
-{
+    struct net *net = core_get_net();
+    struct net_outdata *outdata = &net->outdata;
     char tmp[1024];
     char buf[1024];
     va_list val;
     int len;
     char *outptr;
+
     ircsprintf(buf,1023,msg,val);
 
     if (get_core()->vv) printf(">> %s\n",buf);
@@ -190,9 +177,9 @@ void SendRaw (char *msg, ...)
 #endif
     }
 
-    if (len + outdata.writebytes >= SENDQSIZE) {
-        fprintf(stderr, "PANIC: cannot enqueue data (%d bytes): sendq size exceeded (%d > %d)\n", len, len + outdata.writebytes, SENDQSIZE);
-        operlog("PANIC: sendq size exceeded (%d > %d, tried to write %d bytes)", len + outdata.writebytes, SENDQSIZE, len);
+    if (len + outdata->writebytes >= SENDQSIZE) {
+        fprintf(stderr, "PANIC: cannot enqueue data (%d bytes): sendq size exceeded (%d > %d)\n", len, len + outdata->writebytes, SENDQSIZE);
+        operlog("PANIC: sendq size exceeded (%d > %d, tried to write %d bytes)", len + outdata->writebytes, SENDQSIZE, len);
 #ifdef DIE_ON_PANIC
         child_die(1);
 #else
@@ -200,90 +187,167 @@ void SendRaw (char *msg, ...)
 #endif
     }
 
-    outptr = outdata.outbuf + outdata.writebytes;
+    outptr = outdata->outbuf + outdata->writebytes;
 
-    strncpy(outptr, tmp, SENDQSIZE - outdata.writebytes - 1);
-    outdata.writebytes += len;
+    strncpy(outptr, tmp, SENDQSIZE - outdata->writebytes - 1);
+    outdata->writebytes += len;
 }
 
-int ReadChunk(void)
+static void send_handshake(void)
 {
+    send_raw("PASS :%s",core_get_config()->linkpass);
+    send_raw("PROTOCTL EAUTH=%s SID=%s", core_get_config()->name, core_get_config()->sid);
+    send_raw("PROTOCTL NOQUIT NICKv2 SJOIN SJ3 CLK TKLEXT TKLEXT2 NICKIP ESVID MLOCK EXTSWHOIS");
+    send_raw("SERVER %s 1 :Child IRC Services",core_get_config()->name);
+    send_raw("SQLINE %s :Reserved for services",core_get_config()->nick);
+    generate_uid(get_core()->uid);
+    fakeuser(core_get_config()->nick, core_get_config()->ident, core_get_config()->host, get_core()->uid, MY_UMODES);
+    send_raw("EOS");
+}
+
+static int net_connect(void)
+{
+    int ret;
+
+    ret = net_connect_fd();
+    if (ret < 0)
+        return ret;
+
+    send_handshake();
+    get_core()->connected = 1;
+
+    return 0;
+}
+
+static int flush_sendq(void)
+{
+    struct net *net = core_get_net();
+    struct net_outdata *outdata = &net->outdata;
+    ssize_t bytes, len;
+
+    if (outdata->writebytes == 0)
+        return 0;
+
+    len = outdata->writebytes;
+
+    bytes = send(net->fd, outdata->outbuf, len, 0);
+    if (bytes < 0)
+        return -1;
+
+    memmove(outdata->outbuf, outdata->outbuf + bytes, len - bytes);
+    outdata->outbuf[len-bytes] = 0;
+    outdata->writebytes = len - bytes;
+
+    return 0;
+}
+
+static void net_disconnect(bool graceful)
+{
+    struct net *net = core_get_net();
+
+    operlog("Disconnect from server (SQUIT)");
+
+    if (graceful) {
+        send_raw("SQUIT");
+        flush_sendq();
+    }
+
+    close(net->fd);
+    get_core()->eos = false;
+    get_core()->connected = 0;
+
+    cleanup_reconnect();
+    net_init();
+}
+
+static int read_chunk(void)
+{
+    struct net *net = core_get_net();
+    struct net_indata *indata = &net->indata;
     int oldbytes;
     int readbytes;
     char *dest;
 
-    if (*indata.nextline != '\0') {
-        oldbytes = strlen(indata.nextline);
-        dest = indata.chunkbuf;
-        while (*indata.nextline)
-            *dest++ = *indata.nextline++;
-        indata.chunkbufentry = indata.chunkbuf + oldbytes;
+    if (*indata->nextline != '\0') {
+        oldbytes = strlen(indata->nextline);
+        dest = indata->chunkbuf;
+        while (*indata->nextline)
+            *dest++ = *indata->nextline++;
+        indata->chunkbufentry = indata->chunkbuf + oldbytes;
     } else {
         oldbytes = 0;
-        indata.chunkbufentry = indata.chunkbuf;
+        indata->chunkbufentry = indata->chunkbuf;
     }
 
-    readbytes = read(get_core()->sock, indata.chunkbufentry, (CHUNKSIZE - oldbytes) - 10);
-    if (readbytes == 0 || readbytes == -1)
-        return 0;
+    readbytes = read(net->fd, indata->chunkbufentry, (CHUNKSIZE - oldbytes) - 10);
+    if (readbytes <= -1)
+        return -1;
 
-    *(indata.chunkbufentry + readbytes) = '\0';
-    indata.nextline = indata.chunkbuf;
+    *(indata->chunkbufentry + readbytes) = '\0';
+    indata->nextline = indata->chunkbuf;
 
-    return 1;
+    return 0;
 }
 
-int GetLineFromChunk(void)
+static char *read_line(void)
 {
-    indata.currentline = indata.nextline;
-    while (*indata.nextline != '\n' && *indata.nextline != '\r' && *indata.nextline != '\0')
-        indata.nextline++;
+    struct net *net = core_get_net();
+    struct net_indata *indata = &net->indata;
 
-    if (*indata.nextline == '\0') {
-        indata.nextline = indata.currentline;
-        return 0;
+    indata->currentline = indata->nextline;
+    while (*indata->nextline != '\n' && *indata->nextline != '\r' && *indata->nextline != '\0')
+        indata->nextline++;
+
+    if (*indata->nextline == '\0') {
+        indata->nextline = indata->currentline;
+        return NULL;
     }
 
-    if (*indata.nextline == '\n' || *indata.nextline == '\r') {
-        *indata.nextline = '\0';
-        indata.nextline++;
+    if (*indata->nextline == '\n' || *indata->nextline == '\r') {
+        *indata->nextline = '\0';
+        indata->nextline++;
     }
 
-    if (*indata.nextline == '\n' || *indata.nextline == '\r') {
-        *indata.nextline = '\0';
-        indata.nextline++;
+    if (*indata->nextline == '\n' || *indata->nextline == '\r') {
+        *indata->nextline = '\0';
+        indata->nextline++;
     }
 
-    return 1;
+    return indata->currentline;
 }
 
-int ReadLine (char *cur, char *next)
+static int net_poll(void)
 {
-    cur = next;
-    while (*next != '\n' && *next != '\r' && *next != '\0')
-        next++;
+    struct net *net = core_get_net();
+    struct pollfd pfd;
+    int ret;
 
-    if (*next == '\0') {
-        next = cur;
+    if (!get_core()->connected)
         return 0;
+
+    pfd.fd = net->fd;
+    pfd.events = POLLIN | POLLPRI;
+    if (net->outdata.writebytes > 0)
+        pfd.events |= POLLOUT;
+    pfd.revents = 0;
+
+    ret = poll(&pfd, 1, 10);
+    if (ret <= 0)
+        return ret;
+
+    if (pfd.revents & POLLOUT) {
+        ret = flush_sendq();
+        if (ret < 0)
+            return ret;
     }
 
-    if (*next == '\n' || *next == '\r') {
-        *next = '\0';
-        next++;
+    if (pfd.revents & (POLLIN | POLLPRI)) {
+        ret = read_chunk();
+        if (ret < 0)
+            return ret;
     }
 
-    if (*next == '\n' || *next == '\r') {
-        *next = '\0';
-        next++;
-    }
-
-    return 1;
-}
-
-void CloseAllSock()
-{
-    close(get_core()->sock);
+    return 0;
 }
 
 int match_ipmask (int addr, int mask, int bits)
@@ -293,3 +357,13 @@ int match_ipmask (int addr, int mask, int bits)
     else
         return 0;
 }
+
+static struct core_api net_api = {
+    .net_init       = net_init,
+    .net_connect    = net_connect,
+    .net_disconnect = net_disconnect,
+    .net_poll       = net_poll,
+    .read_line      = read_line,
+    .send_raw       = send_raw,
+};
+REGISTER_CORE_API(&net_api);

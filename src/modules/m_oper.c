@@ -468,7 +468,7 @@ void oper_fakenick (Nick *nptr, User *uptr __unused, char *all)
     HASHMAP_ERASE(core_get_fakeusers(), fake->nick);
     strncpy(fake->nick, arg4, NICKLEN);
     HASHMAP_INSERT(core_get_fakeusers(), fake->nick, fake, NULL);
-    SendRaw(":%s NICK %s %ld",arg3,arg4,time(NULL));
+    get_core_api()->send_raw(":%s NICK %s %ld",arg3,arg4,time(NULL));
 }
 
 void oper_fakelist (Nick *nptr)
@@ -508,7 +508,7 @@ void oper_forceauth (Nick *nptr, User *uptr __unused, char *all)
         
     uptr2->authed = 1;
     uptr2->lastseen = time(NULL);
-    SendRaw("SVSMODE %s +r",arg3);
+    get_core_api()->send_raw("SVSMODE %s +r",arg3);
     NoticeToUser(nptr,"\2%s\2 has been authed.",arg3);
     operlog("%s force-authed %s",nptr->nick,arg3);
     if (HasOption(uptr2, UOPT_PROTECT)) DeleteGuest(arg3);
@@ -776,8 +776,8 @@ void oper_jupe (Nick *nptr, User *uptr __unused, char *all)
         return;
     }   
      
-    SendRaw("SQUIT %s :Server juped by %s (%s)",arg3,nptr->nick,all);
-    SendRaw("SERVER %s 1 :Server juped (%s)",arg3,all);
+    get_core_api()->send_raw("SQUIT %s :Server juped by %s (%s)",arg3,nptr->nick,all);
+    get_core_api()->send_raw("SERVER %s 1 :Server juped (%s)",arg3,all);
     NoticeToUser(nptr,"Done.");
     globops("Server %s \2JUPED\2 by %s (%s)",arg3,nptr->nick,all);
 }
@@ -980,7 +980,7 @@ void oper_raw (Nick *nptr, User *uptr __unused, char *all)
         return;
     }   
         
-    SendRaw("%s",all);
+    get_core_api()->send_raw("%s",all);
     operlog("%s executed RAW: %s",nptr->nick,all);
 }
 
@@ -1019,7 +1019,7 @@ void oper_restart (Nick *nptr, User *uptr __unused, char *all)
     char *arg3 = all;
     SeperateWord(arg3);
 
-    SendRaw(":%s QUIT :Restarting",core_get_config()->nick);
+    get_core_api()->send_raw(":%s QUIT :Restarting",core_get_config()->nick);
     operlog("%s executed RESTART",nptr->nick);
     if (!arg3 || *arg3 == '\0')
         child_restart(1); 
@@ -1031,7 +1031,7 @@ void oper_die (Nick *nptr, User *uptr __unused, char *all)
     char *arg3 = all;
     SeperateWord(arg3);
 
-    SendRaw(":%s QUIT :I'll be back soon !",core_get_config()->nick);
+    get_core_api()->send_raw(":%s QUIT :I'll be back soon !",core_get_config()->nick);
     operlog("%s executed DIE",nptr->nick);
     if (!arg3 || *arg3 == '\0')
         child_die(1);
@@ -1116,7 +1116,7 @@ void oper_suspend (Nick *nptr, User *uptr, char *all)
             
         if (!Strcmp(arg4,"on")) {
             SetOption(chptr, COPT_SUSPENDED);
-            SendRaw(":%s PART %s :Channel suspended",channel_botname(chptr),chptr->channelname);
+            get_core_api()->send_raw(":%s PART %s :Channel suspended",channel_botname(chptr),chptr->channelname);
             NoticeToUser(nptr,"Channel %s suspended.",chptr->channelname);
             return;
         } else if (!Strcmp(arg4,"off")) {

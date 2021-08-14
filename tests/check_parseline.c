@@ -4,22 +4,33 @@
 #include "child.h"
 #include "commands.h"
 #include "core.h"
+#include "core_api.h"
 #include "net.h"
+
+static void expect_net_output(const char *buf)
+{
+    struct net *net = core_get_net();
+    struct net_outdata *outdata = &net->outdata;
+
+    ck_assert_int_eq(strlen(outdata->outbuf), strlen(buf));
+    ck_assert_int_eq(memcmp(outdata->outbuf, buf, strlen(buf)), 0);
+}
+
+static void test_parse_line(const char *buf)
+{
+    char *copy = strdup(buf);
+    parse_line(copy);
+    free(copy);
+}
 
 START_TEST(test_parse_ping)
 {
     init_core();
-    InitMem();
-    indata.nextline = indata.chunkbufentry = indata.chunkbuf;
 
-    strcpy(indata.chunkbufentry, "PING :this is a test");
-    GetLineFromChunk();
-    ParseLine();
+    test_parse_line("PING :this is a test");
 
     // The current implementation only echoes the first word.
-    const char *expected = "PONG this\r\n";
-    ck_assert_int_eq(strlen(outdata.outbuf), strlen(expected));
-    ck_assert_int_eq(memcmp(outdata.outbuf, expected, strlen(expected)), 0);
+    expect_net_output("PONG this\r\n");
 
     free_core();
 }

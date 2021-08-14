@@ -80,6 +80,8 @@ START_TEST(test_hashmap_insert)
     ck_assert_ptr_nonnull(entry);
     ck_assert_str_eq(entry->key, "two");
     ck_assert_int_eq((intptr_t)entry->value, 2);
+
+    hashmap_free(hm);
 }
 END_TEST
 

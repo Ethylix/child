@@ -39,7 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 /* parseline v2, greetz to wildcat for the idea */
 
-int ParseLine(void)
+int parse_line(char *line)
 {
     void *commands[] =
                 {
@@ -75,7 +75,7 @@ int ParseLine(void)
     char *sender, *command, *tail;
     char *parv[3];
 
-    sender = StripBlanks(indata.currentline);
+    sender = StripBlanks(line);
 
     if (!sender || *sender == '\0')
         return 0;
@@ -249,7 +249,7 @@ void m_join (char *sender, char *tail)
         } else if (GetFlag(uptr,chptr) == core_get_config()->chlev_akick) {
             KickUser(bot,uptr->nick,str_ptr,"Get out of this chan !"); hasaccess = 1;
         } else if (GetFlag(uptr,chptr) == core_get_config()->chlev_akb) {
-            SendRaw(":%s MODE %s +b *!*@%s",bot,str_ptr,nptr->hiddenhost);
+            get_core_api()->send_raw(":%s MODE %s +b *!*@%s",bot,str_ptr,nptr->hiddenhost);
             KickUser(bot,uptr->nick,str_ptr,"Get out of this chan !"); hasaccess = 1;
         } else if (GetFlag(uptr,chptr) == core_get_config()->chlev_nostatus)
             hasaccess = 1;
@@ -285,7 +285,7 @@ skip_flags:
         snprintf(mask2, 256, "%s!%s@%s", nptr->nick, nptr->ident, nptr->host);
         LLIST_FOREACH_ENTRY(&chptr->timebans, tb, chan_head) {
             if (match_mask(tb->mask, mask) || match_mask(tb->mask, mask2)) {
-                SendRaw(":%s MODE %s +b *!*@%s", bot, str_ptr, nptr->hiddenhost);
+                get_core_api()->send_raw(":%s MODE %s +b *!*@%s", bot, str_ptr, nptr->hiddenhost);
                 KickUser(bot, nptr->nick, str_ptr, "%s", tb->reason);
                 break;
             }
@@ -531,7 +531,7 @@ void m_mode (char *sender, char *tail)
 
                         for (k=0;k<strlen(modesbis);k++) {
                             if (IsCharInString(*(modesbis+k),modesm2))
-                                SendRaw(":%s MODE %s %s",bot,chptr->channelname,chptr->mlock);
+                                get_core_api()->send_raw(":%s MODE %s %s",bot,chptr->channelname,chptr->mlock);
                         }
 
                         nextp:
@@ -549,7 +549,7 @@ void m_mode (char *sender, char *tail)
 
                         for (k=0;k<strlen(modesm);k++) {
                             if (IsCharInString(*(modesm+k),modesm4))
-                                SendRaw(":%s MODE %s %s",bot,chptr->channelname,chptr->mlock);
+                                get_core_api()->send_raw(":%s MODE %s %s",bot,chptr->channelname,chptr->mlock);
                         }
 
                         break;
@@ -566,7 +566,7 @@ void m_mode (char *sender, char *tail)
 
                         for (k=0;k<strlen(modesbis);k++) {
                             if (IsCharInString(*(modesbis+k),modesm2))
-                                SendRaw(":%s MODE %s %s",bot,chptr->channelname,chptr->mlock);
+                                get_core_api()->send_raw(":%s MODE %s %s",bot,chptr->channelname,chptr->mlock);
                         }
 
                         nextm:
@@ -584,7 +584,7 @@ void m_mode (char *sender, char *tail)
 
                         for (k=0;k<strlen(modesm);k++) {
                             if (IsCharInString(*(modesm+k),modesm4))
-                                SendRaw(":%s MODE %s %s",bot,chptr->channelname,chptr->mlock);
+                                get_core_api()->send_raw(":%s MODE %s %s",bot,chptr->channelname,chptr->mlock);
                         }
 
                         break;
@@ -734,7 +734,7 @@ void m_mode (char *sender, char *tail)
                             break;
                         case 'a':
                             if (chptr && !Strcmp(channel_botname(chptr), args[warg])) {
-                                SendRaw(":%s MODE %s +a %s", channel_botname(chptr), chan, bot);
+                                get_core_api()->send_raw(":%s MODE %s +a %s", channel_botname(chptr), chan, bot);
                                 warg++;
                                 break;
                             }
@@ -753,7 +753,7 @@ void m_mode (char *sender, char *tail)
                             break;
                         case 'o':
                             if (chptr && !Strcmp(channel_botname(chptr), args[warg])) {
-                                SendRaw(":%s MODE %s +o %s", channel_botname(chptr), chan, bot);
+                                get_core_api()->send_raw(":%s MODE %s +o %s", channel_botname(chptr), chan, bot);
                                 warg++;
                                 break;
                             }
@@ -841,11 +841,11 @@ void m_nick (char *sender, char *tail)
             uptr->authed = 0;
             uptr->lastseen = time(NULL);
             uptr2->authed = 1;
-            SendRaw("SVSMODE %s +r",newnick);
+            get_core_api()->send_raw("SVSMODE %s +r",newnick);
             uptr2->lastseen = time(NULL);
         } else {
             if (uptr && uptr->authed == 1)
-                SendRaw("SVSMODE %s -r",newnick);
+                get_core_api()->send_raw("SVSMODE %s -r",newnick);
             NoticeToUser(nptr, "This nick is registered. Please identify yourself or take another nick.");
             if (HasOption(uptr2, UOPT_PROTECT))
                 AddGuest(newnick, uptr2->timeout, time(NULL));
@@ -855,7 +855,7 @@ void m_nick (char *sender, char *tail)
     if (uptr) {
         uptr->authed = 0;
         uptr->lastseen = time(NULL);
-        SendRaw("SVSLOGIN %s %s 0", core_get_config()->server, newnick);
+        get_core_api()->send_raw("SVSLOGIN %s %s 0", core_get_config()->server, newnick);
         nptr->svid[0] = '\0';
     }
 
@@ -884,7 +884,7 @@ void m_part (char *sender, char *tail)
 
 void m_ping (char *command)
 {
-    SendRaw("PONG %s",command+1);
+    get_core_api()->send_raw("PONG %s",command+1);
     RunHooks(HOOK_PING,NULL,NULL,NULL,NULL);
 }
 
@@ -1281,7 +1281,7 @@ void m_topic (char *sender, char *tail)
         return;
 
     if (chptr->options & COPT_ENFTOPIC)
-        SendRaw(":%s TOPIC %s :%s", channel_botname(chptr), chan, chptr->topic);
+        get_core_api()->send_raw(":%s TOPIC %s :%s", channel_botname(chptr), chan, chptr->topic);
     else
         strncpy(chptr->topic, topic, TOPICLEN);
 }

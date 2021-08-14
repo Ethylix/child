@@ -54,23 +54,23 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #define fakeuser(nick_,ident_,host_, uid_, umodes_) { \
                                 if ((AddFake(nick_, ident_, host_, uid_)) != NULL) { \
-                                    SendRaw("UID %s 1 %ld %s %s %s 0 +%s * * * :%s", nick_, time(NULL), ident_, host_, uid_, umodes_, ident_); \
+                                    get_core_api()->send_raw("UID %s 1 %ld %s %s %s 0 +%s * * * :%s", nick_, time(NULL), ident_, host_, uid_, umodes_, ident_); \
                                 } \
                           }
-#define fakejoin(x,y) SendRaw(":%s JOIN %s",x,y)
+#define fakejoin(x,y) get_core_api()->send_raw(":%s JOIN %s",x,y)
 #define fakekill(x,y) { \
                             if (find_fake(x) != NULL) \
                                 DeleteFake(find_fake(x)); \
-                            SendRaw(":%s QUIT :%s",x,y); \
+                            get_core_api()->send_raw(":%s QUIT :%s",x,y); \
                       }
-#define fakesay(x,y,z) SendRaw(":%s PRIVMSG %s :%s",x,y,z)
-#define _killuser(x,y,z) SendRaw(":%s KILL %s :%s!%s (%s)",z,x,core_get_config()->name,z,y)
+#define fakesay(x,y,z) get_core_api()->send_raw(":%s PRIVMSG %s :%s",x,y,z)
+#define _killuser(x,y,z) get_core_api()->send_raw(":%s KILL %s :%s!%s (%s)",z,x,core_get_config()->name,z,y)
 #define killuser(x,y,z) { \
                             _killuser(x,y,z); \
                             userquit(x); \
                         }
-#define glineuser(a,b,c,d) SendRaw("TKL + G %s %s %s %ld %ld :%s",a,b,core_get_config()->name,(c) ? time(NULL) + c : 0,time(NULL),d)
-#define unglineuser(a,b) SendRaw("TKL - G %s %s %s",a,b,core_get_config()->name)
+#define glineuser(a,b,c,d) get_core_api()->send_raw("TKL + G %s %s %s %ld %ld :%s",a,b,core_get_config()->name,(c) ? time(NULL) + c : 0,time(NULL),d)
+#define unglineuser(a,b) get_core_api()->send_raw("TKL - G %s %s %s",a,b,core_get_config()->name)
 
 #define NoticeToUser(a,b,...) FakeNotice(core_get_config()->nick,a,b,##__VA_ARGS__)
 

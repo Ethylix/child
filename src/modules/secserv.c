@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "channel.h"
 #include "child.h"
 #include "core.h"
+#include "core_api.h"
 #include "hashmap.h"
 #include "logging.h"
 #include "modules.h"
@@ -89,7 +90,7 @@ static void set_mode_allchans()
     if (rmode) return;
 
     HASHMAP_FOREACH_ENTRY_VALUE(core_get_chans(), entry, chan) {
-        SendRaw("MODE %s +%s",chan->channelname,modes);
+        get_core_api()->send_raw("MODE %s +%s",chan->channelname,modes);
     }
     rmode = 1;
 }
@@ -102,7 +103,7 @@ static void remove_mode_allchans()
     if (!rmode) return;
 
     HASHMAP_FOREACH_ENTRY_VALUE(core_get_chans(), entry, chan) {
-        SendRaw("MODE %s -%s",chan->channelname,modes);
+        get_core_api()->send_raw("MODE %s -%s",chan->channelname,modes);
     }
     rmode = 0;
 }

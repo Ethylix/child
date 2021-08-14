@@ -30,7 +30,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define MAX_HASH 5003
 
 long get_mem (int);
-void InitMem (void);
 void cleanup_reconnect (void);
 int hash(const char *buffer);
 

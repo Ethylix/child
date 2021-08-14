@@ -40,6 +40,14 @@ struct core_api {
 
     // Database.
     int (*load_all_db)(void);
+
+    // Network,
+    void (*net_init)(void);
+    int (*net_connect)(void);
+    void (*net_disconnect)(bool graceful);
+    int (*net_poll)(void);
+    char *(*read_line)(void);
+    void (*send_raw)(const char *msg, ...);
 };
 
 struct core_api *get_core_api(void);

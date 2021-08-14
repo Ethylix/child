@@ -1,5 +1,6 @@
 #include "core.h"
 
+#include "core_api.h"
 #include "hashmap.h"
 
 #include <ctype.h>
@@ -99,6 +100,8 @@ void init_core(void) {
     LLIST_INIT(&core->timebans);
     LLIST_INIT(&core->servers);
     LLIST_INIT(&core->commands);
+
+    get_core_api()->net_init();
 }
 
 void free_core(void) {

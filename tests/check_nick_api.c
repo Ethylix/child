@@ -35,6 +35,9 @@ START_TEST(test_new_nick)
     ck_assert_int_eq(LLIST_EMPTY(&nptr->wchans), true);
 
     ck_assert_int_eq(HASHMAP_SIZE(core_get_nicks()), 1);
+
+    get_core_api()->clear_nicks();
+    free_core();
 }
 END_TEST
 
@@ -56,6 +59,9 @@ START_TEST(test_find_nick)
     ck_assert_ptr_eq(nptr, get_core_api()->find_nick("test"));
     ck_assert_ptr_eq(nptr, get_core_api()->find_nick("042AABBCC"));
     ck_assert_ptr_eq(get_core_api()->find_nick("non_existent"), NULL);
+
+    get_core_api()->clear_nicks();
+    free_core();
 }
 END_TEST
 
@@ -93,6 +99,9 @@ START_TEST(test_delete_nick)
     ck_assert_ptr_eq(get_core_api()->find_nick("042AABBCC"), NULL);
     ck_assert_ptr_eq(get_core_api()->find_nick("test2"), nptr2);
     ck_assert_ptr_eq(get_core_api()->find_nick("042AABBDD"), nptr2);
+
+    get_core_api()->clear_nicks();
+    free_core();
 }
 END_TEST
 
@@ -123,6 +132,8 @@ START_TEST(test_clear_nicks)
     ck_assert_int_eq(HASHMAP_SIZE(core_get_nicks()), 2);
     get_core_api()->clear_nicks();
     ck_assert_int_eq(HASHMAP_SIZE(core_get_nicks()), 0);
+
+    free_core();
 }
 END_TEST
 
