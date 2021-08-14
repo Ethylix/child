@@ -175,5 +175,6 @@ void m_squit(char *, char *);
 void m_sid(char *, char *);
 void m_server(char *, char *);
 void m_sjoin(char *, char *);
+void m_sasl(char *, char *);
 
 #endif

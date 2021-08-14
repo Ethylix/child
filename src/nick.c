@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 User *find_account(const Nick *nptr)
 {
-    return *nptr->svid ? find_user(nptr->svid) : find_user(nptr->nick);
+    return (*nptr->svid && strcmp(nptr->svid, "0")) ? find_user(nptr->svid) : find_user(nptr->nick);
 }
 
 static Nick *find_nick(const char *name_or_uid)

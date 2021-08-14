@@ -58,6 +58,7 @@ int ParseLine(void)
                     "PRIVMSG",  m_privmsg,
                     "TOPIC", m_topic,
                     "UID", m_uid,
+                    "SASL", m_sasl,
                     "SID", m_sid,
                     "SJOIN", m_sjoin,
                 };
@@ -835,28 +836,21 @@ void m_nick (char *sender, char *tail)
 
     if (!Strcmp(newnick,oldnick)) return;
 
+    // If the new nick is a registered account (User) and it is linked to our current account (nptr->svid)
+    // then we add +r (the nick is registered). Otherwise, we protect the new account as needed.
     uptr2 = find_user(newnick);
     if (uptr2) {
         if (uptr && (find_link2(oldnick, newnick) || find_link2(newnick, oldnick)) && uptr->authed == 1) {
-            uptr->authed = 0;
-            uptr->lastseen = time(NULL);
-            uptr2->authed = 1;
             SendRaw("SVSMODE %s +r",newnick);
             uptr2->lastseen = time(NULL);
         } else {
             if (uptr && uptr->authed == 1)
-                SendRaw("SVSMODE %s -r",newnick);
-            NoticeToUser(nptr, "This nick is registered. Please identify yourself or take another nick.");
+                NoticeToUser(nptr, "This nick is registered and you are already logged in, please take another nick.");
+            else
+                NoticeToUser(nptr, "This nick is registered. Please identify yourself or take another nick.");
             if (HasOption(uptr2, UOPT_PROTECT))
                 AddGuest(newnick, uptr2->timeout, time(NULL));
         }
-    }
-
-    if (uptr) {
-        uptr->authed = 0;
-        uptr->lastseen = time(NULL);
-        SendRaw("SVSLOGIN %s %s 0", core_get_config()->server, newnick);
-        nptr->svid[0] = '\0';
     }
 
     nptr = get_core_api()->find_nick(sender);
@@ -886,6 +880,14 @@ void m_ping (char *command)
 {
     SendRaw("PONG %s",command+1);
     RunHooks(HOOK_PING,NULL,NULL,NULL,NULL);
+}
+
+void m_sasl (char *sender, char *tail)
+{
+    char *parv[2];
+    parv[0] = sender;
+    parv[1] = tail;
+    RunHooks(HOOK_SASL, NULL, NULL, NULL, parv);
 }
 
 void m_protoctl(char *command, char *tail)
@@ -1149,6 +1151,7 @@ void m_uid (char *sender, char *tail)
     char *ident;
     char *host;
     char *uid;
+    char *svid;
     char *hiddenhost;
     char *nickip;
     long int modes=0;
@@ -1167,8 +1170,8 @@ void m_uid (char *sender, char *tail)
     ident = SeperateWord(ident);
     host = SeperateWord(ident);
     uid = SeperateWord(host);
-    umode = SeperateWord(uid);
-    umode = SeperateWord(umode);
+    svid = SeperateWord(uid);
+    umode = SeperateWord(svid);
     hiddenhost = SeperateWord(umode);
     hiddenhost = SeperateWord(hiddenhost);
     nickip = SeperateWord(hiddenhost);
@@ -1216,10 +1219,14 @@ void m_uid (char *sender, char *tail)
     if (IsCharInString('z',umode)) modes |= UMODE_SSL;
 
     nptr = get_core_api()->new_nick(nick,ident,host,uid,hiddenhost,modes,clientip);
+    strncpy(nptr->svid, svid, SVIDLEN);
     LLIST_INSERT_TAIL(&server->nicks, &nptr->server_head);
 
     User *uptr;
     uptr = find_account(nptr);
+
+    RunHooks(HOOK_NICKCREATE,nptr,uptr,NULL,NULL);
+
     if (uptr) {
         if (IsRegistered(nptr))
             uptr->authed = 1;
@@ -1233,7 +1240,6 @@ void m_uid (char *sender, char *tail)
         }
     }
 
-    RunHooks(HOOK_NICKCREATE,nptr,uptr,NULL,NULL);
     return;
 }
 
