@@ -183,6 +183,7 @@ static void child_run_loop_once(void)
             parse_line(line);
     } else {
         api->net_disconnect(/*graceful=*/false);
+        gettimeofday(&core->next_connect_time, NULL);
         return;
     }
 

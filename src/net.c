@@ -280,7 +280,7 @@ static int read_chunk(void)
     }
 
     readbytes = read(net->fd, indata->chunkbufentry, (CHUNKSIZE - oldbytes) - 10);
-    if (readbytes <= -1)
+    if (readbytes <= 0)
         return -1;
 
     *(indata->chunkbufentry + readbytes) = '\0';
