@@ -338,14 +338,14 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
         NoticeToUser(nptr,"Please set a valid email address with /msg C nick set email email@domain.xx");
 
     user->lastseen = time(NULL);
-    SendRaw("SVS2MODE %s +r",nptr->nick);
-    SendRaw("SVSLOGIN * %s %s",nptr->nick,nptr->nick);
+    get_core_api()->send_raw("SVS2MODE %s +r",nptr->nick);
+    get_core_api()->send_raw("SVSLOGIN * %s %s",nptr->nick,nptr->nick);
     if (user->vhost[0] != '\0') {
-        SendRaw("CHGHOST %s %s",nptr->nick,user->vhost);
+        get_core_api()->send_raw("CHGHOST %s %s",nptr->nick,user->vhost);
         strncpy(nptr->hiddenhost, user->vhost, HOSTLEN);
         NoticeToUser(nptr,"Your vhost \2%s\2 has been activated",user->vhost);
     } else if (HasOption(user, UOPT_CLOAKED)) {
-        SendRaw("CHGHOST %s %s%s", nptr->nick, user->nick, core_get_config()->usercloak);
+        get_core_api()->send_raw("CHGHOST %s %s%s", nptr->nick, user->nick, core_get_config()->usercloak);
         char host[HOSTLEN + NICKLEN + 1];
         bzero(host, HOSTLEN+NICKLEN+1);
         snprintf(host, HOSTLEN + NICKLEN + 1, "%s%s", user->nick, core_get_config()->usercloak);
@@ -427,8 +427,8 @@ void nick_register (Nick *nptr, User *uptr, char *all)
     } else {        
         user->authed = 1;
         strncpy(nptr->svid, user->nick, SVIDLEN);
-        SendRaw("SVS2MODE %s +r", nptr->nick);
-        SendRaw("SVSLOGIN %s %s %s", core_get_config()->server, nptr->nick, nptr->nick);
+        get_core_api()->send_raw("SVS2MODE %s +r", nptr->nick);
+        get_core_api()->send_raw("SVSLOGIN %s %s %s", core_get_config()->server, nptr->nick, nptr->nick);
     }
 }
 
@@ -660,7 +660,7 @@ void nick_set_cloak (Nick *nptr, User *uptr, char *all)
 
     if (!Strcmp(arg1,"on")) {
         SetOption(uptr, UOPT_CLOAKED);
-        SendRaw("CHGHOST %s %s%s", uptr->nick, uptr->nick, core_get_config()->usercloak);
+        get_core_api()->send_raw("CHGHOST %s %s%s", uptr->nick, uptr->nick, core_get_config()->usercloak);
         bzero(host, HOSTLEN+NICKLEN+1);
         snprintf(host, HOSTLEN+NICKLEN+1, "%s%s", uptr->nick, core_get_config()->usercloak);
         strncpy(nptr->hiddenhost, host, HOSTLEN);

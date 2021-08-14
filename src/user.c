@@ -209,7 +209,7 @@ void DeleteAccount (User *user)
         return;
 
     if (get_core_api()->find_nick(user->nick) && get_core()->eos)
-        SendRaw("SVSMODE %s -r",user->nick);
+        get_core_api()->send_raw("SVSMODE %s -r",user->nick);
     if (HasOption(user, UOPT_PROTECT)) DeleteGuest(user->nick);
     free(user);
 }
@@ -301,7 +301,7 @@ void FakeMsg(const char *who, const char *chan, const char *msg, ...)
     va_list val;
     ircsprintf(buf,511,msg,val);
 
-    SendRaw(":%s PRIVMSG %s :%s",who,chan,buf);
+    get_core_api()->send_raw(":%s PRIVMSG %s :%s",who,chan,buf);
 }
 
 void FakeNotice(const char *who, const Nick *nptr, const char *msg, ...)
@@ -310,7 +310,7 @@ void FakeNotice(const char *who, const Nick *nptr, const char *msg, ...)
     va_list val;
     ircsprintf(buf,511,msg,val);
     
-    SendRaw(":%s NOTICE %s :%s",who,nptr->nick,buf);
+    get_core_api()->send_raw(":%s NOTICE %s :%s",who,nptr->nick,buf);
 }
 
 void globops(char *msg, ...)
@@ -320,7 +320,7 @@ void globops(char *msg, ...)
 
     ircsprintf(buf,511,msg,val);
 
-    SendRaw("GLOBOPS :%s",buf);
+    get_core_api()->send_raw("GLOBOPS :%s",buf);
 }
 
 void send_global (char *target, char *msg, ...)
@@ -330,7 +330,7 @@ void send_global (char *target, char *msg, ...)
 
     ircsprintf(buf,511,msg,val);
 
-    SendRaw(":%s NOTICE $%s :%s", core_get_config()->nick, target, buf);
+    get_core_api()->send_raw(":%s NOTICE $%s :%s", core_get_config()->nick, target, buf);
 }
 
 Clone *find_clone (char *host)
@@ -366,7 +366,7 @@ void CheckGuests()
             gv = random()%999999;
             gv += hash(guest->nick);
             gv = gv%999999;
-            SendRaw("SVSNICK %s %s%d %ld",guest->nick,core_get_config()->guest_prefix,gv,time(NULL));
+            get_core_api()->send_raw("SVSNICK %s %s%d %ld",guest->nick,core_get_config()->guest_prefix,gv,time(NULL));
             DeleteGuest(guest->nick);
         }
     }
@@ -469,7 +469,7 @@ void loadallfakes()
     HASHMAP_FOREACH_ENTRY_VALUE(core_get_bots(), entry, bot) {
         generate_uid(bot->uid);
         fakeuser(bot->nick, bot->ident, bot->host, bot->uid, BOTSERV_UMODES);
-        SendRaw("SQLINE %s :Reserved for services", bot->nick);
+        get_core_api()->send_raw("SQLINE %s :Reserved for services", bot->nick);
     }
 }
 
@@ -539,7 +539,7 @@ void sync_cflag(const Cflag *cflag)
         if (cflag->uflags & UFLAG_NOOP) SetStatus(nptr, chname, member->flags, 0, bot);
         if (cflag->uflags & UFLAG_AUTOKICK) KickUser(bot, nptr->nick, chname, "Get out of this chan !");
         if (cflag->uflags & UFLAG_AUTOKICKBAN) {
-            SendRaw(":%s MODE %s +b *!*@%s", bot, nptr->nick, nptr->hiddenhost);
+            get_core_api()->send_raw(":%s MODE %s +b *!*@%s", bot, nptr->nick, nptr->hiddenhost);
             KickUser(bot, nptr->nick, chname, "Get out of this chan !");
         }
     } else {
@@ -577,7 +577,7 @@ void sync_cflag(const Cflag *cflag)
     } else if (cflag->flags == core_get_config()->chlev_akick) {
         KickUser(bot, nptr->nick, chname, "Get out of this chan !");
     } else if (cflag->flags == core_get_config()->chlev_akb) {
-        SendRaw(":%s MODE %s +b *!*@%s", bot, nptr->nick, nptr->hiddenhost);
+        get_core_api()->send_raw(":%s MODE %s +b *!*@%s", bot, nptr->nick, nptr->hiddenhost);
         KickUser(bot, nptr->nick, chname, "Get out of this chan !");
     } else if (cflag->flags == core_get_config()->chlev_nostatus)
         SetStatus(nptr, chname, member->flags, 0, bot);

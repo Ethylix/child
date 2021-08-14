@@ -80,8 +80,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define CFLAG_AUTO_VOICE    2
 #define CFLAG_AUTO_OP       3
 
-#define PartChannel(x) SendRaw(":%s PART %s",channel_botname(x),x)
-#define InviteUser(x,y) SendRaw(":%s INVITE %s :%s",core_get_config()->nick,x,y)
+#define PartChannel(x) get_core_api()->send_raw(":%s PART %s",channel_botname(x),x)
+#define InviteUser(x,y) get_core_api()->send_raw(":%s INVITE %s :%s",core_get_config()->nick,x,y)
 
 #define IsChanSuspended(x) HasOption(x, COPT_SUSPENDED)
 #define IsChanNoexpire(x) HasOption(x, COPT_NOEXPIRE)

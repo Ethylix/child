@@ -28,31 +28,24 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define MAX_RECO_ATTEMPTS 10
 #define CONNECT_TIMEOUT 5
 
-#define ECL_MAXSOCK 64
-
-struct {
+struct net_indata {
     char *nextline, *currentline;
     char *chunkbufentry;
     char chunkbuf[CHUNKSIZE];
-} indata;
+};
 
-struct {
+struct net_outdata {
     char outbuf[SENDQSIZE];
     int writebytes;
-} outdata;
+};
 
-int ConnectToServer (void);
-void SendInitToServer (void);
-void DisconnectFromServer (void);
-void SendRaw (char *, ...);
-int ReadChunk (void);
-int GetLineFromChunk (void);
-int GetLineFromPChunk (int);
-int Bind (void);
-void CloseAllSock (void);
-int build_poll (void);
+struct net {
+    struct net_indata indata;
+    struct net_outdata outdata;
+    int fd;
+};
+
 int match_ipmask (int, int, int);
 const char *decode_ip (char *);
-void flush_sendq(void);
 
 #endif

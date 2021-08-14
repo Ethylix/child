@@ -390,7 +390,7 @@ void KickUser (const char *who, const char *nick, const char *chan, const char *
 
     if (IsNokick(nptr)) return;
 
-    SendRaw(":%s KICK %s %s :%s",who,chan,nick,tmp);
+    get_core_api()->send_raw(":%s KICK %s %s :%s",who,chan,nick,tmp);
 
     Wchan *wchan = find_wchan(chan);
     if (wchan)
@@ -402,12 +402,12 @@ void JoinChannel(const char *who, const char *name)
     Chan *chptr = find_channel(name);
     if (!chptr) return;
     if (chptr->mlock[0] != '\0')
-        SendRaw(":%s MODE %s %s", who, name, chptr->mlock);
+        get_core_api()->send_raw(":%s MODE %s %s", who, name, chptr->mlock);
     if (!Strcmp(channel_botname(chptr),core_get_config()->nick) && HasOption(chptr, COPT_NOJOIN))
         return;
 
-    SendRaw(":%s JOIN %s",who,name);
-    SendRaw(":%s MODE %s +ao %s %s",who,name,who,who);
+    get_core_api()->send_raw(":%s JOIN %s",who,name);
+    get_core_api()->send_raw(":%s MODE %s +ao %s %s",who,name,who,who);
 }
 
 Member *find_member(const Wchan *wchan, const Nick *nptr)
@@ -472,10 +472,10 @@ void SetStatus (Nick *nptr, const char *chan, long int flag, int what, const cha
     if (!member) return;
 
     if (!what) {
-        SendRaw(":%s MODE %s -%s %s",who,chan,modes,targ);
+        get_core_api()->send_raw(":%s MODE %s -%s %s",who,chan,modes,targ);
         ClearChanFlag(member, flag);
     } else {
-        SendRaw(":%s MODE %s +%s %s",who,chan,modes,targ);
+        get_core_api()->send_raw(":%s MODE %s +%s %s",who,chan,modes,targ);
         SetChanFlag(member, flag);
     }
 }
@@ -578,7 +578,7 @@ void CheckLimits()
             }
             chptr = limit->chan;
             int ag = HasOption(chptr, COPT_NOJOIN) ? 0 : 1;
-            SendRaw(":%s MODE %s +l %d",channel_botname(limit->chan),limit->chan->channelname,members_num(wchan)+chptr->autolimit+ag);
+            get_core_api()->send_raw(":%s MODE %s +l %d",channel_botname(limit->chan),limit->chan->channelname,members_num(wchan)+chptr->autolimit+ag);
             DeleteLimit(limit);
         }
     }
@@ -618,9 +618,9 @@ void joinallchans()
             JoinChannel(channel_botname(chptr), chptr->channelname);
 
         if (chptr->mlock[0] != '\0')
-            SendRaw(":%s MODE %s %s",channel_botname(chptr),chptr->channelname,chptr->mlock);
+            get_core_api()->send_raw(":%s MODE %s %s",channel_botname(chptr),chptr->channelname,chptr->mlock);
         if (chptr->topic[0] != '\0' && (wchan && strcmp(chptr->topic, wchan->topic)))
-            SendRaw(":%s TOPIC %s :%s", channel_botname(chptr), chptr->channelname, chptr->topic);
+            get_core_api()->send_raw(":%s TOPIC %s :%s", channel_botname(chptr), chptr->channelname, chptr->topic);
     }
 }
 
@@ -640,7 +640,7 @@ void CheckTimebans()
         if (tb->duration == -1 || time(NULL) < tb->setat + tb->duration)
             continue;
 
-        SendRaw(":%s MODE %s -b %s", channel_botname(tb->chan), tb->chan->channelname, tb->mask);
+        get_core_api()->send_raw(":%s MODE %s -b %s", channel_botname(tb->chan), tb->chan->channelname, tb->mask);
         DeleteTimeban(tb);
     }
 }

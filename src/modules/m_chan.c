@@ -795,7 +795,7 @@ void chan_set_nojoin (Nick *nptr, User *uptr, Chan *chptr, char *all)
     if (!Strcmp(arg1,"on")) {
         SetOption(chptr, COPT_NOJOIN);
         NoticeToUser(nptr,"The option \2NOJOIN\2 has been set to \2on\2 for \2%s\2",chptr->channelname);
-        SendRaw(":%s PART %s :I won't idle any more on this lame channel.",core_get_config()->nick,chptr->channelname);
+        get_core_api()->send_raw(":%s PART %s :I won't idle any more on this lame channel.",core_get_config()->nick,chptr->channelname);
     } else if (!Strcmp(arg1,"off")) {
         ClearOption(chptr, COPT_NOJOIN); 
         NoticeToUser(nptr,"The option \2NOJOIN\2 has been set to \2off\2 for \2%s\2",chptr->channelname);
@@ -1052,7 +1052,7 @@ void chan_set_mlock (Nick *nptr, User *uptr, Chan *chptr, char *all)
             
     strncpy(chptr->mlock,all,50);
     NoticeToUser(nptr,"Mlock for channel %s set to \2%s\2",chptr->channelname,chptr->mlock);
-    SendRaw(":%s MODE %s %s",channel_botname(chptr),chptr->channelname,chptr->mlock);
+    get_core_api()->send_raw(":%s MODE %s %s",channel_botname(chptr),chptr->channelname,chptr->mlock);
 }
 
 void chan_set_founder (Nick *nptr, User *uptr, Chan *chptr, char *all)
@@ -1197,8 +1197,8 @@ void chan_clearchan (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
 
-    SendRaw("MODE %s -cfijklmnprstzACGMKLNOQRSTVu",arg3);
-    SendRaw("SVSMODE %s -beIqaohv",arg3);
+    get_core_api()->send_raw("MODE %s -cfijklmnprstzACGMKLNOQRSTVu",arg3);
+    get_core_api()->send_raw("SVSMODE %s -beIqaohv",arg3);
 
     NoticeToUser(nptr,"Done.");
 }
@@ -1223,7 +1223,7 @@ void chan_clearmodes (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
 
-    SendRaw("MODE %s -cfijklmnprstzACGMKLNOQRSTVu",arg3);
+    get_core_api()->send_raw("MODE %s -cfijklmnprstzACGMKLNOQRSTVu",arg3);
 
     NoticeToUser(nptr,"Done.");
 }
@@ -1248,7 +1248,7 @@ void chan_unbanall (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
 
-    SendRaw("SVSMODE %s -b",arg3);
+    get_core_api()->send_raw("SVSMODE %s -b",arg3);
 
     NoticeToUser(nptr,"Done.");
 }
@@ -1394,7 +1394,7 @@ void chan_unassign (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
 
-    SendRaw(":%s PART %s :Channel unassigned", chptr->chanbot->nick, arg1);
+    get_core_api()->send_raw(":%s PART %s :Channel unassigned", chptr->chanbot->nick, arg1);
     chptr->chanbot = NULL;
     NoticeToUser(nptr,"Channel unassigned. You can now either let the channel without bot or make %s join it with command /msg %s chan set %s nojoin off",core_get_config()->nick,core_get_config()->nick,arg1);
 }
@@ -1433,7 +1433,7 @@ void chan_addbot (Nick *nptr, User *uptr __unused, Chan *chptr __unused, char *a
     bot = add_bot(arg1, arg2, arg3);
     generate_uid(bot->uid);
     fakeuser(arg1, arg2, arg3, bot->uid, BOTSERV_UMODES);
-    SendRaw("SQLINE %s :Reserved for services",arg1);
+    get_core_api()->send_raw("SQLINE %s :Reserved for services",arg1);
     NoticeToUser(nptr,"Done.");
 }
 
@@ -1709,11 +1709,11 @@ void chan_topic (Nick *nptr, User *uptr, Chan *chptr, char *all)
     sprintf(mask, "%s!%s@%s", nptr->nick, nptr->ident, nptr->hiddenhost);
     if (!topic || *topic == '\0') {
         bzero(chptr->topic, TOPICLEN);
-        SendRaw(":%s TOPIC %s %s %ld :", channel_botname(chptr), ch, mask, time(NULL));
+        get_core_api()->send_raw(":%s TOPIC %s %s %ld :", channel_botname(chptr), ch, mask, time(NULL));
         NoticeToUser(nptr, "Topic cleared.");
     } else {
         strncpy(chptr->topic, topic, TOPICLEN);
-        SendRaw(":%s TOPIC %s %s %ld :%s", channel_botname(chptr), ch, mask, time(NULL), topic);
+        get_core_api()->send_raw(":%s TOPIC %s %s %ld :%s", channel_botname(chptr), ch, mask, time(NULL), topic);
         NoticeToUser(nptr, "Done.");
     }
 }

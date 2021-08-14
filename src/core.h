@@ -110,20 +110,26 @@ struct core {
     struct config config;
 
     // Runtime parameters
-    int sock;
     int startuptime;
     bool verbose;
     bool vv;
     bool raws;
     bool eos;
     MYSQL mysql_handle;
-    int retry_attempts;
     int connected;
-    int nextretry;
+
+    struct timeval next_connect_time;
+    struct timeval next_savedb_time;
+    struct timeval next_expired_check_time;
+    int connect_retries;
 
     char remote_server[SERVERNAMELEN+1];
     char remote_sid[SIDLEN+1];
     char uid[UIDLEN+1];
+
+    struct net net;
+
+    bool stop;
 };
 
 #define core_get_users() (get_core()->users)
@@ -144,6 +150,8 @@ struct core {
 #define core_get_commands() (&get_core()->commands)
 
 #define core_get_config() (&get_core()->config)
+
+#define core_get_net() (&get_core()->net)
 
 struct core *get_core(void);
 void init_core(void);

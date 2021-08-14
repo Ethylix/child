@@ -401,7 +401,7 @@ void bot_deopall (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan)
     if (!IsAuthed(uptr)) return;
     if (!ChannelCanOp(uptr, chptr) && !IsFounder(uptr, chptr)) return;
 
-    SendRaw("SVSMODE %s -o",wchan->chname);
+    get_core_api()->send_raw("SVSMODE %s -o",wchan->chname);
 }
 
 void bot_halfopall (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan)
@@ -422,7 +422,7 @@ void bot_dehalfopall (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan
     if (!IsAuthed(uptr)) return;
     if (!ChannelCanOp(uptr, chptr) && !IsFounder(uptr, chptr)) return;
 
-    SendRaw("SVSMODE %s -h",wchan->chname);
+    get_core_api()->send_raw("SVSMODE %s -h",wchan->chname);
 }
 
 void bot_voiceall (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan)
@@ -443,7 +443,7 @@ void bot_devoiceall (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan)
     if (!IsAuthed(uptr)) return;
     if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
 
-    SendRaw("SVSMODE %s -v",wchan->chname);
+    get_core_api()->send_raw("SVSMODE %s -v",wchan->chname);
 }
 
 void bot_opopop (Nick *nptr, User *uptr __unused, Chan *chptr __unused, Wchan *wchan)
@@ -542,7 +542,7 @@ void bot_rkb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
     if (!HasOption(chptr, COPT_MASS)) return;
 
     if (!arg2 || *arg2 == '\0') {
-        SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname,nptr->hiddenhost);
+        get_core_api()->send_raw(":%s MODE %s +b *!*@%s",bot,wchan->chname,nptr->hiddenhost);
         KickUser(bot,nptr->nick,wchan->chname,"Requested");
     } else {
         Member *member, *tmp_member;
@@ -560,7 +560,7 @@ void bot_rkb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
                             continue;
                     }
                 }
-                SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname, member->nick->hiddenhost);
+                get_core_api()->send_raw(":%s MODE %s +b *!*@%s",bot,wchan->chname, member->nick->hiddenhost);
                 KickUser(bot, member->nick->nick, wchan->chname, "regexp kickban matching nick");
             }
         }
@@ -579,11 +579,11 @@ void bot_kb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
     if (!IsAuthed(uptr)) return;
     if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
     if (!arg2 || *arg2 == '\0') {
-        SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname,nptr->hiddenhost);
+        get_core_api()->send_raw(":%s MODE %s +b *!*@%s",bot,wchan->chname,nptr->hiddenhost);
         KickUser(bot,nptr->nick,wchan->chname,"Requested");
     } else {
         if (!Strcmp(arg2,core_get_config()->nick)) {
-            SendRaw(":%s MODE %s +b %s*!*@*",bot,wchan->chname,nptr->nick);
+            get_core_api()->send_raw(":%s MODE %s +b %s*!*@*",bot,wchan->chname,nptr->nick);
             KickUser(bot,nptr->nick,wchan->chname,"Don't touch !");
             return;
         }
@@ -594,7 +594,7 @@ void bot_kb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
             LLIST_FOREACH_ENTRY_SAFE(&wchan->members, member, tmp_member, wchan_head) {
                 if (member->nick == nptr || IsOper(member->nick))
                     continue;
-                SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname,member->nick->hiddenhost);
+                get_core_api()->send_raw(":%s MODE %s +b *!*@%s",bot,wchan->chname,member->nick->hiddenhost);
                 KickUser(bot,member->nick->nick,wchan->chname,"Kickbanning all users");
             }
             return;
@@ -613,7 +613,7 @@ void bot_kb (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
             }
         }
 
-        SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname,nptr2->hiddenhost);
+        get_core_api()->send_raw(":%s MODE %s +b *!*@%s",bot,wchan->chname,nptr2->hiddenhost);
         if (!all || *all == '\0')
             KickUser(bot,arg2,wchan->chname,"Requested");
         else
@@ -631,7 +631,7 @@ void bot_unban (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan, char
     if (!IsAuthed(uptr)) return;
     if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
     if (!arg2 || *arg2 == '\0') return;
-    SendRaw(":%s MODE %s -b %s",bot,wchan->chname,arg2);
+    get_core_api()->send_raw(":%s MODE %s -b %s",bot,wchan->chname,arg2);
 
     tb = find_timeban(chptr, arg2);
     if (tb)
@@ -650,24 +650,24 @@ void bot_ban (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
     if (!IsAuthed(uptr)) return;
     if (!ChannelCanHalfop(uptr, chptr) && !IsFounder(uptr, chptr)) return;
     if (!arg2 || *arg2 == '\0') { 
-        SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname,nptr->hiddenhost);
+        get_core_api()->send_raw(":%s MODE %s +b *!*@%s",bot,wchan->chname,nptr->hiddenhost);
     } else {
         nptr2 = get_core_api()->find_nick(arg2);
         if (!nptr2) {
-            SendRaw(":%s MODE %s +b %s",bot,wchan->chname,arg2);
+            get_core_api()->send_raw(":%s MODE %s +b %s",bot,wchan->chname,arg2);
         } else {
             if (!arg3 || *arg3 == '\0') {
-                SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname,nptr2->hiddenhost);
+                get_core_api()->send_raw(":%s MODE %s +b *!*@%s",bot,wchan->chname,nptr2->hiddenhost);
             } else {
                 switch(strtol(arg3,NULL,10)) {
                     case 1:
-                        SendRaw(":%s MODE %s +b %s!*@*",bot,wchan->chname,nptr2->nick);
+                        get_core_api()->send_raw(":%s MODE %s +b %s!*@*",bot,wchan->chname,nptr2->nick);
                         break;
                     case 2:
-                        SendRaw(":%s MODE %s +b *!%s@*",bot,wchan->chname,nptr2->ident);
+                        get_core_api()->send_raw(":%s MODE %s +b *!%s@*",bot,wchan->chname,nptr2->ident);
                         break;
                     case 3:
-                        SendRaw(":%s MODE %s +b *!*@%s",bot,wchan->chname,nptr2->hiddenhost);
+                        get_core_api()->send_raw(":%s MODE %s +b *!*@%s",bot,wchan->chname,nptr2->hiddenhost);
                         break;
                }        
             }  
@@ -680,8 +680,8 @@ void bot_topic (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan, char
     if (!IsAuthed(uptr)) return;
     if (!IsTrueOwner(uptr, chptr)) return;
     if (!all || *all == '\0') return;
-//    SendRaw("TOPIC %s %s %ld :%s", wchan->chname, nptr->nick, time(NULL), all);
-    SendRaw(":%s TOPIC %s :%s", channel_botname(chptr), wchan->chname, all);
+//    get_core_api()->send_raw("TOPIC %s %s %ld :%s", wchan->chname, nptr->nick, time(NULL), all);
+    get_core_api()->send_raw(":%s TOPIC %s :%s", channel_botname(chptr), wchan->chname, all);
 }
 
 void bot_moo (Nick *nptr, User *uptr, Chan *chptr, Wchan *wchan, char *all)
@@ -898,5 +898,5 @@ void bot_tb (Nick *nptr __unused, User *uptr, Chan *chptr, Wchan *wchan __unused
         }
     }
 
-    SendRaw(":%s MODE %s +b %s", channel_botname(chptr), wchan->chname, effective_mask);
+    get_core_api()->send_raw(":%s MODE %s +b %s", channel_botname(chptr), wchan->chname, effective_mask);
 }

@@ -33,19 +33,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #define DEFAULT_CONFFILE "child.conf"
 
-char *strcasestr (const char *, const char *);
+char *strcasestr(const char *, const char *);
 
-void child_die (int);
-void child_restart (int);
-void child_clean (void) __attribute__((noreturn));
+void child_die(int);
+void child_restart(int);
+void child_clean(void) __attribute__((noreturn));
 
 /* loadconf.c */
-void loadconf (int);
+void loadconf(int);
 
 /* md5.c */
-char *md5_hash (char *);
+char *md5_hash(char *);
 
 /* parseline.c */
-int ParseLine (void);
+int parse_line(char *line);
 
 #endif

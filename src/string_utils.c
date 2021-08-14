@@ -84,6 +84,9 @@ char *strtosql (char *dst, char *src, int len)
         if (src[i] == '\\' || src[i] == '\'' || src[i] == '"')
             dst[j++] = '\\';
         dst[j] = src[i];
+
+        if (dst[j] == '\0')
+            break;
     }
 
     return dst;
