@@ -63,6 +63,9 @@ int sasl_start_session (__unused Nick *nptr, __unused User *uptr, __unused Chan 
     int i = 0;
     User *user;
 
+    if (!parv[1] || !*parv[1])
+        return MOD_CONTINUE;
+
     char *pch = strtok(parv[1], " ");
 
     while (pch != NULL && i < 10) {
@@ -126,6 +129,7 @@ int sasl_start_session (__unused Nick *nptr, __unused User *uptr, __unused Chan 
         char *md5pass = md5_hash(password);
         if (Strcmp(md5pass,user->md5_pass)) {
             // wrong password
+            free(md5pass);
             get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid);
             return MOD_CONTINUE;
         }
@@ -150,6 +154,14 @@ int sasl_finish_session (Nick *nptr, User *uptr, __unused Chan *cptr, __unused c
 
     if (!uptr)
         uptr = find_user(nptr->svid);
+
+    // This race condition can happen if the user is dropped in between sasl_start_session and
+    // sasl_finish_session.
+    if (!uptr) {
+        strncpy(nptr->svid, "0", SVIDLEN);
+        get_core_api()->send_raw("SVS2MODE %s +d 0", nptr->uid);
+        return MOD_CONTINUE;
+    }
 
     // TODO: refactor, coming from nick_identify()
     NoticeToUser(nptr,"You are now identified");

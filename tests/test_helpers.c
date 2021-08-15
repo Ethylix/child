@@ -1,6 +1,7 @@
 #include "test_helpers.h"
 
 #include "child.h"
+#include "core.h"
 #include "core_api.h"
 #include "string_utils.h"
 
@@ -71,6 +72,11 @@ bool expect_any_raw(const char *raw)
     return false;
 }
 
+bool expect_raw_count(int count)
+{
+    return (mock_server.write_idx - mock_server.read_idx) == count;
+}
+
 void consume_mock_raws(void)
 {
     for (int i = 0; i < MAX_MOCK_RAWS; i++) {
@@ -103,8 +109,26 @@ void inject_parse_line(const char *buf)
     free(copy);
 }
 
-void setup_mock_server(void)
+void setup_mock_server(const char *server_name, const char *sid)
 {
     get_core_api()->send_raw = mock_send_raw;
     memset(&mock_server, 0, sizeof(mock_server));
+
+    if (server_name && sid) {
+        strncpy(get_core()->remote_server, server_name, SERVERNAMELEN);
+        strncpy(get_core()->remote_sid, sid, SIDLEN);
+        assert(add_server(server_name, sid, /*hub=*/NULL));
+        get_core()->eos = false;
+        get_core()->connected = 1;
+    }
+}
+
+void free_mock_server(void)
+{
+    Server *server;
+
+    consume_mock_raws();
+    server = find_server(get_core()->remote_server);
+    if (server)
+        detach_server_recursive(server);
 }

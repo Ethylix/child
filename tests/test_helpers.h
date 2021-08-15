@@ -5,11 +5,13 @@
 
 #include <stdbool.h>
 
+bool expect_raw_count(int count);
 bool expect_next_raw(const char *raw);
 bool expect_any_raw(const char *raw);
 void consume_mock_raws(void);
 User *create_mock_user(const char *name, const char *password);
 void inject_parse_line(const char *buf);
-void setup_mock_server(void);
+void setup_mock_server(const char *server_name, const char *sid);
+void free_mock_server(void);
 
 #endif

@@ -11,7 +11,7 @@
 START_TEST(test_parse_ping)
 {
     init_core();
-    setup_mock_server();
+    setup_mock_server(/*server_name=*/NULL, /*sid=*/NULL);
 
     inject_parse_line("PING :this is a test");
     ck_assert(expect_next_raw("PONG this"));
