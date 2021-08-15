@@ -9,7 +9,7 @@
 #include "net.h"
 #include "test_helpers.h"
 
-START_TEST(test_sasl_auth_success)
+START_TEST(test_sasl_start_session_success)
 {
     Module *mod;
     User *uptr;
@@ -26,7 +26,11 @@ START_TEST(test_sasl_auth_success)
     inject_parse_line(":ircd.test SASL services.test 042AAAAAA S PLAIN");
     ck_assert(expect_next_raw(":services.test SASL ircd.test 042AAAAAA C +"));
 
-    // TODO: check the rest of SASL auth.
+    // base64 payload is "\x00test_user\x00test_password".
+    // https://datatracker.ietf.org/doc/html/rfc4616
+    inject_parse_line(":ircd.test SASL services.test 042AAAAAA C AHRlc3RfdXNlcgB0ZXN0X3Bhc3N3b3Jk");
+    ck_assert(expect_next_raw(":services.test SVSLOGIN ircd.test 042AAAAAA test_user"));
+    ck_assert(expect_next_raw(":services.test SASL ircd.test 042AAAAAA D S"));
 
     consume_mock_raws();
     DeleteAccount(uptr);
@@ -42,8 +46,8 @@ Suite *make_mod_sasl_suite(void)
 
     s = suite_create("mod_sasl");
 
-    tc = tcase_create("sasl_auth_success");
-    tcase_add_test(tc, test_sasl_auth_success);
+    tc = tcase_create("sasl_start_session_success");
+    tcase_add_test(tc, test_sasl_start_session_success);
     suite_add_tcase(s, tc);
 
     return s;

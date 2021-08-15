@@ -83,7 +83,8 @@ int sasl_start_session (__unused Nick *nptr, __unused User *uptr, __unused Chan 
     int ret;
     char *authcid, *password;
 
-    char decoded[400];
+    char decoded[401];
+    memset(decoded, 0, 401);
 
     // parse
     if (strcmp(command, "S") == 0) {
@@ -96,7 +97,7 @@ int sasl_start_session (__unused Nick *nptr, __unused User *uptr, __unused Chan 
         get_core_api()->send_raw(":%s SASL %s %s C +", target, sender, uid);
     } else if (strcmp(command, "C") == 0) {
         ret = b64_decode(split[3], decoded, 400);
-        if (ret != 0) {
+        if (ret < 0) {
             get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid);
             return MOD_CONTINUE;
         }
@@ -132,7 +133,7 @@ int sasl_start_session (__unused Nick *nptr, __unused User *uptr, __unused Chan 
 
         // TODO:    create a helper function to log an user in and use it here
         //          the function should also be used in nick_identify/nick_register
-        get_core_api()->send_raw(":%s SVSLOGIN %s %s %s", target, sender, uid, decoded);
+        get_core_api()->send_raw(":%s SVSLOGIN %s %s %s", target, sender, uid, authcid);
         get_core_api()->send_raw(":%s SASL %s %s D S", target, sender, uid);
     }
 
