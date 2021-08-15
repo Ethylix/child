@@ -6,5 +6,6 @@
 Suite* make_hashmap_suite(void);
 Suite* make_parseline_suite(void);
 Suite* make_nick_api_suite(void);
+Suite* make_mod_sasl_suite(void);
 
 #endif

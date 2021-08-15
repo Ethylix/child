@@ -44,6 +44,9 @@ void child_init()
     AddHook(HOOK_NICKCREATE,&sasl_finish_session,"sasl_finish_session","sasl");
 }
 
+void child_cleanup()
+{}
+
 /** Starts an SASL session
  * An SASL session works in two steps:
  * - sasl_start_session: AUTHENTICATE during registration, this delegates the authentication to services and sets the SVID on the irc
@@ -86,28 +89,28 @@ int sasl_start_session (__unused Nick *nptr, __unused User *uptr, __unused Chan 
     if (strcmp(command, "S") == 0) {
         // We only support PLAIN for now
         if (strcmp(tail, "PLAIN")) {
-            SendRaw(":%s SASL %s %s M PLAIN", target, sender, uid);
-            SendRaw(":%s SASL %s %s D F", target, sender, uid);
+            get_core_api()->send_raw(":%s SASL %s %s M PLAIN", target, sender, uid);
+            get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid);
             return MOD_CONTINUE;
         }
-        SendRaw(":%s SASL %s %s C +", target, sender, uid);
+        get_core_api()->send_raw(":%s SASL %s %s C +", target, sender, uid);
     } else if (strcmp(command, "C") == 0) {
         ret = b64_decode(split[3], decoded, 400);
         if (ret != 0) {
-            SendRaw(":%s SASL %s %s D F", target, sender, uid);
+            get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid);
             return MOD_CONTINUE;
         }
 
         authcid = memchr(decoded, '\0', ret);
         if (authcid == NULL) {
-            SendRaw(":%s SASL %s %s D F", target, sender, uid);
+            get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid);
             return MOD_CONTINUE;
         }
         authcid++;
 
         password = memchr(authcid, '\0', ret);
         if (password == NULL) {
-            SendRaw(":%s SASL %s %s D F", target, sender, uid);
+            get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid);
             return MOD_CONTINUE;
         }
         password++;
@@ -115,22 +118,22 @@ int sasl_start_session (__unused Nick *nptr, __unused User *uptr, __unused Chan 
         // check that user exists and password matches
         user = find_user(authcid);
         if (!user) {
-            SendRaw(":%s SASL %s %s D F", target, sender, uid);
+            get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid);
             return MOD_CONTINUE;
         } 
 
         char *md5pass = md5_hash(password);
         if (Strcmp(md5pass,user->md5_pass)) {
             // wrong password
-            SendRaw(":%s SASL %s %s D F", target, sender, uid);
+            get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid);
             return MOD_CONTINUE;
         }
         free(md5pass);
 
         // TODO:    create a helper function to log an user in and use it here
         //          the function should also be used in nick_identify/nick_register
-        SendRaw(":%s SVSLOGIN %s %s %s", target, sender, uid, decoded);
-        SendRaw(":%s SASL %s %s D S", target, sender, uid);
+        get_core_api()->send_raw(":%s SVSLOGIN %s %s %s", target, sender, uid, decoded);
+        get_core_api()->send_raw(":%s SASL %s %s D S", target, sender, uid);
     }
 
     return MOD_CONTINUE;
@@ -157,15 +160,15 @@ int sasl_finish_session (Nick *nptr, User *uptr, __unused Chan *cptr, __unused c
 
     uptr->authed = 1;
     uptr->lastseen = time(NULL);
-    SendRaw("SVS2MODE %s +r",nptr->nick);
+    get_core_api()->send_raw("SVS2MODE %s +r",nptr->nick);
     SetUmode(nptr, UMODE_REGISTERED);
 
     if (uptr->vhost[0] != '\0') {
-        SendRaw("CHGHOST %s %s",nptr->nick,uptr->vhost);
+        get_core_api()->send_raw("CHGHOST %s %s",nptr->nick,uptr->vhost);
         strncpy(nptr->hiddenhost, uptr->vhost, HOSTLEN);
         NoticeToUser(nptr,"Your vhost \2%s\2 has been activated",uptr->vhost);
     } else if (HasOption(uptr, UOPT_CLOAKED)) {
-        SendRaw("CHGHOST %s %s%s", nptr->nick, uptr->nick, core_get_config()->usercloak);
+        get_core_api()->send_raw("CHGHOST %s %s%s", nptr->nick, uptr->nick, core_get_config()->usercloak);
         char host[HOSTLEN + NICKLEN + 1];
         bzero(host, HOSTLEN+NICKLEN+1);
         snprintf(host, HOSTLEN + NICKLEN + 1, "%s%s", uptr->nick, core_get_config()->usercloak);

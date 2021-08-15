@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdio.h>
 #include <string.h>
 
-char *md5_hash(char *msg)
+char *md5_hash(const char *msg)
 {
     EVP_MD_CTX *mdctx;
     const EVP_MD *md;

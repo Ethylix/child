@@ -6,32 +6,17 @@
 #include "core.h"
 #include "core_api.h"
 #include "net.h"
-
-static void expect_net_output(const char *buf)
-{
-    struct net *net = core_get_net();
-    struct net_outdata *outdata = &net->outdata;
-
-    ck_assert_int_eq(strlen(outdata->outbuf), strlen(buf));
-    ck_assert_int_eq(memcmp(outdata->outbuf, buf, strlen(buf)), 0);
-}
-
-static void test_parse_line(const char *buf)
-{
-    char *copy = strdup(buf);
-    parse_line(copy);
-    free(copy);
-}
+#include "test_helpers.h"
 
 START_TEST(test_parse_ping)
 {
     init_core();
+    setup_mock_server();
 
-    test_parse_line("PING :this is a test");
+    inject_parse_line("PING :this is a test");
+    ck_assert(expect_next_raw("PONG this"));
 
-    // The current implementation only echoes the first word.
-    expect_net_output("PONG this\r\n");
-
+    consume_mock_raws();
     free_core();
 }
 END_TEST

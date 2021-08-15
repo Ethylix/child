@@ -43,7 +43,7 @@ void child_clean(void) __attribute__((noreturn));
 void loadconf(int);
 
 /* md5.c */
-char *md5_hash(char *);
+char *md5_hash(const char *);
 
 /* parseline.c */
 int parse_line(char *line);
