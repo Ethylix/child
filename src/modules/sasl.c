@@ -112,6 +112,7 @@ int sasl_start_session (__unused Nick *nptr, __unused User *uptr, __unused Chan 
         }
         authcid++;
 
+        ret -= (intptr_t)((char *)authcid - (char *)decoded);
         password = memchr(authcid, '\0', ret);
         if (password == NULL) {
             get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid);
