@@ -1,0 +1,30 @@
+---
+main:
+  - name: Usage
+    sub:
+    - name: Getting started
+      ref: /usage/getting-started
+    - name: Manage your account
+      ref: /usage/manage-account
+    - name: Manage a channel
+      ref: /usage/manage-channel
+  - name: Commands
+    sub:
+    - name: nick
+      ref: /commands/nick
+    - name: chan
+      ref: /commands/chan
+    - name: bot
+      ref: /commands/bot
+    - name: host (oper-only)
+      ref: /commands/host
+    - name: oper (oper-only)
+      ref: /commands/oper
+  - name: Administration
+    sub:
+    - name: Installation
+      ref: /administration/install
+  - name: Developer
+    sub:
+    - name: Docker environment
+      ref: /developer/docker
