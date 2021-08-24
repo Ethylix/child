@@ -22,7 +22,7 @@ description: Child is a simple modular service for your [UnrealIRCD](https://unr
 
 Child is a simple modular service for your [UnrealIRCD](https://unrealircd.org) IRC network. It was built for [GeekNode](https://geeknode.org) and has been serving it ever since!
 
-Child behaves differently from other services like Anope or  Atheme: instead of having multiple service accounts (NickServ, ChanServ, OperServ...), C handles everything under its name.
+Child behaves differently from other services like Anope or  Atheme: instead of having multiple service accounts (NickServ, ChanServ, OperServ...), Child handles everything under its nickname **C**.
 
 
 ## Register your user
