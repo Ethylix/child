@@ -1,4 +1,8 @@
-# Docker
+---
+title: Docker development environment
+description: Use docker containers to help development on Child
+---
+
 Our docker-compose file will start:
 - mysql
 - unrealircd
@@ -6,7 +10,7 @@ Our docker-compose file will start:
 
 It provisions mysql with the schema in `schema.sql` and links Child as `services.geeknode.org` to unrealircd (`test.geeknode.org`). You can connect to unrealircd on port `6697` (tls self-signed) and `/oper test test`.
 
-# Start the stack
+## Start the stack
 ```
 docker-compose up
 ```
