@@ -6,7 +6,7 @@ jobs:
       DEBIAN_FRONTEND: noninteractive
       CK_TAP_LOG_FILE_NAME: tests/results.tap
     steps:
-      - run: apt update && apt install -y check
+      - run: apt update && apt install -y check libsodium-dev
       - checkout:
       - run: cmake .
       - run: make

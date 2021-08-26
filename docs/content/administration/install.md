@@ -12,7 +12,7 @@ description: How to get Child up and running on your network
 ## Dependencies
 Install dependencies, example debian-based OSes:
 ```
-apt install git libmariadb-dev-compat libmariadbclient-dev libc-dev libssl-dev cmake check
+apt install git libmariadb-dev-compat libmariadbclient-dev libc-dev libssl-dev libsodium-dev cmake check
 ```
 
 ## Compile child

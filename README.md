@@ -9,12 +9,13 @@ Child is an IRC Service for [UnrealIRCD](https://www.unrealircd.com).
 - `libc`
 - `cmake`
 - `check`
+- `libsodium`
 - mysql 5.7
 - unrealircd 4.2
 
 # Build
 ```
-apt install libmariadb-dev-compat libmariadbclient-dev libc-dev libssl-dev cmake check
+apt install libmariadb-dev-compat libsodium-dev libmariadbclient-dev libc-dev libssl-dev cmake check
 mkdir build
 cd build
 cmake ..

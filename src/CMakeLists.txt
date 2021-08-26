@@ -49,7 +49,7 @@ set(BIN_SOURCES
 )
 
 add_library(childcore STATIC ${HEADERS} ${LIB_SOURCES})
-target_link_libraries(childcore OpenSSL::Crypto ${MYSQL_LIBRARIES} ${DL_LIBRARY})
+target_link_libraries(childcore OpenSSL::Crypto ${MYSQL_LIBRARIES} sodium ${DL_LIBRARY})
 target_include_directories(childcore PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
 
 add_executable(child ${HEADERS} ${BIN_SOURCES})
