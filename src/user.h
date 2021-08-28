@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "net.h"
 #include "nick.h"
 
+#include <sodium.h>
 #include <time.h>
 
 #define EMAILLEN 100
@@ -79,8 +80,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 typedef struct user_ {
     char nick[NICKLEN + 1]; /* hash key */
     int authed,level;
-    char md5_pass[MD5_LEN + 1];
-    int lastseen,timeout;
+    char md5_pass[MD5_LEN + 1]; /* deprecated, to be removed in v2.1 */
+    char pwhash[crypto_pwhash_STRBYTES];
+    int lastseen, timeout;
     long int options;
     char vhost[HOSTLEN + 1];
     char email[EMAILLEN + 1];

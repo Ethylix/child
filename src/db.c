@@ -33,6 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "user.h"
 
 #include <mysql/mysql.h>
+#include <sodium.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,6 +49,7 @@ static int load_one_user(const char *name,
                          const int lastseen,
                          const char *vhost,
                          const char *md5_pass,
+                         const char *pwhash,
                          const int options,
                          const int timeout,
                          const char *email,
@@ -71,6 +73,7 @@ static int load_one_user(const char *name,
         uptr->lastseen = lastseen;
         strncpy(uptr->vhost, vhost, HOSTLEN);
         strncpy(uptr->md5_pass, md5_pass, MD5_LEN);
+        strncpy(uptr->pwhash, pwhash, crypto_pwhash_STRBYTES);
         uptr->options = options;
         uptr->timeout = timeout ?: TIMEOUT_DFLT;
         strncpy(uptr->email, email, EMAILLEN);
@@ -87,7 +90,7 @@ static int load_user_db(void)
     MYSQL_ROW row;
     int err = 0;
 
-    mysql_query(&get_core()->mysql_handle,"SELECT username, authlevel, seen, vhost, md5_pass, options, timeout, email, regtime FROM child_users");
+    mysql_query(&get_core()->mysql_handle,"SELECT username, authlevel, seen, vhost, md5_pass, pwhash, options, timeout, email, regtime FROM child_users");
 
     if ((result = mysql_use_result(&get_core()->mysql_handle)) == NULL) {
         fprintf(stderr, "CRITICAL: Cannot load user table: mysql_use_result returned NULL\n");
@@ -100,10 +103,11 @@ static int load_user_db(void)
                             /*lastseem=*/strtol(row[2], NULL, 10),
                             /*vhost=*/row[3],
                             /*md5_pass=*/row[4],
-                            /*options=*/strtol(row[5], NULL, 10),
-                            /*timeout=*/strtol(row[6], NULL, 10),
-                            /*email=*/row[7],
-                            /*regtime=*/strtol(row[8], NULL, 10));
+                            /*pwhash=*/row[5],
+                            /*options=*/strtol(row[6], NULL, 10),
+                            /*timeout=*/strtol(row[7], NULL, 10),
+                            /*email=*/row[8],
+                            /*regtime=*/strtol(row[9], NULL, 10));
         if (err) {
             fprintf(stderr, "Failed to load user %s from db, aborting load.\n", row[0]);
             break;
@@ -521,7 +525,29 @@ void saveuserdb()
     mysql_query(&get_core()->mysql_handle,"DELETE FROM child_users");
 
     HASHMAP_FOREACH_ENTRY_VALUE(core_get_users(), entry, uptr) {
-        snprintf(tmp,1024,"INSERT INTO child_users VALUES ('%s',%d,%d,'%s','%s',%ld,%d,'%s',%d)",strtosql(buf,uptr->nick,512),uptr->level,uptr->lastseen,uptr->vhost,uptr->md5_pass,uptr->options,uptr->timeout,uptr->email,uptr->regtime);
+        snprintf(tmp,1024,"INSERT INTO child_users ("
+                            "nick,"
+                            "level,"
+                            "lastseen,"
+                            "vhost,"
+                            "md5_pass,"
+                            "pwhash,"
+                            "options,"
+                            "timeout,"
+                            "email,"
+                            "regtime"
+                            ")"
+                            "VALUES ('%s',%d,%d,'%s','%s','%s',%ld,%d,'%s',%d)",
+                            strtosql(buf,uptr->nick,512),
+                            uptr->level,
+                            uptr->lastseen,
+                            uptr->vhost,
+                            uptr->md5_pass,
+                            uptr->pwhash,
+                            uptr->options,
+                            uptr->timeout,
+                            uptr->email,
+                            uptr->regtime);
         mysql_query(&get_core()->mysql_handle,tmp);
     }
 }
