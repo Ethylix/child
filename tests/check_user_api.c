@@ -23,6 +23,12 @@ START_TEST(test_check_user_password)
     ck_assert_int_eq(check_user_password(uptr, "test_password"), 0);
     ck_assert_int_eq(check_user_password(NULL, "dummypassword"), -1);
 
+    // check md5 -> pwhash migration
+    strncpy(uptr->md5_pass, "c4d8a57e2ca5dc5d71d2cf3dbbbbaabe", 32);
+    ck_assert_int_eq(check_user_password(uptr, "testpassword2"), 0);
+    ck_assert_str_eq(uptr->md5_pass, "");
+    ck_assert_int_eq(check_user_password(uptr, "testpassword2"), 0);
+
     DeleteAccount(uptr);
     free_core();
 }
@@ -39,6 +45,12 @@ START_TEST(test_set_user_password)
 
     ck_assert_int_eq(set_user_password(uptr, "test_password2"), 0);
     ck_assert_int_eq(check_user_password(uptr, "test_password2"), 0);
+
+    // check md5 -> pwhash migration
+    strncpy(uptr->md5_pass, "0", 1);
+    ck_assert_int_eq(set_user_password(uptr, "test_password3"), 0);
+    ck_assert_str_eq(uptr->md5_pass, "");
+    ck_assert_int_eq(check_user_password(uptr, "test_password3"), 0);
 
     ck_assert_int_eq(check_user_password(NULL, "dummypassword"), -1);
 

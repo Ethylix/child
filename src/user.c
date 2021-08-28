@@ -642,13 +642,24 @@ void generate_uid(char *dst_uid)
  *          -1 if not or if an error occurs
  */
 int check_user_password(User *uptr, const char *password) {
-    char *hash = md5_hash(password);
-    if (!uptr || Strcmp(hash,uptr->md5_pass)) {
-        free(hash);
+    if (!uptr)
         return -1;
+    
+    if (strcmp(uptr->md5_pass, "")) {
+        char *hash = md5_hash(password);
+        if (Strcmp(hash,uptr->md5_pass)) {
+            free(hash);
+            return -1;
+        }
+        free(hash);
+
+        // migrate to pwhash
+        set_user_password(uptr, password);
     }
-    free(hash);
-    return 0;
+
+    return crypto_pwhash_str_verify(/*str=*/uptr->pwhash,
+                                     /*passwd=*/password,
+                                     /*passwdlen=*/strlen(password));
 }
 
 /** Sets a new password for a user
@@ -661,9 +672,12 @@ int set_user_password(User *uptr, const char *password) {
     if (!uptr) {
         return -1;
     }
+
     memset(uptr->md5_pass,'\0',32);
-    char *hash = md5_hash(password);
-    strncpy(uptr->md5_pass,hash,32);
-    free(hash);
-    return 0;
+
+    return crypto_pwhash_str(/*out=*/uptr->pwhash,
+                        /*passwd=*/password, 
+                        /*passwdlen=*/strlen(password),
+                        /*opslimit=*/3,
+                        /*memlimit=*/65536);
 }
