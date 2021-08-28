@@ -11,6 +11,7 @@ set(TEST_SOURCES
   check_mod_sasl.c
   check_parseline.c
   check_nick_api.c
+  check_user_api.c
   test_helpers.c
 )
 

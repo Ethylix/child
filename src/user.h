@@ -146,5 +146,7 @@ void clear_fakes(void);
 User *get_link_master (User *);
 int IsSuperAdmin (User *);
 void generate_uid(char *);
+int check_user_password(User *, const char *);
+int set_user_password(User *, const char *);
 
 #endif
