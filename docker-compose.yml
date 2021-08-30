@@ -6,7 +6,7 @@ services:
       MYSQL_ROOT_PASSWORD: child
       MYSQL_DATABASE: child
     volumes:
-      - ./doc/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./docs/static/schema.sql:/docker-entrypoint-initdb.d/schema.sql
       
   childdebug:
     build: ./

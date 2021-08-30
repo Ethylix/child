@@ -634,3 +634,50 @@ void generate_uid(char *dst_uid)
 
     strncpy(dst_uid, uid, UIDLEN + 1);
 }
+
+/** Check whether a user password is correct
+ * @param   user        pointer to a User
+ * @param   password    char * containing the password to check
+ * @returns 0 if the password matches the hash in base
+ *          -1 if not or if an error occurs
+ */
+int check_user_password(User *uptr, const char *password) {
+    if (!uptr)
+        return -1;
+    
+    if (strcmp(uptr->md5_pass, "")) {
+        char *hash = md5_hash(password);
+        if (Strcmp(hash,uptr->md5_pass)) {
+            free(hash);
+            return -1;
+        }
+        free(hash);
+
+        // migrate to pwhash
+        set_user_password(uptr, password);
+    }
+
+    return crypto_pwhash_str_verify(/*str=*/uptr->pwhash,
+                                     /*passwd=*/password,
+                                     /*passwdlen=*/strlen(password));
+}
+
+/** Sets a new password for a user
+ * @param   user        pointer to a User
+ * @param   password    char * containing the password
+ * @returns 0 if the operation succeedeed
+ *          -1 if an error occured
+ */
+int set_user_password(User *uptr, const char *password) {
+    if (!uptr) {
+        return -1;
+    }
+
+    memset(uptr->md5_pass,'\0',32);
+
+    return crypto_pwhash_str(/*out=*/uptr->pwhash,
+                        /*passwd=*/password, 
+                        /*passwdlen=*/strlen(password),
+                        /*opslimit=*/3,
+                        /*memlimit=*/65536);
+}

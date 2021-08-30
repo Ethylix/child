@@ -1,7 +1,7 @@
 FROM rikorose/gcc-cmake:gcc-9
 
 RUN apt-get update \
-    && apt-get -y install check libssl1.1 libmariadb3 libc6 netcat gdb gdbserver \
+    && apt-get -y install check libssl1.1 libmariadb3 libc6 libsodium-dev netcat gdb gdbserver \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

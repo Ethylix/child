@@ -12,6 +12,7 @@ int main(void)
     sr = srunner_create(make_hashmap_suite());
     srunner_add_suite(sr, make_parseline_suite());
     srunner_add_suite(sr, make_nick_api_suite());
+    srunner_add_suite(sr, make_user_api_suite());
     srunner_add_suite(sr, make_mod_sasl_suite());
 
     srunner_run_all(sr, CK_NORMAL);

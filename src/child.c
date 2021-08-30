@@ -35,6 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <errno.h>
 #include <execinfo.h>
 #include <mysql/mysql.h>
+#include <sodium.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -236,6 +237,11 @@ int main(int argc, char **argv)
     int err, timenow;
     int daemonize = 1;
     char op = 0;
+
+    if (sodium_init() == -1) {
+        fprintf(stderr, "Error while initializing libsodium, exiting...\n");
+        return 1;
+    }
 
     init_core();
     core = get_core();

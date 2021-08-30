@@ -92,12 +92,9 @@ void consume_mock_raws(void)
 User *create_mock_user(const char *name, const char *password)
 {
     User *uptr;
-    char *pass_hash;
 
     uptr = AddUser(name, 1);
-    pass_hash = md5_hash(password);
-    strncpy(uptr->md5_pass, pass_hash, MD5_LEN);
-    free(pass_hash);
+    set_user_password(uptr, password);
 
     return uptr;
 }

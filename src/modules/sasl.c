@@ -127,14 +127,10 @@ int sasl_start_session (__unused Nick *nptr, __unused User *uptr, __unused Chan 
             return MOD_CONTINUE;
         } 
 
-        char *md5pass = md5_hash(password);
-        if (Strcmp(md5pass,user->md5_pass)) {
-            // wrong password
-            free(md5pass);
+        if (check_user_password(user, password) == -1) {
             get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid);
             return MOD_CONTINUE;
         }
-        free(md5pass);
 
         // TODO:    create a helper function to log an user in and use it here
         //          the function should also be used in nick_identify/nick_register

@@ -181,13 +181,10 @@ void nick_link (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    char *pass = md5_hash(arg4);
-    if (Strcmp(pass,user->md5_pass)) {
+    if (check_user_password(uptr, arg4) == -1) {
         NoticeToUser(nptr,"Wrong password.");
-        free(pass);
         return;
     }
-    free(pass);
 
     AddLink(arg3,nptr->nick);
     if (user->vhost[0] != '\0')
@@ -268,13 +265,10 @@ void nick_ghost (Nick *nptr, User *uptr __unused, char *all)
         return;
     }   
     
-    char *pass = md5_hash(arg4);
-    if (Strcmp(pass,user->md5_pass)) {
-        NoticeToUser(nptr,"Wrong password");
-        free(pass);
+    if (check_user_password(uptr, arg4) == -1) {
+        NoticeToUser(nptr,"Wrong password.");
         return;
-    }   
-    free(pass);
+    }
 
     char ghostmsg[128];
     sprintf(ghostmsg,"GHOST command used by %s",nptr->nick);
@@ -305,10 +299,8 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
         return;
     }
 
-    char *pass = md5_hash(arg3);
-    if (Strcmp(pass,user->md5_pass)) {
-        NoticeToUser(nptr,"Wrong password");
-        free(pass);
+    if (check_user_password(user, arg3) == -1) {
+        NoticeToUser(nptr,"Wrong password.");
 
         nptr->loginattempts++;
         if (nptr->lasttry == 0) nptr->lasttry = time(NULL);
@@ -321,7 +313,6 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
 
         return;
     }   
-    free(pass);
         
     if (IsUserSuspended(user)) {
         NoticeToUser(nptr,"Your account has been suspended. Please contact a services administrator for more informations");
@@ -399,20 +390,15 @@ void nick_register (Nick *nptr, User *uptr, char *all)
     user = find_user(nptr->nick);
     if (!user) return;
         
-    memset(user->md5_pass,'\0',34);
-
     char newpass[16];
     char email[512];
     bzero(newpass, 16);
-    char *pass;
     if (core_get_config()->emailreg == 1) {
         gen_rand_string(newpass, "A-Za-z0-9", 12);
-        pass = md5_hash(newpass);
+        set_user_password(user, newpass);
     } else
-        pass = md5_hash(arg3);
+        set_user_password(user, arg3);
 
-    strncpy(user->md5_pass,pass,32);
-    free(pass);
     strncpy(user->email,arg4,EMAILLEN);
     user->regtime = time(NULL);
     user->lastseen = time(NULL);
@@ -731,10 +717,7 @@ void nick_set_password (Nick *nptr, User *uptr, char *all)
     SeperateWord(arg2);
 
     if (!arg2 || *arg2 == '\0') {
-        memset(uptr->md5_pass,'\0',32);
-        char *pass = md5_hash(arg1);
-        strncpy(uptr->md5_pass,pass,32);
-        free(pass);
+        set_user_password(uptr, arg1);
         NoticeToUser(nptr,"Your password has been changed");
     } else {
         if (uptr->level < core_get_config()->level_oper || !IsOper(nptr)) {
@@ -753,11 +736,9 @@ void nick_set_password (Nick *nptr, User *uptr, char *all)
             return;
         }
 
-        memset(uptr2->md5_pass,'\0',32);
-        char *pass = md5_hash(arg2);
-        strncpy(uptr2->md5_pass,pass,32);
+        set_user_password(uptr, arg2);
+
         NoticeToUser(nptr,"Password changed.");
-        free(pass);
         globops("%s used \2PASSWORD\2 on nick %s",nptr->nick,uptr2->nick);
     }
 }
@@ -791,9 +772,7 @@ void nick_requestpassword (Nick *nptr, User *uptr, char *all)
     char newpass[16];
     bzero(newpass,16);
     gen_rand_string(newpass,"A-Za-z0-9",12);
-    char *pass = md5_hash(newpass);
-    strncpy(uptr->md5_pass,pass,32);
-    free(pass);
+    set_user_password(uptr, newpass);
 
     char email[1024];
     bzero(email, 1024);

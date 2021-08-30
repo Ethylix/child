@@ -112,6 +112,7 @@ CREATE TABLE `child_users` (
   `seen` int(11) DEFAULT NULL,
   `vhost` varchar(200) DEFAULT NULL,
   `md5_pass` varchar(32) NOT NULL DEFAULT '',
+  `pwhash` varchar(128) NOT NULL DEFAULT '',  /* Size is libsodium's crypto_pwhash_STRBYTES */
   `options` int(11) NOT NULL DEFAULT '0',
   `timeout` int(11) NOT NULL DEFAULT '0',
   `email` varchar(100) NOT NULL DEFAULT '',
