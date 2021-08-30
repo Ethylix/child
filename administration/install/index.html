@@ -193,7 +193,7 @@ Dependencies
 </a>
 </h2>
 </div><p>Install dependencies, example debian-based OSes:</p>
-<pre><code>apt install git libmariadb-dev-compat libmariadbclient-dev libc-dev libssl-dev cmake check
+<pre><code>apt install git libmariadb-dev-compat libmariadbclient-dev libc-dev libssl-dev libsodium-dev cmake check
 </code></pre><div class=gdoc-page__anchorwrap>
 <h2 id=compile-child>
 Compile child
@@ -221,11 +221,11 @@ mysql&gt; GRANT ALL PRIVILEGES ON child.* TO 'child'@'localhost';
 mysql&gt; FLUSH PRIVILEGES;
 </code></pre><p>Once done, you need to import our schema in the database.
 <div class=gdoc-expand>
-<label class="gdoc-expand__head flex justify-between" for=2284837c-2>
+<label class="gdoc-expand__head flex justify-between" for=c424f833-2>
 <span>Expand</span>
 <span>↕</span>
 </label>
-<input id=2284837c-2 type=checkbox class="gdoc-expand__control hidden">
+<input id=c424f833-2 type=checkbox class="gdoc-expand__control hidden">
 <div class="gdoc-markdown--nested gdoc-expand__content">
 <div class=gdoc-include><div class=highlight><div class=chroma>
 <table class=lntable><tr><td class=lntd>
@@ -357,6 +357,7 @@ mysql&gt; FLUSH PRIVILEGES;
 </span><span class=lnt>126
 </span><span class=lnt>127
 </span><span class=lnt>128
+</span><span class=lnt>129
 </span></code></pre></td>
 <td class=lntd>
 <pre tabindex=0 class=chroma><code class=language-sql data-lang=sql><span class=cm>/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */</span><span class=p>;</span><span class=w>
@@ -473,6 +474,7 @@ mysql&gt; FLUSH PRIVILEGES;
 </span><span class=w>  </span><span class=o>`</span><span class=n>seen</span><span class=o>`</span><span class=w> </span><span class=nb>int</span><span class=p>(</span><span class=mi>11</span><span class=p>)</span><span class=w> </span><span class=k>DEFAULT</span><span class=w> </span><span class=k>NULL</span><span class=p>,</span><span class=w>
 </span><span class=w>  </span><span class=o>`</span><span class=n>vhost</span><span class=o>`</span><span class=w> </span><span class=nb>varchar</span><span class=p>(</span><span class=mi>200</span><span class=p>)</span><span class=w> </span><span class=k>DEFAULT</span><span class=w> </span><span class=k>NULL</span><span class=p>,</span><span class=w>
 </span><span class=w>  </span><span class=o>`</span><span class=n>md5_pass</span><span class=o>`</span><span class=w> </span><span class=nb>varchar</span><span class=p>(</span><span class=mi>32</span><span class=p>)</span><span class=w> </span><span class=k>NOT</span><span class=w> </span><span class=k>NULL</span><span class=w> </span><span class=k>DEFAULT</span><span class=w> </span><span class=s1>&#39;&#39;</span><span class=p>,</span><span class=w>
+</span><span class=w>  </span><span class=o>`</span><span class=n>pwhash</span><span class=o>`</span><span class=w> </span><span class=nb>varchar</span><span class=p>(</span><span class=mi>128</span><span class=p>)</span><span class=w> </span><span class=k>NOT</span><span class=w> </span><span class=k>NULL</span><span class=w> </span><span class=k>DEFAULT</span><span class=w> </span><span class=s1>&#39;&#39;</span><span class=p>,</span><span class=w>  </span><span class=cm>/* Size is libsodium&#39;s crypto_pwhash_STRBYTES */</span><span class=w>
 </span><span class=w>  </span><span class=o>`</span><span class=k>options</span><span class=o>`</span><span class=w> </span><span class=nb>int</span><span class=p>(</span><span class=mi>11</span><span class=p>)</span><span class=w> </span><span class=k>NOT</span><span class=w> </span><span class=k>NULL</span><span class=w> </span><span class=k>DEFAULT</span><span class=w> </span><span class=s1>&#39;0&#39;</span><span class=p>,</span><span class=w>
 </span><span class=w>  </span><span class=o>`</span><span class=n>timeout</span><span class=o>`</span><span class=w> </span><span class=nb>int</span><span class=p>(</span><span class=mi>11</span><span class=p>)</span><span class=w> </span><span class=k>NOT</span><span class=w> </span><span class=k>NULL</span><span class=w> </span><span class=k>DEFAULT</span><span class=w> </span><span class=s1>&#39;0&#39;</span><span class=p>,</span><span class=w>
 </span><span class=w>  </span><span class=o>`</span><span class=n>email</span><span class=o>`</span><span class=w> </span><span class=nb>varchar</span><span class=p>(</span><span class=mi>100</span><span class=p>)</span><span class=w> </span><span class=k>NOT</span><span class=w> </span><span class=k>NULL</span><span class=w> </span><span class=k>DEFAULT</span><span class=w> </span><span class=s1>&#39;&#39;</span><span class=p>,</span><span class=w>
