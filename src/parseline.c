@@ -1140,6 +1140,20 @@ void m_uid (char *sender, char *tail)
     RunHooks(HOOK_NICKCREATE,nptr,uptr,NULL,NULL);
 
     uptr = find_user(nptr->nick);
+
+    // Accept users with umode +r and without SVID. This can happen when migrating
+    // to account-based authentication.
+    // If the target account is already identified (through someone else), do not
+    // recognize the +r and drop it.
+    if (IsRegistered(nptr) && !nptr->account) {
+        if (!IsAuthed(uptr) && !IsUserSuspended(uptr)) {
+            user_login(nptr, uptr);
+        } else {
+            get_core_api()->send_raw("SVS2MODE %s -r", nptr->nick);
+            ClearUmode(nptr, UMODE_REGISTERED);
+        }
+    }
+
     if (uptr && !IsRegistered(nptr) && !IsUserSuspended(uptr)) {
         NoticeToUser(nptr,"This nick is registered. Please identify yourself or take another nick.");
         if (uptr->options & UOPT_PROTECT)

@@ -89,6 +89,32 @@ START_TEST(test_sasl_auth_success)
 
     userquit(nptr2->nick);
 
+    // Login users with +r and without SVID.
+    inject_parse_line(":042 UID test_user 0 1629045439 test_ident test_host 042AAAAAD 0 +iwrp * geek-ABCDEFGH.blah fwAAAQ== :test description");
+
+    nptr = get_core_api()->find_nick("042AAAAAD");
+    ck_assert_ptr_ne(nptr, NULL);
+    ck_assert_str_eq(nptr->svid, "test_user");
+    ck_assert(IsRegistered(nptr));
+    ck_assert_int_eq(uptr->authed, 1);
+    ck_assert_ptr_eq(uptr->authed_nick, nptr);
+    ck_assert_ptr_eq(nptr->account, uptr);
+
+    userquit(nptr->nick);
+
+    // Same but without +r, do not login.
+    inject_parse_line(":042 UID test_user 0 1629045439 test_ident test_host 042AAAAAE 0 +iwp * geek-ABCDEFGH.blah fwAAAQ== :test description");
+
+    nptr = get_core_api()->find_nick("042AAAAAE");
+    ck_assert_ptr_ne(nptr, NULL);
+    ck_assert_str_eq(nptr->svid, "0");
+    ck_assert(!IsRegistered(nptr));
+    ck_assert_int_eq(uptr->authed, 0);
+    ck_assert_ptr_eq(uptr->authed_nick, NULL);
+    ck_assert_ptr_eq(nptr->account, NULL);
+
+    userquit(nptr->nick);
+
     DeleteAccount(uptr);
     unloadmodule("sasl");
     free_mock_server();
