@@ -205,12 +205,12 @@ Fake *AddFake(const char *nick, const char *ident, const char *host, const char 
 
 void DeleteAccount (User *user)
 {
-    if (!HASHMAP_ERASE(core_get_users(), user->nick))
-        return;
+   if (user->authed_nick)
+       user_logout(user->authed_nick, user);
 
-    if (get_core_api()->find_nick(user->nick) && get_core()->eos)
-        get_core_api()->send_raw("SVSMODE %s -r",user->nick);
-    if (HasOption(user, UOPT_PROTECT)) DeleteGuest(user->nick);
+    HASHMAP_ERASE(core_get_users(), user->nick);
+
+    DeleteGuest(user->nick);
     free(user);
 }
 
@@ -374,23 +374,15 @@ void CheckGuests()
 
 void userquit (char *nick)
 {
-    User *uptr;
     Nick *nptr;
 
     nptr = get_core_api()->find_nick(nick);
     if (!nptr) return;
 
-    uptr = find_account(nptr);
-    if (uptr) {
-        if (uptr->authed == 1) {
-            uptr->authed = 0;
-            uptr->lastseen = time(NULL);
-        } else {
-            if (HasOption(uptr, UOPT_PROTECT))
-                DeleteGuest(nptr->nick);
-        }
-    }
-    
+    if (nptr->account)
+        user_logout(nptr, nptr->account);
+
+    DeleteGuest(nptr->nick);
     DeleteUserFromWchans(nptr);
     DeleteWildNick(nptr);
 }
@@ -680,4 +672,61 @@ int set_user_password(User *uptr, const char *password) {
                         /*passwdlen=*/strlen(password),
                         /*opslimit=*/3,
                         /*memlimit=*/65536);
+}
+
+void user_login(Nick *nptr, User *uptr)
+{
+    uptr->authed = 1;
+    uptr->authed_nick = nptr;
+    uptr->lastseen = time(NULL);
+
+    nptr->loginattempts = 0;
+    nptr->lasttry = 0;
+    nptr->account = uptr;
+
+    // Set svid if empty or different from account name.
+    if (Strcmp(nptr->svid, uptr->nick)) {
+        strncpy(nptr->svid, uptr->nick, SVIDLEN);
+        get_core_api()->send_raw("SVSLOGIN * %s %s", nptr->nick, nptr->svid);
+    }
+
+    // Set umode +r if nick name matches account name.
+    if (!Strcmp(nptr->nick, uptr->nick)) {
+        get_core_api()->send_raw("SVS2MODE %s +r", nptr->nick);
+        SetUmode(nptr, UMODE_REGISTERED);
+
+        if (HasOption(uptr, UOPT_PROTECT))
+            DeleteGuest(nptr->nick);
+    }
+
+    NoticeToUser(nptr, "You are now identified with account \2%s\2.", nptr->svid);
+
+    if (uptr->vhost[0] != '\0') {
+        get_core_api()->send_raw("CHGHOST %s %s", nptr->nick, uptr->vhost);
+        strncpy(nptr->hiddenhost, uptr->vhost, HOSTLEN);
+        NoticeToUser(nptr, "Your vhost \2%s\2 has been activated.", uptr->vhost);
+    } else if (HasOption(uptr, UOPT_CLOAKED)) {
+        get_core_api()->send_raw("CHGHOST %s %s%s", nptr->nick, uptr->nick, core_get_config()->usercloak);
+        char host[HOSTLEN + NICKLEN + 1];
+        bzero(host, HOSTLEN+NICKLEN+1);
+        snprintf(host, HOSTLEN + NICKLEN + 1, "%s%s", uptr->nick, core_get_config()->usercloak);
+        strncpy(nptr->hiddenhost, host, HOSTLEN);
+        NoticeToUser(nptr,"Your cloak \2%s\2 has been activated.", host);
+    }
+}
+
+void user_logout(Nick *nptr, User *uptr)
+{
+    if (uptr) {
+        uptr->authed = 0;
+        uptr->authed_nick = NULL;
+        uptr->lastseen = time(NULL);
+    }
+
+    nptr->account = NULL;
+    strncpy(nptr->svid, "0", SVIDLEN);
+    get_core_api()->send_raw("SVSLOGIN * %s 0", nptr->uid);
+
+    if (IsRegistered(nptr))
+        get_core_api()->send_raw("SVS2MODE %s -r", nptr->uid);
 }

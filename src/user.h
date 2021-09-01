@@ -77,7 +77,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #define Global(a, ...) send_global("*",a,##__VA_ARGS__)
 
-typedef struct user_ {
+typedef struct user {
     char nick[NICKLEN + 1]; /* hash key */
     int authed,level;
     char md5_pass[MD5_LEN + 1]; /* deprecated, to be removed in v2.1 */
@@ -88,6 +88,7 @@ typedef struct user_ {
     char email[EMAILLEN + 1];
     int regtime;
     struct llist_head cflags;
+    struct nick *authed_nick;
 } User;
 
 typedef struct clone {
@@ -150,5 +151,7 @@ int IsSuperAdmin (User *);
 void generate_uid(char *);
 int check_user_password(User *, const char *);
 int set_user_password(User *, const char *);
+void user_login(Nick *, User *);
+void user_logout(Nick *, User *);
 
 #endif

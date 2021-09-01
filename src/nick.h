@@ -86,6 +86,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define ClearSSL(x) ClearUmode(x, UMODE_SSL)
 #define ClearRegistered(x) ClearUmode(x, UMODE_REGISTERED)
 
+struct user;
+
 typedef struct nick {
     char nick[NICKLEN + 1]; /* hash key */
     char ident[NICKLEN + 1];
@@ -100,6 +102,7 @@ typedef struct nick {
     int loginattempts,lasttry;
     struct llist_head wchans;
     struct llist_head server_head;
+    struct user *account;
 } Nick;
 
 #endif

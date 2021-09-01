@@ -89,25 +89,27 @@ int sasl_start_session (__unused Nick *nptr, __unused User *uptr, __unused Chan 
     char decoded[401];
     memset(decoded, 0, 401);
 
+#define SASL_FAIL() get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid)
+
     // parse
     if (strcmp(command, "S") == 0) {
         // We only support PLAIN for now
         if (strcmp(tail, "PLAIN")) {
             get_core_api()->send_raw(":%s SASL %s %s M PLAIN", target, sender, uid);
-            get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid);
+            SASL_FAIL();
             return MOD_CONTINUE;
         }
         get_core_api()->send_raw(":%s SASL %s %s C +", target, sender, uid);
     } else if (strcmp(command, "C") == 0) {
         ret = b64_decode(split[3], decoded, 400);
         if (ret < 0) {
-            get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid);
+            SASL_FAIL();
             return MOD_CONTINUE;
         }
 
         authcid = memchr(decoded, '\0', ret);
         if (authcid == NULL) {
-            get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid);
+            SASL_FAIL();
             return MOD_CONTINUE;
         }
         authcid++;
@@ -115,7 +117,7 @@ int sasl_start_session (__unused Nick *nptr, __unused User *uptr, __unused Chan 
         ret -= (intptr_t)((char *)authcid - (char *)decoded);
         password = memchr(authcid, '\0', ret);
         if (password == NULL) {
-            get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid);
+            SASL_FAIL();
             return MOD_CONTINUE;
         }
         password++;
@@ -123,18 +125,16 @@ int sasl_start_session (__unused Nick *nptr, __unused User *uptr, __unused Chan 
         // check that user exists and password matches
         user = find_user(authcid);
         if (!user) {
-            get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid);
+            SASL_FAIL();
             return MOD_CONTINUE;
         } 
 
         if (check_user_password(user, password) == -1) {
-            get_core_api()->send_raw(":%s SASL %s %s D F", target, sender, uid);
+            SASL_FAIL();
             return MOD_CONTINUE;
         }
 
-        // TODO:    create a helper function to log an user in and use it here
-        //          the function should also be used in nick_identify/nick_register
-        get_core_api()->send_raw(":%s SVSLOGIN %s %s %s", target, sender, uid, authcid);
+        get_core_api()->send_raw(":%s SVSLOGIN * %s %s", target, uid, authcid);
         get_core_api()->send_raw(":%s SASL %s %s D S", target, sender, uid);
     }
 
@@ -155,36 +155,16 @@ int sasl_finish_session (Nick *nptr, User *uptr, __unused Chan *cptr, __unused c
     // This race condition can happen if the user is dropped in between sasl_start_session and
     // sasl_finish_session.
     if (!uptr) {
-        strncpy(nptr->svid, "0", SVIDLEN);
-        get_core_api()->send_raw("SVS2MODE %s +d 0", nptr->uid);
+        user_logout(nptr, NULL);
         return MOD_CONTINUE;
     }
 
-    // TODO: refactor, coming from nick_identify()
-    NoticeToUser(nptr,"You are now identified");
-    nptr->loginattempts = 0;
-    nptr->lasttry = 0;
+    // Ghost if the user is already authed (meaning another nick is identified with this account).
+    // TODO: remove when full support for nick/user decoupling is implemented.
+    if (IsAuthed(uptr))
+        killuser(uptr->authed_nick->nick, "Ghosted by new account identification", core_get_config()->nick);
 
-    if (uptr->email[0] == '\0')
-        NoticeToUser(nptr,"Please set a valid email address with /msg C nick set email email@domain.xx");
-
-    uptr->authed = 1;
-    uptr->lastseen = time(NULL);
-    get_core_api()->send_raw("SVS2MODE %s +r",nptr->nick);
-    SetUmode(nptr, UMODE_REGISTERED);
-
-    if (uptr->vhost[0] != '\0') {
-        get_core_api()->send_raw("CHGHOST %s %s",nptr->nick,uptr->vhost);
-        strncpy(nptr->hiddenhost, uptr->vhost, HOSTLEN);
-        NoticeToUser(nptr,"Your vhost \2%s\2 has been activated",uptr->vhost);
-    } else if (HasOption(uptr, UOPT_CLOAKED)) {
-        get_core_api()->send_raw("CHGHOST %s %s%s", nptr->nick, uptr->nick, core_get_config()->usercloak);
-        char host[HOSTLEN + NICKLEN + 1];
-        bzero(host, HOSTLEN+NICKLEN+1);
-        snprintf(host, HOSTLEN + NICKLEN + 1, "%s%s", uptr->nick, core_get_config()->usercloak);
-        strncpy(nptr->hiddenhost, host, HOSTLEN);
-        NoticeToUser(nptr,"Your cloak has been activated");
-    }
+    user_login(nptr, uptr);
 
     return MOD_CONTINUE;
 }

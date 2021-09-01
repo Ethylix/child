@@ -234,7 +234,7 @@ int main(int argc, char **argv)
     struct core_api *api = get_core_api();
     struct rlimit rlim;
     struct core *core;
-    int err, timenow;
+    int err;
     int daemonize = 1;
     char op = 0;
 

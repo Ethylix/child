@@ -287,20 +287,21 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
     if (!arg3 || *arg3 == '\0') {
         NoticeToUser(nptr,"Syntax: \2NICK IDENTIFY \037password\037\2");
         return;
-    }   
+    }
+
+    if (nptr->account) {
+        NoticeToUser(nptr, "You are already identified to account \2%s\2. Please reconnect if you wish to identify to another account.", nptr->account->nick);
+        return;
+    }
+
     user = find_user(nptr->nick);
     if (!user) {
-        NoticeToUser(nptr,"You are not registered");
-        return;
-    }   
-    
-    if (user->authed == 1) {
-        NoticeToUser(nptr,"You are already identified");
+        NoticeToUser(nptr, "This nickname is not registered.");
         return;
     }
 
     if (check_user_password(user, arg3) == -1) {
-        NoticeToUser(nptr,"Wrong password.");
+        NoticeToUser(nptr, "Wrong password.");
 
         nptr->loginattempts++;
         if (nptr->lasttry == 0) nptr->lasttry = time(NULL);
@@ -312,38 +313,21 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
         }
 
         return;
-    }   
-        
-    if (IsUserSuspended(user)) {
-        NoticeToUser(nptr,"Your account has been suspended. Please contact a services administrator for more informations");
-        return;
-    }   
-        
-    user->authed = 1;
-    NoticeToUser(nptr,"You are now identified");
-    nptr->loginattempts = 0;
-    nptr->lasttry = 0;
-    strncpy(nptr->svid, user->nick, SVIDLEN);
-
-    if (user->email[0] == '\0')
-        NoticeToUser(nptr,"Please set a valid email address with /msg C nick set email email@domain.xx");
-
-    user->lastseen = time(NULL);
-    get_core_api()->send_raw("SVS2MODE %s +r",nptr->nick);
-    get_core_api()->send_raw("SVSLOGIN * %s %s",nptr->nick,nptr->nick);
-    if (user->vhost[0] != '\0') {
-        get_core_api()->send_raw("CHGHOST %s %s",nptr->nick,user->vhost);
-        strncpy(nptr->hiddenhost, user->vhost, HOSTLEN);
-        NoticeToUser(nptr,"Your vhost \2%s\2 has been activated",user->vhost);
-    } else if (HasOption(user, UOPT_CLOAKED)) {
-        get_core_api()->send_raw("CHGHOST %s %s%s", nptr->nick, user->nick, core_get_config()->usercloak);
-        char host[HOSTLEN + NICKLEN + 1];
-        bzero(host, HOSTLEN+NICKLEN+1);
-        snprintf(host, HOSTLEN + NICKLEN + 1, "%s%s", user->nick, core_get_config()->usercloak);
-        strncpy(nptr->hiddenhost, host, HOSTLEN);
-        NoticeToUser(nptr,"Your cloak has been activated");
     }
-    if (HasOption(user, UOPT_PROTECT)) DeleteGuest(nptr->nick);
+
+    if (IsUserSuspended(user)) {
+        NoticeToUser(nptr,"Your account has been suspended.");
+        return;
+    }
+
+    if (IsAuthed(user)) {
+        NoticeToUser(nptr, "Nick \2%s\2 was already identified with this account, killing it.", user->authed_nick->nick);
+        killuser(user->authed_nick->nick, "Ghosted by new account identification", core_get_config()->nick);
+        return;
+    }
+
+    user_login(nptr, user);
+
     if (HasOption(user, UOPT_NOAUTO)) return;
 
     sync_user(user);
@@ -407,15 +391,13 @@ void nick_register (Nick *nptr, User *uptr, char *all)
 
     if (core_get_config()->emailreg == 1) {
         bzero(email, 512);
-        sprintf(email, "From: Child <%s>\r\nTo: %s <%s>\r\nSubject: Account information\r\n\r\nYour user info:\r\n\tLogin: %s\r\n\tPassword: %s\r\n\r\nYou can auth with the following command: /msg %s nick identify %s\r\n", core_get_config()->sendfrom, user->nick, user->email, user->nick, newpass, core_get_config()->nick, newpass);
+        sprintf(email, "From: Child <%s>\r\nTo: %s <%s>\r\nSubject: IRC account information\r\n\r\nYour user info:\r\n\tLogin: %s\r\n\tPassword: %s\r\n\r\nYou can auth with the following command: /msg %s nick identify %s\r\n", core_get_config()->sendfrom, user->nick, user->email, user->nick, newpass, core_get_config()->nick, newpass);
         sendmail(user->email, email);
         NoticeToUser(nptr, "A password has been generated and sent to your specified e-mail address (this mean that the password you've specified doesn't work).");
-    } else {        
-        user->authed = 1;
-        strncpy(nptr->svid, user->nick, SVIDLEN);
-        get_core_api()->send_raw("SVS2MODE %s +r", nptr->nick);
-        get_core_api()->send_raw("SVSLOGIN %s %s %s", core_get_config()->server, nptr->nick, nptr->nick);
+       return;
     }
+
+    user_login(nptr, user);
 }
 
 void nick_drop (Nick *nptr, User *uptr, char *all)

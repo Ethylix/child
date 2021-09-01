@@ -10,7 +10,7 @@
 #include <stdbool.h>
 
 struct bot;
-struct user_;
+struct user;
 struct clone;
 struct module_;
 struct trust;
@@ -86,7 +86,7 @@ struct config {
 };
 
 struct core {
-    DECLARE_HASHMAP(users, const char *, struct user_ *);
+    DECLARE_HASHMAP(users, const char *, struct user *);
     DECLARE_HASHMAP(nicks, const char *, struct nick *);
     DECLARE_HASHMAP(clones, const char *, struct clone *);
     DECLARE_HASHMAP(modules, const char *, struct module_ *);

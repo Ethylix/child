@@ -486,6 +486,7 @@ void oper_fakelist (Nick *nptr)
 void oper_forceauth (Nick *nptr, User *uptr __unused, char *all)
 {
     char *arg3;
+    Nick *nptr2;
     User *uptr2;
     arg3 = all;
     SeperateWord(arg3);
@@ -493,25 +494,29 @@ void oper_forceauth (Nick *nptr, User *uptr __unused, char *all)
     if (!arg3 || *arg3 == '\0') {
         NoticeToUser(nptr,"Syntax: \2forceauth \037nick\037\2");
         return;
-    }   
-        
-    if (!get_core_api()->find_nick(arg3)) {
-        NoticeToUser(nptr,"This nick does not exist");
+    }
+
+    nptr2 = get_core_api()->find_nick(arg3);
+    if (!nptr2) {
+        NoticeToUser(nptr, "This nick is not connected.");
         return;
     }   
         
     uptr2 = find_user(arg3);
     if (!uptr2) {
-        NoticeToUser(nptr,"This nick is not registered");
+        NoticeToUser(nptr, "This nick is not registered.");
         return;
-    }   
-        
-    uptr2->authed = 1;
-    uptr2->lastseen = time(NULL);
-    get_core_api()->send_raw("SVSMODE %s +r",arg3);
+    }
+
+    if (nptr2->account) {
+        NoticeToUser(nptr, "This nick is already identified to account \2%s\2.", nptr2->svid);
+        return;
+    }
+
+    user_login(nptr2, uptr2);
+
     NoticeToUser(nptr,"\2%s\2 has been authed.",arg3);
     operlog("%s force-authed %s",nptr->nick,arg3);
-    if (HasOption(uptr2, UOPT_PROTECT)) DeleteGuest(arg3);
 }
 
 void oper_trustadd (Nick *nptr, User *uptr __unused, char *all)
@@ -1142,8 +1147,11 @@ void oper_suspend (Nick *nptr, User *uptr, char *all)
 
         if (!Strcmp(arg4,"on")) {
             SetOption(uptr2, UOPT_SUSPENDED);
+
+            if (uptr2->authed_nick)
+                user_logout(uptr2->authed_nick, uptr2);
+
             NoticeToUser(nptr,"User %s suspended.",uptr2->nick);
-            uptr2->authed = 0;
             return;
         } else if (!Strcmp(arg4,"off")) {
             ClearOption(uptr2, UOPT_SUSPENDED);

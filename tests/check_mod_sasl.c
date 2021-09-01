@@ -32,7 +32,7 @@ START_TEST(test_sasl_auth_success)
     // https://datatracker.ietf.org/doc/html/rfc4616
     inject_parse_line(":ircd.test SASL services.test 042AAAAAA C AHRlc3RfdXNlcgB0ZXN0X3Bhc3N3b3Jk");
     ck_assert(expect_raw_count(2));
-    ck_assert(expect_next_raw(":services.test SVSLOGIN ircd.test 042AAAAAA test_user"));
+    ck_assert(expect_next_raw(":services.test SVSLOGIN * 042AAAAAA test_user"));
     ck_assert(expect_next_raw(":services.test SASL ircd.test 042AAAAAA D S"));
 
     // Clear previous raws before proceeding to the second phase.
@@ -40,16 +40,54 @@ START_TEST(test_sasl_auth_success)
 
     // Override uninitialized config.
     core_get_config()->maxclones = 1000;
+    strcpy(core_get_config()->nick, "C");
+    strcpy(core_get_config()->name, "services.test");
 
-    inject_parse_line(":042 UID test_nick 0 1629045439 test_ident test_host 042AAAAAA test_user +iwp * geek-ABCDEFGH.blah fwAAAQ== :test description");
+    // Default case: nick == user.
+    inject_parse_line(":042 UID test_user 0 1629045439 test_ident test_host 042AAAAAA test_user +iwp * geek-ABCDEFGH.blah fwAAAQ== :test description");
 
     nptr = get_core_api()->find_nick("042AAAAAA");
     ck_assert_ptr_ne(nptr, NULL);
     ck_assert_str_eq(nptr->svid, "test_user");
     ck_assert(IsRegistered(nptr));
     ck_assert_int_eq(uptr->authed, 1);
+    ck_assert_ptr_eq(uptr->authed_nick, nptr);
+    ck_assert_ptr_eq(nptr->account, uptr);
 
-    ck_assert(expect_any_raw("SVS2MODE test_nick +r"));
+    ck_assert(expect_any_raw("SVS2MODE test_user +r"));
+
+    userquit(nptr->nick);
+    ck_assert_int_eq(uptr->authed, 0);
+    ck_assert_ptr_eq(uptr->authed_nick, NULL);
+
+    // Nick != user, and user is not authed.
+    inject_parse_line(":042 UID test_nick 0 1629045439 test_ident test_host 042AAAAAB test_user +iwp * geek-ABCDEFGH.blah fwAAAQ== :test description");
+
+    nptr = get_core_api()->find_nick("042AAAAAB");
+    ck_assert_ptr_ne(nptr, NULL);
+    ck_assert_str_eq(nptr->svid, "test_user");
+    ck_assert(!IsRegistered(nptr));
+    ck_assert_int_eq(uptr->authed, 1);
+    ck_assert_ptr_eq(uptr->authed_nick, nptr);
+    ck_assert_ptr_eq(nptr->account, uptr);
+
+    consume_mock_raws();
+
+    // Double authentication.
+    inject_parse_line(":042 UID test_nick2 0 1629045439 test_ident test_host 042AAAAAC test_user +iwp * geek-ABCDEFGH.blah fwAAAQ== :test description");
+
+    Nick *nptr2 = get_core_api()->find_nick("042AAAAAC");
+    ck_assert_ptr_ne(nptr2, NULL);
+    ck_assert_str_eq(nptr2->svid, "test_user");
+    ck_assert(!IsRegistered(nptr2));
+    ck_assert_int_eq(uptr->authed, 1);
+    ck_assert_ptr_eq(uptr->authed_nick, nptr2);
+    ck_assert_ptr_eq(nptr2->account, uptr);
+
+    ck_assert_ptr_eq(get_core_api()->find_nick("042AAAAAB"), NULL);
+    ck_assert(expect_any_raw(":C KILL test_nick :services.test!C (Ghosted by new account identification)"));
+
+    userquit(nptr2->nick);
 
     DeleteAccount(uptr);
     unloadmodule("sasl");
@@ -261,7 +299,7 @@ START_TEST(test_sasl_finish_user_not_found)
     inject_parse_line(":042 UID test_nick 0 1629045439 test_ident test_host 042AAAAAA test_user +iwp * geek-ABCDEFGH.blah fwAAAQ== :test description");
 
     ck_assert(expect_raw_count(1));
-    ck_assert(expect_next_raw("SVS2MODE 042AAAAAA +d 0"));
+    ck_assert(expect_next_raw("SVSLOGIN * 042AAAAAA 0"));
 
     nptr = get_core_api()->find_nick("test_nick");
     ck_assert_ptr_ne(nptr, NULL);
