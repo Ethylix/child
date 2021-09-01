@@ -526,17 +526,17 @@ void saveuserdb()
 
     HASHMAP_FOREACH_ENTRY_VALUE(core_get_users(), entry, uptr) {
         snprintf(tmp,1024,"INSERT INTO child_users ("
-                            "nick,"
-                            "level,"
-                            "lastseen,"
-                            "vhost,"
-                            "md5_pass,"
-                            "pwhash,"
-                            "options,"
-                            "timeout,"
-                            "email,"
+                            "username, "
+                            "authlevel, "
+                            "seen, "
+                            "vhost, "
+                            "md5_pass, "
+                            "pwhash, "
+                            "options, "
+                            "timeout, "
+                            "email, "
                             "regtime"
-                            ")"
+                            ") "
                             "VALUES ('%s',%d,%d,'%s','%s','%s',%ld,%d,'%s',%d)",
                             strtosql(buf,uptr->nick,512),
                             uptr->level,
