@@ -1146,7 +1146,7 @@ void m_uid (char *sender, char *tail)
     // If the target account is already identified (through someone else), do not
     // recognize the +r and drop it.
     if (IsRegistered(nptr) && !nptr->account) {
-        if (!IsAuthed(uptr) && !IsUserSuspended(uptr)) {
+        if (uptr && !IsAuthed(uptr) && !IsUserSuspended(uptr)) {
             user_login(nptr, uptr);
         } else {
             get_core_api()->send_raw("SVS2MODE %s -r", nptr->nick);
