@@ -323,7 +323,6 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
     if (IsAuthed(user)) {
         NoticeToUser(nptr, "Nick \2%s\2 was already identified with this account, killing it.", user->authed_nick->nick);
         killuser(user->authed_nick->nick, "Ghosted by new account identification", core_get_config()->nick);
-        return;
     }
 
     user_login(nptr, user);
