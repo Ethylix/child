@@ -367,6 +367,13 @@ int main(int argc, char **argv)
     }
     write_pid();
 
+    // Initialize timers.
+    gettimeofday(&core->next_expired_check_time, NULL);
+    core->next_expired_check_time.tv_sec += 60;
+
+    gettimeofday(&core->next_savedb_time, NULL);
+    core->next_savedb_time.tv_sec += 60*core_get_config()->savedb_interval;
+    
     child_run_loop();
 
     operlog("Returned from main run loop, gracefully exiting.");
