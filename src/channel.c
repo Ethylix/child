@@ -88,7 +88,8 @@ Cflag *find_cflag_recursive(const Chan *chptr, const User *uptr)
             fprintf(stderr, "Impossible recursive link master=%s, slave=%s\n", l->master, l->slave);
             return NULL;
         }
-        return find_cflag_recursive(chptr, uptr2);
+        cflag = find_cflag_recursive(chptr, uptr2);
+        cflag->user = uptr;
     }
 
     return cflag;
@@ -467,7 +468,8 @@ void SetStatus (Nick *nptr, const char *chan, long int flag, int what, const cha
 
     for (i=0;i<args;i++) {
         strcat(targ,nptr->nick);
-        strcat(targ," ");
+        if (i != args - 1)
+            strcat(targ," ");
     }
 
     member = find_member(wchan, nptr);
