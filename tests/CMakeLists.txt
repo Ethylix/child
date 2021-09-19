@@ -12,10 +12,15 @@ set(TEST_SOURCES
   check_parseline.c
   check_nick_api.c
   check_user_api.c
+  check_mod_prometheus.c
   test_helpers.c
 )
 
+set(CURL_LIBRARY "-lcurl") 
+find_package(CURL REQUIRED) 
+include_directories(${CURL_INCLUDE_DIR})
+
 add_executable(check_child ${TEST_SOURCES})
-target_link_libraries(check_child ${CHECK_LIBRARIES} Threads::Threads "-Wl,--whole-archive" childcore "-Wl,--no-whole-archive")
+target_link_libraries(check_child ${CHECK_LIBRARIES} ${CURL_LIBRARIES} Threads::Threads "-Wl,--whole-archive" childcore "-Wl,--no-whole-archive")
 set_target_properties(check_child PROPERTIES ENABLE_EXPORTS 1)
 add_test(NAME check_child COMMAND check_child WORKING_DIRECTORY ${PROJECT_BINARY_DIR})

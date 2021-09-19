@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "core_api.h"
 #include "hashmap.h"
 #include "mem.h"
+#include "modules.h"
 #include "net.h"
 #include "string_utils.h"
 
@@ -175,6 +176,7 @@ Chan *CreateChannel (const char *name, const char *owner, int lastseen)
 */
 
     AddUserToChannel(uptr, chan, CHLEV_OWNER, UFLAG_CHANOWNER);
+    RunHooks(HOOK_CREATE_CHANNEL, NULL, NULL, NULL, NULL);
     return new_chan;
 }
 
@@ -253,6 +255,8 @@ void DeleteChannel (Chan *chan)
         PartChannel(chan);
 
     free(chan);
+
+    RunHooks(HOOK_DELETE_CHANNEL, NULL, NULL, NULL, NULL);
 }
 
 void DeleteWchan (Wchan *wchan)
