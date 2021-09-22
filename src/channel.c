@@ -363,11 +363,13 @@ void DeleteUserFromWchan (Nick *nptr, Wchan *chan)
 
     DeleteMember(member);
 
-    if (!member_exists(chan)) DeleteWchan(chan);
-
-    Chan *chptr = find_channel(chan->chname);
-    if (chptr && chptr->autolimit > 0)
-        AddLimit(chptr);
+    if (!member_exists(chan)) {
+        DeleteWchan(chan);
+    } else {
+        Chan *chptr = find_channel(chan->chname);
+        if (chptr && chptr->autolimit > 0)
+            AddLimit(chptr);
+    }
 }
 
 void DeleteMember (Member *member)
