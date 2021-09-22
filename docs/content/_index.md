@@ -7,6 +7,7 @@ description: Child is a simple modular service for your [UnrealIRCD](https://unr
 <!-- markdownlint-disable MD033 -->
 
 <span class="badge-placeholder">[![Child](https://circleci.com/gh/Ethylix/child.svg?style=svg)](https://circleci.com/gh/Ethylix/child)</span>
+<span class="badge-placeholder">[![codecov](https://codecov.io/gh/ethylix/child/branch/master/graph/badge.svg)](https://codecov.io/gh/ethylix/child)</span>
 <span class="badge-placeholder">[![GitHub release](https://img.shields.io/github/v/release/ethylix/child)](https://github.com/ethylix/child/releases/latest)</span>
 <span class="badge-placeholder">[![GitHub contributors](https://img.shields.io/github/contributors/ethylix/child)](https://github.com/ethylix/child/graphs/contributors)</span>
 <span class="badge-placeholder">[![License: GPL-2.0](https://img.shields.io/github/license/ethylix/child)](https://github.com/ethylix/child/blob/main/LICENSE)</span>

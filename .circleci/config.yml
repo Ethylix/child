@@ -1,3 +1,6 @@
+version: 2.1
+orbs:
+  codecov: codecov/codecov@3.0.0
 jobs:
   build:
     docker:
@@ -7,13 +10,21 @@ jobs:
       CK_TAP_LOG_FILE_NAME: tests/results.tap
     steps:
       - run: apt update && apt install -y check libsodium-dev
-      - checkout:
-      - run: cmake .
+      - checkout
+      - run: cmake -DCMAKE_BUILD_TYPE=Debug .
       - run: make
       - run: make test
       - store_artifacts:
           path: src/child
           destination: child
-      - run: apt install -y npm && npm install tap-xunit -g && sleep 1 && chmod +x /usr/local/lib/node_modules/tap-xunit/bin/tap-xunit && cat tests/results.tap | tap-xunit > tests/results.xml
+      - run: apt install -y gcovr npm && npm install tap-xunit -g && sleep 1 && chmod +x /usr/local/lib/node_modules/tap-xunit/bin/tap-xunit && cat tests/results.tap | tap-xunit > tests/results.xml
       - store_test_results:
           path: tests
+      - run: gcovr -r src/ --xml-pretty -o codecov.xml
+      - codecov/upload:
+          file: codecov.xml
+
+workflows:
+  build_and_test:
+    jobs:
+      - build
