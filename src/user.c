@@ -504,7 +504,7 @@ void sync_cflag(const Cflag *cflag)
     Nick *nptr;
     const char *bot;
 
-    if ((nptr = get_core_api()->find_nick(cflag->user->nick)) == NULL)
+    if ((nptr = get_core_api()->find_nick(cflag->user->authed_nick)) == NULL)
         return;
 
     if ((wchan = find_wchan(chname)) == NULL)

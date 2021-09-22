@@ -59,6 +59,67 @@ START_TEST(test_set_user_password)
 }
 END_TEST
 
+START_TEST(test_user_link)
+{
+    Chan *cptr;
+    User *uptr, *uptr2;
+    Nick *nptr, *nptr2;
+
+    init_core();
+    setup_mock_server(/*server_name=*/"ircd.test", /*sid=*/"042");
+    strcpy(core_get_config()->nick,"C");
+
+    uptr = create_mock_user("test_user", "test_password");
+    ck_assert_ptr_ne(uptr, NULL);
+    uptr->authed = 1;
+
+    uptr2 = create_mock_user("test_user2", "test_password2");
+    ck_assert_ptr_ne(uptr2, NULL);
+    uptr2->authed = 1;
+
+    AddLink(uptr->nick, uptr2->nick);
+    
+    // register a channel
+    cptr = create_mock_chan("#test", uptr->nick);
+    ck_assert_ptr_ne(cptr, NULL);
+
+    // create 2 nicks, log them in
+    nptr = get_core_api()->new_nick(/*nick=*/"test_user",
+                                    /*ident=*/"test_ident",
+                                    /*host=*/"test_host",
+                                    /*uid=*/"042AABBCC",
+                                    /*hiddenhost=*/"test_hiddenhost",
+                                    /*umodes=*/UMODE_BOT | UMODE_SSL,
+                                    /*reshost=*/"127.0.0.1");
+    ck_assert_ptr_ne(nptr, NULL);
+    strncpy(nptr->svid, "test_user", 10);
+    uptr->authed_nick = nptr;
+
+    nptr2 = get_core_api()->new_nick(/*nick=*/"test_user2",
+                                    /*ident=*/"test_ident",
+                                    /*host=*/"test_host",
+                                    /*uid=*/"042BBCCDD",
+                                    /*hiddenhost=*/"test_hiddenhost",
+                                    /*umodes=*/UMODE_BOT | UMODE_SSL,
+                                    /*reshost=*/"127.0.0.1");
+    strncpy(nptr2->svid, "test_user2", 11);
+    uptr2->authed_nick = nptr2;
+
+    inject_parse_line(":042 SJOIN 1628161239 #test :042AABBCC");
+    ck_assert(expect_raw_count(2));
+    ck_assert(expect_next_raw(":C MODE #test +q test_user"));
+    ck_assert(expect_next_raw(":C MODE #test +o test_user"));
+
+    inject_parse_line(":042 SJOIN 1628161239 #test :042BBCCDD");
+    ck_assert(expect_raw_count(2));
+    ck_assert(expect_next_raw(":C MODE #test +q test_user2"));
+    ck_assert(expect_next_raw(":C MODE #test +o test_user2"));
+
+    free_mock_server();
+    free_core();
+}
+END_TEST
+
 Suite *make_user_api_suite(void)
 {
     Suite *s;
@@ -72,6 +133,10 @@ Suite *make_user_api_suite(void)
 
     tc = tcase_create("set_user_password");
     tcase_add_test(tc, test_set_user_password);
+    suite_add_tcase(s, tc);
+
+    tc = tcase_create("user_link");
+    tcase_add_test(tc, test_user_link);
     suite_add_tcase(s, tc);
 
     return s;

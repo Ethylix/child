@@ -99,6 +99,14 @@ User *create_mock_user(const char *name, const char *password)
     return uptr;
 }
 
+Chan *create_mock_chan(const char *name, const char *owner) {
+    Chan *cptr;
+
+    cptr = CreateChannel(name, owner, 0);
+
+    return cptr;
+}
+
 void inject_parse_line(const char *buf)
 {
     char *copy = strdup(buf);
