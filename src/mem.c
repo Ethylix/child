@@ -23,8 +23,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "botserv.h"
 #include "channel.h"
 #include "commands.h"
+#include "core.h"
 #include "core_api.h"
+#include "logging.h"
 #include "modules.h"
+#include "server.h"
 #include "string_utils.h"
 #include "trust.h"
 #include "user.h"
@@ -34,6 +37,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 void cleanup_reconnect()
 {
+    Server *server = find_server(get_core()->remote_server);
+    if (server) {
+        detach_server_recursive(server);
+    } else {
+        operlog("Cannot find remote server %s: disconnected during handshake?");
+    }
+
     clear_wchans();
     clear_limits();
     clear_guests();
