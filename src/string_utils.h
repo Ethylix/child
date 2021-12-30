@@ -35,7 +35,7 @@ char *SeperateWord (char *);
 char *StripBlanks (char *);
 int Strcmp (const char *, const char *);
 char *strtosql(char *, char *, int);
-int __match_regex (char *, char *, int);
+int __match_regex (const char *, const char *, int);
 char *parse_range (char *, char *);
 char *gen_rand_string (char *, char *, int);
 void ToLower(char *, const char *, unsigned int);

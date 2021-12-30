@@ -72,7 +72,7 @@ void child_cleanup()
     MsgToChan(logchan,"[SecServ] Bye :(");
 }
 
-static int match_bad_pattern(char *string)
+static int match_bad_pattern(const char *string)
 {
     int i;
     for (i=0;i<=NICKLEN && *(string+i+1);i++) {
@@ -244,13 +244,13 @@ void secserv_cmds (Nick *nptr, User *uptr, char *all)
 
     set_seclev(atoi(arg2));
     NoticeToUser(nptr,"Security level set to %d",seclev);
-    operlog("%s changed security level to %d and perm to %d",nptr->nick,seclev,perm);
+    operlog("%s changed security level to %d and perm to %d", nick_name(nptr), seclev, perm);
 }
 
 int check_nick(Nick *nptr)
 {
     if (!nptr) return MOD_CONTINUE;
-    char *nick = nptr->nick;
+    const char *nick = nick_name(nptr);
     if (!nick || *nick == '\0') return MOD_CONTINUE;
 
     /*if (!Strcmp(nptr->server,"research.geeknode.org")) return MOD_CONTINUE;*/
@@ -265,7 +265,7 @@ int check_nick(Nick *nptr)
         switch(seclev) {
             case 1:
                 killuser(nick,"Your nick may be an evil bot nick, please change it.",core_get_config()->nick);
-                MsgToChan(logchan,"\2User %s!%s@%s killed (Bad nick)\2",nick,nptr->ident,nptr->host);
+                MsgToChan(logchan,"\2User %s!%s@%s killed (Bad nick)\2",nick, nick_ident(nptr), nick_host(nptr));
                 kills++;
                 if (kills >= maxkills && perm < 2) {
                     MsgToChan(logchan,"\2Maxkills limit exceeded, switching to security level\0034 2\3\2");
@@ -275,9 +275,9 @@ int check_nick(Nick *nptr)
                 return MOD_STOP;
             case 2:
             case 3:
-                if (!Strcmp(nptr->host,"127.0.0.1") || !Strcmp(nptr->host,"localhost")) break;
-                glineuser(nptr->ident,nptr->host,gline_expire,"Possible clones attack");
-                MsgToChan(logchan,"\2User %s!%s@%s \0034G-Lined\003 (Possible clones attack)\2",nick,nptr->ident,nptr->host);
+                if (!Strcmp(nick_host(nptr), "127.0.0.1") || !Strcmp(nick_host(nptr),"localhost")) break;
+                glineuser(nick_ident(nptr), nick_host(nptr), gline_expire, "Possible clones attack");
+                MsgToChan(logchan,"\2User %s!%s@%s \0034G-Lined\003 (Possible clones attack)\2",nick, nick_ident(nptr), nick_host(nptr));
                 glines++;
                 if (glines >= maxglines && seclev == 2 && perm < 2) {
                     MsgToChan(logchan,"\2Maxglines limit exceeded, switching to security level\0034 3\3\2");

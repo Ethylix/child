@@ -236,7 +236,7 @@ void chan_register (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }
 
-    if (chansreg(nptr->nick) >= core_get_config()->chanperuser && uptr->level < core_get_config()->level_oper) {
+    if (chansreg(nick_name(nptr)) >= core_get_config()->chanperuser && uptr->level < core_get_config()->level_oper) {
         NoticeToUser(nptr,"You have registered too many channels (%i max).",core_get_config()->chanperuser);
         return;
     }
@@ -283,8 +283,8 @@ void chan_drop (Nick *nptr, User *uptr, Chan *chptr, char *all)
     }   
         
     if (!IsFounder(uptr,chptr) && uptr->level >= core_get_config()->level_oper && IsOper(nptr)) {
-        globops("%s used \2DROP\2 on channel %s",nptr->nick,arg3);
-        operlog("%s dropped channel %s",nptr->nick,arg3);
+        globops("%s used \2DROP\2 on channel %s",nick_name(nptr),arg3);
+        operlog("%s dropped channel %s",nick_name(nptr),arg3);
     }
 
     chandrop(chptr);
@@ -383,7 +383,7 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
             return;
         }
         
-        if (!Strcmp(arg5,nptr->nick) || (GetFlag(uptr,chptr) >= 10 && GetFlag(uptr2,chptr) < GetFlag(uptr,chptr))) {
+        if (!Strcmp(arg5,nick_name(nptr)) || (GetFlag(uptr,chptr) >= 10 && GetFlag(uptr2,chptr) < GetFlag(uptr,chptr))) {
             cflag = find_cflag(chptr, uptr2);
             if (!cflag)
                 return;
@@ -411,7 +411,7 @@ void __chan_access (Nick *nptr, User *uptr, Chan *chptr, char *all)
             return;
         }
 
-        if (GetFlag(uptr,chptr) && !Strcmp(arg5,nptr->nick)) {
+        if (GetFlag(uptr,chptr) && !Strcmp(arg5,nick_name(nptr))) {
             DeleteUserFromChannel(uptr,chptr);
             NoticeToUser(nptr,"You have been removed from channel %s",arg3);
             return;
@@ -737,7 +737,7 @@ void chan_invite (Nick *nptr, User *uptr, Chan *chptr, char *all)
         return;
     }   
         
-    InviteUser(nptr->nick,arg3);
+    InviteUser(nick_name(nptr),arg3);
 }
 
 void chan_set (Nick *nptr, User *uptr, Chan *chptr, char *all)
@@ -1279,10 +1279,10 @@ void chan_kick (Nick *nptr, User *uptr, Chan *chptr, char *all)
 
     bot = channel_botname(chptr);
     if (!arg4 || *arg4 == '\0') {
-        KickUser(bot,nptr->nick,chptr->channelname,"(%s) Requested", nptr->nick);
+        KickUser(bot,nick_name(nptr),chptr->channelname,"(%s) Requested", nick_name(nptr));
     } else {
         if (!Strcmp(arg4,bot)) {
-            KickUser(bot,nptr->nick,chptr->channelname,"Don't touch !");
+            KickUser(bot,nick_name(nptr),chptr->channelname,"Don't touch !");
             return;
         }
 
@@ -1298,7 +1298,7 @@ void chan_kick (Nick *nptr, User *uptr, Chan *chptr, char *all)
                     continue;
 
                 if (!IsOper(member->nick))
-                    KickUser(bot,member->nick->nick,chptr->channelname,"(%s) Kicking all users", nptr->nick);
+                    KickUser(bot,nick_name(member->nick),chptr->channelname,"(%s) Kicking all users", nick_name(nptr));
             }
             return;
         }
@@ -1319,9 +1319,9 @@ void chan_kick (Nick *nptr, User *uptr, Chan *chptr, char *all)
         }
 
         if (!all || *all == '\0')
-            KickUser(bot,arg4,chptr->channelname,"(%s) Requested", nptr->nick);
+            KickUser(bot,arg4,chptr->channelname,"(%s) Requested", nick_name(nptr));
         else
-            KickUser(bot,arg4,chptr->channelname,"(%s) %s", nptr->nick, all);
+            KickUser(bot,arg4,chptr->channelname,"(%s) %s", nick_name(nptr), all);
     }
 }
 
@@ -1706,7 +1706,7 @@ void chan_topic (Nick *nptr, User *uptr, Chan *chptr, char *all)
     }
 
     bzero(mask, 512);
-    sprintf(mask, "%s!%s@%s", nptr->nick, nptr->ident, nptr->hiddenhost);
+    sprintf(mask, "%s!%s@%s", nick_name(nptr), nick_ident(nptr), nick_hiddenhost(nptr));
     if (!topic || *topic == '\0') {
         bzero(chptr->topic, TOPICLEN);
         get_core_api()->send_raw(":%s TOPIC %s %s %ld :", channel_botname(chptr), ch, mask, time(NULL));

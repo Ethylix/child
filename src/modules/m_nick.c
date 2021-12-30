@@ -160,7 +160,7 @@ void nick_link (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    if (!Strcmp(arg3,nptr->nick)) {
+    if (!Strcmp(arg3,nick_name(nptr))) {
         NoticeToUser(nptr,"You cannot link with yourself...");
         return;
     }
@@ -171,12 +171,12 @@ void nick_link (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    if (find_link(nptr->nick)) {
+    if (find_link(nick_name(nptr))) {
         NoticeToUser(nptr,"You are already linked with another nick.");
         return;
     }
 
-    if (find_link2(nptr->nick,arg3)) {
+    if (find_link2(nick_name(nptr),arg3)) {
         NoticeToUser(nptr,"You are already linked to this nick. If you want to change the master, use the SET MASTER command.");
         return;
     }
@@ -186,7 +186,7 @@ void nick_link (Nick *nptr, User *uptr, char *all)
         return;
     }
 
-    AddLink(arg3,nptr->nick);
+    AddLink(arg3,nick_name(nptr));
     if (user->vhost[0] != '\0')
         strncpy(uptr->vhost,user->vhost,HOSTLEN);
     uptr->options = user->options;
@@ -210,7 +210,7 @@ void nick_unlink (Nick *nptr, User *uptr, char *all)
         return;
     }   
     
-    if (!Strcmp(arg3,nptr->nick)) {
+    if (!Strcmp(arg3,nick_name(nptr))) {
         NoticeToUser(nptr,"You cannot be linked with yourself ...");
         return;
     }   
@@ -222,8 +222,8 @@ void nick_unlink (Nick *nptr, User *uptr, char *all)
     }   
     
     Link *link;
-    if ((link = find_link2(nptr->nick,arg3)) == NULL) {
-        if ((link = find_link2(arg3,nptr->nick)) == NULL) {
+    if ((link = find_link2(nick_name(nptr),arg3)) == NULL) {
+        if ((link = find_link2(arg3,nick_name(nptr))) == NULL) {
             NoticeToUser(nptr,"You are not linked to this nick.");
             return;
         }   
@@ -248,7 +248,7 @@ void nick_ghost (Nick *nptr, User *uptr __unused, char *all)
         return;
     }
 
-    if (!Strcmp(arg3, nptr->nick)) {
+    if (!Strcmp(arg3, nick_name(nptr))) {
         NoticeToUser(nptr, "You want to ghost yourself ? Uh ..");
         return;
     }
@@ -271,8 +271,8 @@ void nick_ghost (Nick *nptr, User *uptr __unused, char *all)
     }
 
     char ghostmsg[128];
-    sprintf(ghostmsg,"GHOST command used by %s",nptr->nick);
-    killuser(nptr2->nick,ghostmsg,core_get_config()->nick);
+    sprintf(ghostmsg,"GHOST command used by %s",nick_name(nptr));
+    killuser(nick_name(nptr2),ghostmsg,core_get_config()->nick);
     NoticeToUser(nptr,"Done.");
 }
 
@@ -289,12 +289,12 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
         return;
     }
 
-    if (nptr->account) {
-        NoticeToUser(nptr, "You are already identified to account \2%s\2. Please reconnect if you wish to identify to another account.", nptr->account->nick);
+    if (nick_account(nptr)) {
+        NoticeToUser(nptr, "You are already identified to account \2%s\2. Please reconnect if you wish to identify to another account.", nick_account(nptr)->nick);
         return;
     }
 
-    user = find_user(nptr->nick);
+    user = find_user(nick_name(nptr));
     if (!user) {
         NoticeToUser(nptr, "This nickname is not registered.");
         return;
@@ -303,13 +303,13 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
     if (check_user_password(user, arg3) == -1) {
         NoticeToUser(nptr, "Wrong password.");
 
-        nptr->loginattempts++;
-        if (nptr->lasttry == 0) nptr->lasttry = time(NULL);
-        if (nptr->loginattempts >= core_get_config()->maxloginatt && time(NULL) - nptr->lasttry < 60) {
-            killuser(nptr->nick,"Max login attempts exceeded",core_get_config()->nick);
-        } else if (nptr->loginattempts < core_get_config()->maxloginatt && time(NULL) - nptr->lasttry >= 60) {
-            nptr->loginattempts = 1;
-            nptr->lasttry = time(NULL);
+        nick_set_loginattempts(nptr, nick_loginattempts(nptr) + 1);
+        if (nick_lasttry(nptr) == 0) nick_set_lasttry(nptr, time(NULL));
+        if (nick_loginattempts(nptr) >= core_get_config()->maxloginatt && time(NULL) - nick_lasttry(nptr) < 60) {
+            killuser(nick_name(nptr),"Max login attempts exceeded",core_get_config()->nick);
+        } else if (nick_loginattempts(nptr) < core_get_config()->maxloginatt && time(NULL) - nick_lasttry(nptr) >= 60) {
+            nick_set_loginattempts(nptr, 1);
+            nick_set_lasttry(nptr, time(NULL));
         }
 
         return;
@@ -321,8 +321,8 @@ void nick_identify (Nick *nptr, User *uptr __unused, char *all)
     }
 
     if (IsAuthed(user)) {
-        NoticeToUser(nptr, "Nick \2%s\2 was already identified with this account, killing it.", user->authed_nick->nick);
-        killuser(user->authed_nick->nick, "Ghosted by new account identification", core_get_config()->nick);
+        NoticeToUser(nptr, "Nick \2%s\2 was already identified with this account, killing it.", nick_name(user->authed_nick));
+        killuser(nick_name(user->authed_nick), "Ghosted by new account identification", core_get_config()->nick);
     }
 
     user_login(nptr, user);
@@ -364,13 +364,13 @@ void nick_register (Nick *nptr, User *uptr, char *all)
     }
 
     if (!HASHMAP_EMPTY(core_get_users()))
-        AddUser(nptr->nick,1);
+        AddUser(nick_name(nptr),1);
     else {
-        AddUser(nptr->nick,core_get_config()->level_owner);
+        AddUser(nick_name(nptr),core_get_config()->level_owner);
         NoticeToUser(nptr,"You have now the level \2%d\2",core_get_config()->level_owner);
     }   
         
-    user = find_user(nptr->nick);
+    user = find_user(nick_name(nptr));
     if (!user) return;
         
     char newpass[16];
@@ -435,8 +435,8 @@ void nick_drop (Nick *nptr, User *uptr, char *all)
     userdrop(uptr2);
     NoticeToUser(nptr,"The nick %s has been dropped",arg3);
 
-    globops("%s used \2DROP\2 on %s",nptr->nick,arg3);
-    operlog("%s dropped nick %s",nptr->nick,arg3);
+    globops("%s used \2DROP\2 on %s",nick_name(nptr),arg3);
+    operlog("%s dropped nick %s",nick_name(nptr),arg3);
 }
 
 void nick_info (Nick *nptr, User *uptr, char *all)
@@ -474,7 +474,7 @@ void nick_info (Nick *nptr, User *uptr, char *all)
     NoticeToUser(nptr,"Informations for \2%s\2 :",user->nick);
     NoticeToUser(nptr,"   Level :             %d",user->level);
     NoticeToUser(nptr,"   Online:             %s",user->authed == 1 ? "yes" : "no");
-    if (!Strcmp(nptr->nick,arg3) || (uptr->level >= core_get_config()->level_oper && IsOper(nptr)) || !HasOption(user, UOPT_HIDEMAIL))
+    if (!Strcmp(nick_name(nptr),arg3) || (uptr->level >= core_get_config()->level_oper && IsOper(nptr)) || !HasOption(user, UOPT_HIDEMAIL))
         NoticeToUser(nptr,"   Email:              %s",user->email);
     char opt[512];
     memset(opt,0x00,512);
@@ -494,7 +494,7 @@ void nick_info (Nick *nptr, User *uptr, char *all)
     NoticeToUser(nptr,"   Last seen: %s",ctime(&blah));
     blah = user->regtime;
     NoticeToUser(nptr,"   Registration time: %s", blah ? ctime(&blah) : "Unknown");
-    if (!Strcmp(nptr->nick,arg3) || (uptr->level >= core_get_config()->level_oper && IsOper(nptr))) {
+    if (!Strcmp(nick_name(nptr),arg3) || (uptr->level >= core_get_config()->level_oper && IsOper(nptr))) {
         NoticeToUser(nptr,"   Linked nicks:");
         HASHMAP_FOREACH_ENTRY_VALUE(core_get_links(), entry, link) {
             if (!Strcmp(link->master,arg3))
@@ -630,7 +630,7 @@ void nick_set_cloak (Nick *nptr, User *uptr, char *all)
         get_core_api()->send_raw("CHGHOST %s %s%s", uptr->nick, uptr->nick, core_get_config()->usercloak);
         bzero(host, HOSTLEN+NICKLEN+1);
         snprintf(host, HOSTLEN+NICKLEN+1, "%s%s", uptr->nick, core_get_config()->usercloak);
-        strncpy(nptr->hiddenhost, host, HOSTLEN);
+        nick_set_hiddenhost(nptr, host);
         NoticeToUser(nptr,"Your host is now cloaked");
     } else if (!Strcmp(arg1, "off")) {
         ClearOption(uptr, UOPT_CLOAKED);
@@ -645,8 +645,8 @@ void nick_set_master (Nick *nptr, User *uptr __unused, char *all)
     char *arg1 = all;
     SeperateWord(all);
 
-    if (!Strcmp(nptr->nick,arg1)) {
-        link = find_link(nptr->nick);
+    if (!Strcmp(nick_name(nptr),arg1)) {
+        link = find_link(nick_name(nptr));
         if (!link) {
             NoticeToUser(nptr,"You are already the master or you are not linked");
             return;
@@ -656,7 +656,7 @@ void nick_set_master (Nick *nptr, User *uptr __unused, char *all)
         strncpy(link->master,arg1,NICKLEN);
         NoticeToUser(nptr,"The master has been set to %s",arg1);
     } else {
-        link = find_link2(nptr->nick,arg1);
+        link = find_link2(nick_name(nptr),arg1);
         if (!link) {
             NoticeToUser(nptr,"You are not linked to %s",arg1);
             return;
@@ -720,7 +720,7 @@ void nick_set_password (Nick *nptr, User *uptr, char *all)
         set_user_password(uptr, arg2);
 
         NoticeToUser(nptr,"Password changed.");
-        globops("%s used \2PASSWORD\2 on nick %s",nptr->nick,uptr2->nick);
+        globops("%s used \2PASSWORD\2 on nick %s",nick_name(nptr),uptr2->nick);
     }
 }
 
@@ -758,8 +758,8 @@ void nick_requestpassword (Nick *nptr, User *uptr, char *all)
     char email[1024];
     bzero(email, 1024);
 
-    operlog("%s (%s@%s) requested new password for %s\n",nptr->nick,nptr->ident,nptr->host,uptr->nick);
-    snprintf(email, 1023, "From: Child <%s>\r\nTo: %s <%s>\r\nSubject: Request of password\r\n\r\n%s (%s@%s) requested new password.\r\nYour user info:\r\n\tLogin: %s\r\n\tPassword: %s\r\n\r\nYou can auth with the following command: /msg %s nick identify %s\r\n", core_get_config()->sendfrom, uptr->nick, uptr->email, nptr->nick, nptr->ident, nptr->host, uptr->nick, newpass, core_get_config()->nick, newpass);
+    operlog("%s (%s@%s) requested new password for %s\n",nick_name(nptr),nick_ident(nptr),nick_host(nptr),uptr->nick);
+    snprintf(email, 1023, "From: Child <%s>\r\nTo: %s <%s>\r\nSubject: Request of password\r\n\r\n%s (%s@%s) requested new password.\r\nYour user info:\r\n\tLogin: %s\r\n\tPassword: %s\r\n\r\nYou can auth with the following command: /msg %s nick identify %s\r\n", core_get_config()->sendfrom, uptr->nick, uptr->email, nick_name(nptr), nick_ident(nptr), nick_host(nptr), uptr->nick, newpass, core_get_config()->nick, newpass);
     sendmail(uptr->email, email);
 
     NoticeToUser(nptr,"New password generated and sent to your email address");

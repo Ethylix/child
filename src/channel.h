@@ -236,7 +236,7 @@ int members_num (Wchan *);
 void checkexpired (void);
 void CheckLimits (void);
 Limit *AddLimit(Chan *);
-int chansreg (char *);
+int chansreg (const char *);
 const char *channel_botname(const Chan *);
 void joinallchans (void);
 void DeleteCflag (Cflag *);

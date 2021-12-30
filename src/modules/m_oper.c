@@ -180,7 +180,7 @@ void do_oper (Nick *nptr, User *uptr, char *all)
     
     if (!IsOper(nptr)) {
         NoticeToUser(nptr,"Access denied");
-        globops("Access denied to OPER commands from \2%s\2 (non-oper)",nptr->nick);
+        globops("Access denied to OPER commands from \2%s\2 (non-oper)",nick_name(nptr));
         return;
     }   
     
@@ -223,12 +223,12 @@ void oper_nicklist (Nick *nptr, User *uptr __unused, char *all)
     int count=0;
     HASHMAP_FOREACH_ENTRY_VALUE(core_get_nicks(), entry, nptr2) {
         if (arg3 && *arg3 != '\0') {
-            if (Strstr(nptr2->nick,arg3) || Strstr(nptr2->ident,arg3) || Strstr(nptr2->host,arg3)) {
-                NoticeToUser(nptr,"\2%s\2!%s@%s",nptr2->nick,nptr2->ident,nptr2->host);
+            if (Strstr(nick_name(nptr2),arg3) || Strstr(nick_ident(nptr2),arg3) || Strstr(nick_host(nptr2),arg3)) {
+                NoticeToUser(nptr,"\2%s\2!%s@%s",nick_name(nptr2),nick_ident(nptr2),nick_host(nptr2));
                 count++;
             }
         } else {
-            NoticeToUser(nptr,"\2%s\2!%s@%s",nptr2->nick,nptr2->ident,nptr2->host);
+            NoticeToUser(nptr,"\2%s\2!%s@%s",nick_name(nptr2),nick_ident(nptr2),nick_host(nptr2));
             count++;
         }
     }
@@ -255,9 +255,9 @@ void oper_userlist (Nick *nptr, User *uptr __unused, char *all)
                 nptr2 = get_core_api()->find_nick(uptr2->nick);
                 if (nptr2) {
                     if (uptr2->authed == 1)
-                        sprintf(tmp,"%s     %d     Authed      %s!%s@%s",uptr2->nick,uptr2->level,nptr2->nick,nptr2->ident,nptr2->host);
+                        sprintf(tmp,"%s     %d     Authed      %s!%s@%s",uptr2->nick,uptr2->level,nick_name(nptr2),nick_ident(nptr2),nick_host(nptr2));
                     else
-                        sprintf(tmp,"%s     %d     Not authed  %s!%s@%s",uptr2->nick,uptr2->level,nptr2->nick,nptr2->ident,nptr2->host);
+                        sprintf(tmp,"%s     %d     Not authed  %s!%s@%s",uptr2->nick,uptr2->level,nick_name(nptr2),nick_ident(nptr2),nick_host(nptr2));
                 } else
                     sprintf(tmp,"%s     %d      Not authed, not online",uptr2->nick,uptr2->level);
                 NoticeToUser(nptr,tmp);
@@ -267,9 +267,9 @@ void oper_userlist (Nick *nptr, User *uptr __unused, char *all)
             nptr2 = get_core_api()->find_nick(uptr2->nick);
             if (nptr2) {
                 if (uptr2->authed == 1)
-                    sprintf(tmp,"%s     %d      Authed      %s!%s@%s",uptr2->nick,uptr2->level,nptr2->nick,nptr2->ident,nptr2->host);
+                    sprintf(tmp,"%s     %d      Authed      %s!%s@%s",uptr2->nick,uptr2->level,nick_name(nptr2),nick_ident(nptr2),nick_host(nptr2));
                 else
-                    sprintf(tmp,"%s     %d      Not authed  %s!%s@%s",uptr2->nick,uptr2->level,nptr2->nick,nptr2->ident,nptr2->host);
+                    sprintf(tmp,"%s     %d      Not authed  %s!%s@%s",uptr2->nick,uptr2->level,nick_name(nptr2),nick_ident(nptr2),nick_host(nptr2));
             } else
                 sprintf(tmp,"%s     %d      Not authed, not online",uptr2->nick,uptr2->level);
             NoticeToUser(nptr,tmp);
@@ -321,9 +321,9 @@ void oper_killall (Nick *nptr, User *uptr __unused, char *all)
 
     char mask[256];
     HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_nicks(), entry, tmp_entry, nptr2) {
-        snprintf(mask, 256, "%s!%s@%s",nptr2->nick,nptr2->ident,nptr2->host);
+        snprintf(mask, 256, "%s!%s@%s",nick_name(nptr2),nick_ident(nptr2),nick_host(nptr2));
         if (match_mask(arg3,mask)) {
-            killuser(nptr2->nick,"Clearing users",core_get_config()->nick);
+            killuser(nick_name(nptr2),"Clearing users",core_get_config()->nick);
         }
     }
 
@@ -351,9 +351,9 @@ void oper_regexpcheck (Nick *nptr, User *uptr __unused, char *all)
     char mask[256];
     NoticeToUser(nptr, "Affected users :");
     HASHMAP_FOREACH_ENTRY_VALUE(core_get_nicks(), entry, nptr2) {
-        snprintf(mask, 256, "%s!%s@%s", nptr2->nick, nptr2->ident, nptr2->host);
+        snprintf(mask, 256, "%s!%s@%s", nick_name(nptr2), nick_ident(nptr2), nick_host(nptr2));
         if (match_mask(all, mask)) {
-            NoticeToUser(nptr, "\2%s\2      (%s@%s)", nptr2->nick, nptr2->ident, nptr2->host);
+            NoticeToUser(nptr, "\2%s\2      (%s@%s)", nick_name(nptr2), nick_ident(nptr2), nick_host(nptr2));
             i++;
         }
     }
@@ -379,9 +379,9 @@ void oper_glineall (Nick *nptr, User *uptr __unused, char *all)
 
     char mask[256];
     HASHMAP_FOREACH_ENTRY_VALUE_SAFE(core_get_nicks(), entry, tmp_entry, nptr2) {
-        snprintf(mask, 256, "%s!%s@%s",nptr2->nick,nptr2->ident,nptr2->host);
+        snprintf(mask, 256, "%s!%s@%s",nick_name(nptr2),nick_ident(nptr2),nick_host(nptr2));
         if (match_mask(arg3,mask)) {
-            glineuser("*", nptr2->host, 86400, "Clearing users");
+            glineuser("*", nick_host(nptr2), 86400, "Clearing users");
         }
     }
 
@@ -409,7 +409,7 @@ void oper_glinechan (Nick *nptr, User *uptr __unused, char *all)
 
     LLIST_FOREACH_ENTRY(&wchan->members, member, wchan_head) {
         if (!IsOper(member->nick))
-            glineuser("*", member->nick->host, atoi(duration), reason);
+            glineuser("*", nick_host(member->nick), atoi(duration), reason);
     }
 
     NoticeToUser(nptr, "Done.");
@@ -508,15 +508,15 @@ void oper_forceauth (Nick *nptr, User *uptr __unused, char *all)
         return;
     }
 
-    if (nptr2->account) {
-        NoticeToUser(nptr, "This nick is already identified to account \2%s\2.", nptr2->svid);
+    if (nick_account(nptr2)) {
+        NoticeToUser(nptr, "This nick is already identified to account \2%s\2.", nick_svid(nptr2));
         return;
     }
 
     user_login(nptr2, uptr2);
 
     NoticeToUser(nptr,"\2%s\2 has been authed.",arg3);
-    operlog("%s force-authed %s",nptr->nick,arg3);
+    operlog("%s force-authed %s",nick_name(nptr),arg3);
 }
 
 void oper_trustadd (Nick *nptr, User *uptr __unused, char *all)
@@ -536,11 +536,11 @@ void oper_trustadd (Nick *nptr, User *uptr __unused, char *all)
     if (trust) {
         trust->limit = strtol(arg4,NULL,10);
         NoticeToUser(nptr,"The limit of the trust on %s is now %s",arg3,arg4);
-        operlog("%s set limit for trust %s to %s",nptr->nick,arg3,arg4);
+        operlog("%s set limit for trust %s to %s",nick_name(nptr),arg3,arg4);
     } else {
         AddTrust(arg3,strtol(arg4,NULL,10));
         NoticeToUser(nptr,"Trust for %s added (max %s clones)",arg3,arg4);
-        operlog("%s added trust for %s (%s clones)",nptr->nick,arg3,arg4);
+        operlog("%s added trust for %s (%s clones)",nick_name(nptr),arg3,arg4);
     }
 }
 
@@ -573,7 +573,7 @@ void oper_trustdel (Nick *nptr, User *uptr __unused, char *all)
     else {
         DeleteTrust(trust);
         NoticeToUser(nptr,"Trust for %s removed",arg3);
-        operlog("%s removed trust for %s",nptr->nick,arg3);
+        operlog("%s removed trust for %s",nick_name(nptr),arg3);
     }   
 }
 
@@ -607,7 +607,7 @@ void oper_massfakeuser (Nick *nptr, User *uptr __unused, char *all)
         fakeuser(name, name, core_get_config()->host, NULL, "i");
     }   
         
-    operlog("%s executed MASSFAKEUSER :%d clones (%s)",nptr->nick,howmanyfakes,arg3);
+    operlog("%s executed MASSFAKEUSER :%d clones (%s)",nick_name(nptr),howmanyfakes,arg3);
     NoticeToUser(nptr,"Done.");
 }
 
@@ -644,7 +644,7 @@ void oper_massfakejoin (Nick *nptr, User *uptr __unused, char *all)
     }   
         
     NoticeToUser(nptr,"Done.");
-    operlog("%s executed MASSFAKEJOIN :%d clones (%s,%s)",nptr->nick,howmanyfakes,arg3,arg6);
+    operlog("%s executed MASSFAKEJOIN :%d clones (%s,%s)",nick_name(nptr),howmanyfakes,arg3,arg6);
 }
 
 void oper_massfakekill (Nick *nptr, User *uptr __unused, char *all)
@@ -679,7 +679,7 @@ void oper_massfakekill (Nick *nptr, User *uptr __unused, char *all)
     }   
         
     NoticeToUser(nptr,"Done.");
-    operlog("%s executed MASSFAKEKILL :%d clones (%s,%s)",nptr->nick,howmanyfakes,arg3,all);
+    operlog("%s executed MASSFAKEKILL :%d clones (%s,%s)",nick_name(nptr),howmanyfakes,arg3,all);
 }
 
 void oper_modload (Nick *nptr, User *uptr __unused, char *all)
@@ -702,9 +702,9 @@ void oper_modload (Nick *nptr, User *uptr __unused, char *all)
         return;
     } else {
         NoticeToUser(nptr,"Module %s loaded",arg3);
-        globops("%s loaded module \2%s\2",nptr->nick,arg3);
+        globops("%s loaded module \2%s\2",nick_name(nptr),arg3);
     }
-    operlog("Module %s loaded by %s",arg3,nptr->nick);
+    operlog("Module %s loaded by %s",arg3,nick_name(nptr));
 }
 
 void oper_modunload (Nick *nptr, User *uptr __unused, char *all)
@@ -735,8 +735,8 @@ void oper_modunload (Nick *nptr, User *uptr __unused, char *all)
     }
 
     NoticeToUser(nptr,"Module %s unloaded",arg3);
-    globops("%s unloaded module \2%s\2",nptr->nick,arg3);
-    operlog("Module %s unloaded by %s",arg3,nptr->nick);
+    globops("%s unloaded module \2%s\2",nick_name(nptr),arg3);
+    operlog("Module %s unloaded by %s",arg3,nick_name(nptr));
 }
 
 void oper_modlist (Nick *nptr)
@@ -781,10 +781,10 @@ void oper_jupe (Nick *nptr, User *uptr __unused, char *all)
         return;
     }   
      
-    get_core_api()->send_raw("SQUIT %s :Server juped by %s (%s)",arg3,nptr->nick,all);
+    get_core_api()->send_raw("SQUIT %s :Server juped by %s (%s)",arg3,nick_name(nptr),all);
     get_core_api()->send_raw("SERVER %s 1 :Server juped (%s)",arg3,all);
     NoticeToUser(nptr,"Done.");
-    globops("Server %s \2JUPED\2 by %s (%s)",arg3,nptr->nick,all);
+    globops("Server %s \2JUPED\2 by %s (%s)",arg3,nick_name(nptr),all);
 }
 
 void oper_fakekill (Nick *nptr, User *uptr __unused, char *all)
@@ -839,7 +839,7 @@ void oper_operlist (Nick *nptr)
     NoticeToUser(nptr,"Online operators :");
     HASHMAP_FOREACH_ENTRY_VALUE(core_get_nicks(), entry, nptr2) {
         if (IsOper(nptr2)) {
-            NoticeToUser(nptr,"\2%s\2     %s@%s",nptr2->nick,nptr2->ident,nptr2->host);
+            NoticeToUser(nptr,"\2%s\2     %s@%s",nick_name(nptr2),nick_ident(nptr2),nick_host(nptr2));
             count++;
         }
     }
@@ -940,7 +940,7 @@ void oper_changelev (Nick *nptr, User *uptr, char *all)
     uptr2->level = strtol(arg4,NULL,10);
     NoticeToUser(nptr,"The level of \2%s\2 is now \2%s\2",arg3,arg4);
         
-    operlog("%s changed the level of %s to %s",nptr->nick,arg3,arg4);
+    operlog("%s changed the level of %s to %s",nick_name(nptr),arg3,arg4);
 }
 
 void oper_global (Nick *nptr, User *uptr __unused, char *all)
@@ -953,7 +953,7 @@ void oper_global (Nick *nptr, User *uptr __unused, char *all)
     if (core_get_config()->anonymous_global)
         Global("(Global) %s", all);
     else
-        Global("(Global) [%s] %s", nptr->nick, all);
+        Global("(Global) [%s] %s", nick_name(nptr), all);
 }
 
 void oper_sglobal (Nick *nptr, User *uptr __unused, char *all)
@@ -970,7 +970,7 @@ void oper_sglobal (Nick *nptr, User *uptr __unused, char *all)
     if (core_get_config()->anonymous_global)
         send_global(serv, "(sGlobal) %s", message);
     else
-        send_global(serv, "(sGlobal) [%s] %s", nptr->nick, message);
+        send_global(serv, "(sGlobal) [%s] %s", nick_name(nptr), message);
 }
 
 void oper_raw (Nick *nptr, User *uptr __unused, char *all)
@@ -986,7 +986,7 @@ void oper_raw (Nick *nptr, User *uptr __unused, char *all)
     }   
         
     get_core_api()->send_raw("%s",all);
-    operlog("%s executed RAW: %s",nptr->nick,all);
+    operlog("%s executed RAW: %s",nick_name(nptr),all);
 }
 
 void oper_savedb (Nick *nptr)
@@ -1003,11 +1003,11 @@ void oper_setraws (Nick *nptr, User *uptr __unused, char *all)
     if (!Strcmp(arg3,"1")) {
         get_core()->raws = true;
         NoticeToUser(nptr,"The raws are now enabled");
-        operlog("%s enabled RAWS",nptr->nick);
+        operlog("%s enabled RAWS",nick_name(nptr));
     } else if (!Strcmp(arg3,"0")) {
         get_core()->raws = false;
         NoticeToUser(nptr,"The raws are now disabled");
-        operlog("%s disabled RAWS",nptr->nick);
+        operlog("%s disabled RAWS",nick_name(nptr));
     } else
         NoticeToUser(nptr,"Syntax: \2setraws [1|0]\2");
 }
@@ -1016,7 +1016,7 @@ void oper_rehash (Nick *nptr)
 {
     loadconf(1);
     NoticeToUser(nptr,"Configuration rehashed");
-    operlog("%s rehashed configuration",nptr->nick);
+    operlog("%s rehashed configuration",nick_name(nptr));
 }
 
 void oper_restart (Nick *nptr, User *uptr __unused, char *all)
@@ -1025,7 +1025,7 @@ void oper_restart (Nick *nptr, User *uptr __unused, char *all)
     SeperateWord(arg3);
 
     get_core_api()->send_raw(":%s QUIT :Restarting",core_get_config()->nick);
-    operlog("%s executed RESTART",nptr->nick);
+    operlog("%s executed RESTART",nick_name(nptr));
     if (!arg3 || *arg3 == '\0')
         child_restart(1); 
     if (!Strcmp(arg3,"0")) child_restart(0);
@@ -1037,7 +1037,7 @@ void oper_die (Nick *nptr, User *uptr __unused, char *all)
     SeperateWord(arg3);
 
     get_core_api()->send_raw(":%s QUIT :I'll be back soon !",core_get_config()->nick);
-    operlog("%s executed DIE",nptr->nick);
+    operlog("%s executed DIE",nick_name(nptr));
     if (!arg3 || *arg3 == '\0')
         child_die(1);
     if (!Strcmp(arg3,"0")) child_die(0);

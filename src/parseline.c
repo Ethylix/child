@@ -126,7 +126,7 @@ void m_chghost (char *sender __unused, char *tail)
 
     nptr = get_core_api()->find_nick(target);
     if (!nptr) return;
-    strncpy(nptr->hiddenhost,newhost,HOSTLEN);
+    nick_set_hiddenhost(nptr, newhost);
 }
 
 void m_chgident (char *sender __unused, char *tail)
@@ -140,7 +140,7 @@ void m_chgident (char *sender __unused, char *tail)
 
     nptr = get_core_api()->find_nick(target);
     if (!nptr) return;
-    strncpy(nptr->ident,newident,NICKLEN);
+    nick_set_ident(nptr, newident);
 }
 
 void m_eos ()
@@ -249,7 +249,7 @@ void m_join (char *sender, char *tail)
         } else if (GetFlag(uptr,chptr) == core_get_config()->chlev_akick) {
             KickUser(bot,uptr->nick,str_ptr,"Get out of this chan !"); hasaccess = 1;
         } else if (GetFlag(uptr,chptr) == core_get_config()->chlev_akb) {
-            get_core_api()->send_raw(":%s MODE %s +b *!*@%s",bot,str_ptr,nptr->hiddenhost);
+            get_core_api()->send_raw(":%s MODE %s +b *!*@%s",bot,str_ptr, nick_hiddenhost(nptr));
             KickUser(bot,uptr->nick,str_ptr,"Get out of this chan !"); hasaccess = 1;
         } else if (GetFlag(uptr,chptr) == core_get_config()->chlev_nostatus)
             hasaccess = 1;
@@ -281,12 +281,12 @@ skip_flags:
 
         bzero(mask,256);
         bzero(mask2,256);
-        snprintf(mask, 256, "%s!%s@%s", nptr->nick, nptr->ident, nptr->hiddenhost);
-        snprintf(mask2, 256, "%s!%s@%s", nptr->nick, nptr->ident, nptr->host);
+        snprintf(mask, 256, "%s!%s@%s", nick_name(nptr), nick_ident(nptr), nick_hiddenhost(nptr));
+        snprintf(mask2, 256, "%s!%s@%s", nick_name(nptr), nick_ident(nptr), nick_host(nptr));
         LLIST_FOREACH_ENTRY(&chptr->timebans, tb, chan_head) {
             if (match_mask(tb->mask, mask) || match_mask(tb->mask, mask2)) {
-                get_core_api()->send_raw(":%s MODE %s +b *!*@%s", bot, str_ptr, nptr->hiddenhost);
-                KickUser(bot, nptr->nick, str_ptr, "%s", tb->reason);
+                get_core_api()->send_raw(":%s MODE %s +b *!*@%s", bot, str_ptr, nick_hiddenhost(nptr));
+                KickUser(bot, nick_name(nptr), str_ptr, "%s", tb->reason);
                 break;
             }
         }
@@ -406,7 +406,7 @@ void m_umode (char *sender, char *tail)
     if (umode[0] == '+') {
         if (IsCharInString('o',umode)) {
             SetOper(nptr);
-            globops("\2%s\2 is now an IRC Operator",nptr->nick);
+            globops("\2%s\2 is now an IRC Operator", nick_name(nptr));
         }
         if (IsCharInString('a',umode)) SetSAdmin(nptr);
         if (IsCharInString('A',umode)) SetAdmin(nptr);
@@ -422,7 +422,7 @@ void m_umode (char *sender, char *tail)
         if (IsCharInString('B',umode)) ClearBot(nptr);
         if (IsCharInString('S',umode)) ClearService(nptr);
         if (IsCharInString('q',umode)) ClearNokick(nptr);
-        if (IsCharInString('x',umode)) strncpy(nptr->hiddenhost,nptr->host,HOSTLEN);
+        if (IsCharInString('x',umode)) nick_set_hiddenhost(nptr, nick_host(nptr));
     }
 
     parv[0] = umode;
@@ -468,7 +468,7 @@ void m_mode (char *sender, char *tail)
         if (umode[0] == '+') {
             if (IsCharInString('o',umode)) {
                 SetOper(nptr);
-                globops("\2%s\2 is now an IRC Operator",nptr->nick);
+                globops("\2%s\2 is now an IRC Operator", nick_name(nptr));
             }
             if (IsCharInString('a',umode)) SetSAdmin(nptr);
             if (IsCharInString('A',umode)) SetAdmin(nptr);
@@ -484,7 +484,7 @@ void m_mode (char *sender, char *tail)
             if (IsCharInString('B',umode)) ClearBot(nptr);
             if (IsCharInString('S',umode)) ClearService(nptr);
             if (IsCharInString('q',umode)) ClearNokick(nptr);
-            if (IsCharInString('x',umode)) strncpy(nptr->hiddenhost,nptr->host,HOSTLEN);
+            if (IsCharInString('x',umode)) nick_set_hiddenhost(nptr, nick_host(nptr));
         }
 
         parv[0] = umode;
@@ -802,7 +802,7 @@ void m_mode (char *sender, char *tail)
 void m_nick (char *sender, char *tail)
 {
     char *newnick;
-    char oldnick[NICKLEN];
+    char oldnick[NICKLEN + 1];
     Nick *nptr;
     User *uptr,*uptr2 = NULL;
     char *parv[1];
@@ -813,23 +813,21 @@ void m_nick (char *sender, char *tail)
     SeperateWord(newnick);
 
     nptr = get_core_api()->find_nick(sender);
-
-    strncpy(oldnick,nptr->nick,NICKLEN - 1);
-    oldnick[NICKLEN - 1] = '\0';
-
     if (!nptr)
         return;
 
-    DeleteGuest(nptr->nick);
+    strncpy(oldnick, nick_name(nptr), NICKLEN);
+    oldnick[NICKLEN] = '\0';
+
+    DeleteGuest(oldnick);
 
     // TODO(target0): handle error cases.
-    HASHMAP_ERASE(core_get_nicks(), nptr->nick);
+    HASHMAP_ERASE(core_get_nicks(), oldnick);
 
-    strncpy(nptr->nick,newnick,NICKLEN - 1);
-    nptr->nick[NICKLEN - 1] = '\0';
+    nick_set_name(nptr, newnick);
 
     // TODO(target0): handle error cases.
-    HASHMAP_INSERT(core_get_nicks(), nptr->nick, nptr, NULL);
+    HASHMAP_INSERT(core_get_nicks(), newnick, nptr, NULL);
 
     uptr = find_user(oldnick);
 
@@ -961,24 +959,25 @@ void m_privmsg (char *sender, char *tail)
     if (!nptr) return;
 
     if (target[0] != '#' && !IsOper(nptr)) {
-        if (nptr->ignored) {
-            if (time(NULL) - nptr->ignoretime > core_get_config()->ignoretime) {
-                nptr->ignored = 0;
-                nptr->ignoretime = 0;
+        if (nick_ignored(nptr)) {
+            if (time(NULL) - nick_ignoretime(nptr) > core_get_config()->ignoretime) {
+                nick_set_ignored(nptr, false);
+                nick_set_ignoretime(nptr, 0);
             } else
                 return;
-        } else if (nptr->msgtime == 0 || nptr->msgnb == 0) {
-            nptr->msgtime = time(NULL);
-            nptr->msgnb = 1;
-        } else if (time(NULL) - nptr->msgtime <= core_get_config()->maxmsgtime && nptr->msgnb >= core_get_config()->maxmsgnb) {
-            nptr->ignored = 1;
-            nptr->ignoretime = time(NULL);
+        } else if (nick_msgtime(nptr) == 0 || nick_msgnb(nptr) == 0) {
+            nick_set_msgtime(nptr, time(NULL));
+            nick_set_msgnb(nptr, 1);
+        } else if (time(NULL) - nick_msgtime(nptr) <= core_get_config()->maxmsgtime && nick_msgnb(nptr) >= core_get_config()->maxmsgnb) {
+            nick_set_ignored(nptr, true);
+            nick_set_ignoretime(nptr, time(NULL));
             return;
-        } else if (time(NULL) - nptr->msgtime > core_get_config()->maxmsgtime && nptr->msgnb <= core_get_config()->maxmsgnb) {
-            nptr->msgtime = time(NULL);
-            nptr->msgnb = 1;
-        } else
-            nptr->msgnb++;
+        } else if (time(NULL) - nick_msgtime(nptr) > core_get_config()->maxmsgtime && nick_msgnb(nptr) <= core_get_config()->maxmsgnb) {
+            nick_set_msgtime(nptr, time(NULL));
+            nick_set_msgnb(nptr, 1);
+        } else {
+            nick_set_msgnb(nptr, nick_msgnb(nptr) + 1);
+        }
     }
 
     if (target[0] == '#') {
@@ -1053,7 +1052,7 @@ void m_quit (char *sender)
     if (RunHooks(HOOK_QUIT,nptr,uptr,NULL,NULL) == MOD_STOP)
         return;
 
-    userquit(nptr->nick);
+    userquit(nick_name(nptr));
 }
 
 void m_uid (char *sender, char *tail)
@@ -1131,25 +1130,25 @@ void m_uid (char *sender, char *tail)
     if (IsCharInString('z',umode)) modes |= UMODE_SSL;
 
     nptr = get_core_api()->new_nick(nick,ident,host,uid,hiddenhost,modes,clientip);
-    strncpy(nptr->svid, svid, SVIDLEN);
-    LLIST_INSERT_TAIL(&server->nicks, &nptr->server_head);
+    nick_set_svid(nptr, svid);
+    LLIST_INSERT_TAIL(&server->nicks, &nick_llist_wrapper(nptr)->server_head);
 
     User *uptr;
     uptr = find_account(nptr);
 
     RunHooks(HOOK_NICKCREATE,nptr,uptr,NULL,NULL);
 
-    uptr = find_user(nptr->nick);
+    uptr = find_user(nick_name(nptr));
 
     // Accept users with umode +r and without SVID. This can happen when migrating
     // to account-based authentication.
     // If the target account is already identified (through someone else), do not
     // recognize the +r and drop it.
-    if (IsRegistered(nptr) && !nptr->account) {
+    if (IsRegistered(nptr) && !nick_account(nptr)) {
         if (uptr && !IsAuthed(uptr) && !IsUserSuspended(uptr)) {
             user_login(nptr, uptr);
         } else {
-            get_core_api()->send_raw("SVS2MODE %s -r", nptr->nick);
+            get_core_api()->send_raw("SVS2MODE %s -r", nick_name(nptr));
             ClearUmode(nptr, UMODE_REGISTERED);
         }
     }
@@ -1157,10 +1156,8 @@ void m_uid (char *sender, char *tail)
     if (uptr && !IsRegistered(nptr) && !IsUserSuspended(uptr)) {
         NoticeToUser(nptr,"This nick is registered. Please identify yourself or take another nick.");
         if (uptr->options & UOPT_PROTECT)
-            AddGuest(nptr->nick,uptr->timeout,time(NULL));
+            AddGuest(nick_name(nptr), uptr->timeout, time(NULL));
     }
-
-    return;
 }
 
 void m_sethost (char *sender, char *tail)
@@ -1174,7 +1171,7 @@ void m_sethost (char *sender, char *tail)
 
     nptr = get_core_api()->find_nick(sender);
     if (!nptr) return;
-    strncpy(nptr->hiddenhost,newhost,HOSTLEN);
+    nick_set_hiddenhost(nptr, newhost);
 }
 
 void m_setident (char *sender, char *tail)
@@ -1188,7 +1185,7 @@ void m_setident (char *sender, char *tail)
 
     nptr = get_core_api()->find_nick(sender);
     if (!nptr) return;
-    strncpy(nptr->ident,newident,NICKLEN);
+    nick_set_ident(nptr, newident);
 }
 
 void m_topic (char *sender, char *tail)
@@ -1372,7 +1369,7 @@ void m_sjoin(char *sender, char *tail)
         }
 
         if (find_member(wchan, nptr) != NULL) {
-            operlog("User %s already present in channel %s during SJOIN, ignoring", nptr->nick, chname);
+            operlog("User %s already present in channel %s during SJOIN, ignoring", nick_name(nptr), chname);
             continue;
         }
 

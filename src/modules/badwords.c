@@ -46,7 +46,7 @@ int badwords (Nick *nptr, User *uptr, Chan *chptr, char *parv[])
 
     strncpy(cmd,parv[1],1023);
 
-    if (!Strcmp(nptr->nick,"target0")) {
+    if (!Strcmp(nick_name(nptr),"target0")) {
         return MOD_CONTINUE;
     }
 
@@ -60,8 +60,8 @@ int badwords (Nick *nptr, User *uptr, Chan *chptr, char *parv[])
 
     for (i=0;i<(sizeof(badword_list)/sizeof(char *));i++) {
         if (strstr(cmd,badword_list[i])) {
-            killuser(nptr->nick,"Et paf, la souris0",core_get_config()->nick);
-            operlog("Badwords: %s said %s: KILLED",nptr->nick,badword_list[i]);
+            killuser(nick_name(nptr),"Et paf, la souris0",core_get_config()->nick);
+            operlog("Badwords: %s said %s: KILLED",nick_name(nptr),badword_list[i]);
             return MOD_STOP;
         }
     }

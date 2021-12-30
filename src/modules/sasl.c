@@ -146,11 +146,11 @@ int sasl_start_session (__unused Nick *nptr, __unused User *uptr, __unused Chan 
  * It then enforces everything as is set on the User: vhosts, +r, ...
  */
 int sasl_finish_session (Nick *nptr, User *uptr, __unused Chan *cptr, __unused char *parv[]) {
-    if (!Strcmp(nptr->svid, "0"))
+    if (!Strcmp(nick_svid(nptr), "0"))
         return MOD_CONTINUE;
 
     if (!uptr)
-        uptr = find_user(nptr->svid);
+        uptr = find_user(nick_svid(nptr));
 
     // This race condition can happen if the user is dropped in between sasl_start_session and
     // sasl_finish_session.
@@ -162,7 +162,7 @@ int sasl_finish_session (Nick *nptr, User *uptr, __unused Chan *cptr, __unused c
     // Ghost if the user is already authed (meaning another nick is identified with this account).
     // TODO: remove when full support for nick/user decoupling is implemented.
     if (IsAuthed(uptr))
-        killuser(uptr->authed_nick->nick, "Ghosted by new account identification", core_get_config()->nick);
+        killuser(nick_name(uptr->authed_nick), "Ghosted by new account identification", core_get_config()->nick);
 
     user_login(nptr, uptr);
 

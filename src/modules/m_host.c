@@ -112,13 +112,13 @@ void host_set (Nick *nptr, User *uptr __unused, char *all)
     if (!arg4 || *arg4 == '\0') {
         memset(uptr2->vhost,'\0',HOSTLEN);
         NoticeToUser(nptr,"Vhost for \2%s\2 deleted",arg3);
-        operlog("%s removed vhost from %s",nptr->nick,arg3);
+        operlog("%s removed vhost from %s",nick_name(nptr),arg3);
         if (get_core_api()->find_nick(arg3))
             get_core_api()->send_raw("SVSMODE %s -x+x",arg3);
     } else {
         strncpy(uptr2->vhost,arg4,HOSTLEN);
         NoticeToUser(nptr,"Vhost for \2%s\2 set to \2%s\2",arg3,arg4);
-        operlog("%s set vhost for %s to %s",nptr->nick,arg3,arg4);
+        operlog("%s set vhost for %s to %s",nick_name(nptr),arg3,arg4);
         if (get_core_api()->find_nick(arg3))
             get_core_api()->send_raw("CHGHOST %s %s",arg3,arg4);
     }

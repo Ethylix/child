@@ -25,14 +25,14 @@ START_TEST(test_new_nick)
                                     /*reshost=*/"127.0.0.1");
 
     ck_assert_ptr_ne(nptr, NULL);
-    ck_assert_str_eq(nptr->nick, "test");
-    ck_assert_str_eq(nptr->ident, "test_ident");
-    ck_assert_str_eq(nptr->host, "test_host");
-    ck_assert_str_eq(nptr->uid, "042AABBCC");
-    ck_assert_str_eq(nptr->hiddenhost, "test_hiddenhost");
-    ck_assert_str_eq(nptr->reshost, "127.0.0.1");
-    ck_assert_int_eq(nptr->umodes, UMODE_BOT | UMODE_SSL);
-    ck_assert_int_eq(LLIST_EMPTY(&nptr->wchans), true);
+    ck_assert_str_eq(nick_name(nptr), "test");
+    ck_assert_str_eq(nick_ident(nptr), "test_ident");
+    ck_assert_str_eq(nick_host(nptr), "test_host");
+    ck_assert_str_eq(nick_uid(nptr), "042AABBCC");
+    ck_assert_str_eq(nick_hiddenhost(nptr), "test_hiddenhost");
+    ck_assert_str_eq(nick_reshost(nptr), "127.0.0.1");
+    ck_assert_int_eq(nick_umodes(nptr), UMODE_BOT | UMODE_SSL);
+    ck_assert_int_eq(LLIST_EMPTY(&nick_llist_wrapper(nptr)->wchans), true);
 
     ck_assert_int_eq(HASHMAP_SIZE(core_get_nicks()), 1);
 

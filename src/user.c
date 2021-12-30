@@ -80,7 +80,7 @@ Link *find_link(const char *slave)
     return HASHMAP_ENTRY_VALUE(core_get_links(), entry);
 }
 
-Link *find_link2 (char *master, char *slave)
+Link *find_link2 (const char *master, const char *slave)
 {
     Link *tmp;
     struct hashmap_entry *entry;
@@ -136,7 +136,7 @@ User *AddUser (const char *nick, int level)
     return new_user;
 }
 
-Guest *AddGuest (char *nick, int timeout, int nickconn)
+Guest *AddGuest (const char *nick, int timeout, int nickconn)
 {
     Guest *new_guest;
     new_guest = (Guest *)malloc(sizeof(Guest));
@@ -218,17 +218,17 @@ void DeleteWildNick (Nick *nptr)
 {
     Clone *clone;
 
-    if (!HASHMAP_ERASE(core_get_nicks(), nptr->nick))
+    if (!HASHMAP_ERASE(core_get_nicks(), nick_name(nptr)))
         return;
 
-    if ((clone = find_clone(nptr->reshost)) != NULL) {
+    if ((clone = find_clone(nick_reshost(nptr))) != NULL) {
         clone->count--;
         if (clone->count == 0) {
             HASHMAP_ERASE(core_get_clones(), clone->host);
             free(clone);
         }
     }
-    LLIST_REMOVE(&nptr->server_head);
+    LLIST_REMOVE(&nick_llist_wrapper(nptr)->server_head);
     free(nptr);
 }
 
@@ -242,7 +242,7 @@ void clear_nicks(void)
     }
 }
 
-void DeleteGuest (char *nick)
+void DeleteGuest(const char *nick)
 {
     Guest *guest = find_guest(nick);
     if (!guest) return;
@@ -310,7 +310,7 @@ void FakeNotice(const char *who, const Nick *nptr, const char *msg, ...)
     va_list val;
     ircsprintf(buf,511,msg,val);
     
-    get_core_api()->send_raw(":%s NOTICE %s :%s",who,nptr->nick,buf);
+    get_core_api()->send_raw(":%s NOTICE %s :%s", who, nick_name(nptr), buf);
 }
 
 void globops(char *msg, ...)
@@ -333,7 +333,7 @@ void send_global (char *target, char *msg, ...)
     get_core_api()->send_raw(":%s NOTICE $%s :%s", core_get_config()->nick, target, buf);
 }
 
-Clone *find_clone (char *host)
+Clone *find_clone (const char *host)
 {
     struct hashmap_entry *entry;
 
@@ -372,17 +372,18 @@ void CheckGuests()
     }
 }
 
-void userquit (char *nick)
+void userquit (const char *nick)
 {
     Nick *nptr;
 
     nptr = get_core_api()->find_nick(nick);
     if (!nptr) return;
 
-    if (nptr->account)
-        user_logout(nptr, nptr->account);
+    User *uptr = nick_account(nptr);
+    if (uptr)
+        user_logout(nptr, uptr);
 
-    DeleteGuest(nptr->nick);
+    DeleteGuest(nick_name(nptr));
     DeleteUserFromWchans(nptr);
     DeleteWildNick(nptr);
 }
@@ -529,10 +530,10 @@ void sync_cflag(const Cflag *cflag)
         if (cflag->uflags & UFLAG_AUTOHALFOP) SetStatus(nptr, chname, CHFL_HALFOP, 1, bot);
         if (cflag->uflags & UFLAG_AUTOVOICE) SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
         if (cflag->uflags & UFLAG_NOOP) SetStatus(nptr, chname, member->flags, 0, bot);
-        if (cflag->uflags & UFLAG_AUTOKICK) KickUser(bot, nptr->nick, chname, "Get out of this chan !");
+        if (cflag->uflags & UFLAG_AUTOKICK) KickUser(bot, nick_name(nptr), chname, "Get out of this chan !");
         if (cflag->uflags & UFLAG_AUTOKICKBAN) {
-            get_core_api()->send_raw(":%s MODE %s +b *!*@%s", bot, nptr->nick, nptr->hiddenhost);
-            KickUser(bot, nptr->nick, chname, "Get out of this chan !");
+            get_core_api()->send_raw(":%s MODE %s +b *!*@%s", bot, nick_name(nptr), nick_hiddenhost(nptr));
+            KickUser(bot, nick_name(nptr), chname, "Get out of this chan !");
         }
     } else {
     if ((cflag->flags == CHLEV_OWNER || cflag->flags == CHLEV_COOWNER)) {
@@ -567,10 +568,10 @@ void sync_cflag(const Cflag *cflag)
         SetStatus(nptr, chname, CHFL_VOICE, 1, bot);
         hasaccess = 1;
     } else if (cflag->flags == core_get_config()->chlev_akick) {
-        KickUser(bot, nptr->nick, chname, "Get out of this chan !");
+        KickUser(bot, nick_name(nptr), chname, "Get out of this chan !");
     } else if (cflag->flags == core_get_config()->chlev_akb) {
-        get_core_api()->send_raw(":%s MODE %s +b *!*@%s", bot, nptr->nick, nptr->hiddenhost);
-        KickUser(bot, nptr->nick, chname, "Get out of this chan !");
+        get_core_api()->send_raw(":%s MODE %s +b *!*@%s", bot, nick_name(nptr), nick_hiddenhost(nptr));
+        KickUser(bot, nick_name(nptr), chname, "Get out of this chan !");
     } else if (cflag->flags == core_get_config()->chlev_nostatus)
         SetStatus(nptr, chname, member->flags, 0, bot);
     }
@@ -680,37 +681,37 @@ void user_login(Nick *nptr, User *uptr)
     uptr->authed_nick = nptr;
     uptr->lastseen = time(NULL);
 
-    nptr->loginattempts = 0;
-    nptr->lasttry = 0;
-    nptr->account = uptr;
+    nick_set_loginattempts(nptr, 0);
+    nick_set_lasttry(nptr, 0);
+    nick_set_account(nptr, uptr);
 
     // Set svid if empty or different from account name.
-    if (Strcmp(nptr->svid, uptr->nick)) {
-        strncpy(nptr->svid, uptr->nick, SVIDLEN);
-        get_core_api()->send_raw("SVSLOGIN * %s %s", nptr->nick, nptr->svid);
+    if (Strcmp(nick_svid(nptr), uptr->nick)) {
+        nick_set_svid(nptr, uptr->nick);
+        get_core_api()->send_raw("SVSLOGIN * %s %s", nick_name(nptr), nick_svid(nptr));
     }
 
     // Set umode +r if nick name matches account name.
-    if (!Strcmp(nptr->nick, uptr->nick)) {
-        get_core_api()->send_raw("SVS2MODE %s +r", nptr->nick);
+    if (!Strcmp(nick_name(nptr), uptr->nick)) {
+        get_core_api()->send_raw("SVS2MODE %s +r", nick_name(nptr));
         SetUmode(nptr, UMODE_REGISTERED);
 
         if (HasOption(uptr, UOPT_PROTECT))
-            DeleteGuest(nptr->nick);
+            DeleteGuest(nick_name(nptr));
     }
 
-    NoticeToUser(nptr, "You are now identified with account \2%s\2.", nptr->svid);
+    NoticeToUser(nptr, "You are now identified with account \2%s\2.", nick_svid(nptr));
 
     if (uptr->vhost[0] != '\0') {
-        get_core_api()->send_raw("CHGHOST %s %s", nptr->nick, uptr->vhost);
-        strncpy(nptr->hiddenhost, uptr->vhost, HOSTLEN);
+        get_core_api()->send_raw("CHGHOST %s %s", nick_name(nptr), uptr->vhost);
+        nick_set_hiddenhost(nptr, uptr->vhost);
         NoticeToUser(nptr, "Your vhost \2%s\2 has been activated.", uptr->vhost);
     } else if (HasOption(uptr, UOPT_CLOAKED)) {
-        get_core_api()->send_raw("CHGHOST %s %s%s", nptr->nick, uptr->nick, core_get_config()->usercloak);
+        get_core_api()->send_raw("CHGHOST %s %s%s", nick_name(nptr), uptr->nick, core_get_config()->usercloak);
         char host[HOSTLEN + NICKLEN + 1];
         bzero(host, HOSTLEN+NICKLEN+1);
         snprintf(host, HOSTLEN + NICKLEN + 1, "%s%s", uptr->nick, core_get_config()->usercloak);
-        strncpy(nptr->hiddenhost, host, HOSTLEN);
+        nick_set_hiddenhost(nptr, host);
         NoticeToUser(nptr,"Your cloak \2%s\2 has been activated.", host);
     }
 }
@@ -723,10 +724,10 @@ void user_logout(Nick *nptr, User *uptr)
         uptr->lastseen = time(NULL);
     }
 
-    nptr->account = NULL;
-    strncpy(nptr->svid, "0", SVIDLEN);
-    get_core_api()->send_raw("SVSLOGIN * %s 0", nptr->uid);
+    nick_set_account(nptr, NULL);
+    nick_set_svid(nptr, "0");
+    get_core_api()->send_raw("SVSLOGIN * %s 0", nick_uid(nptr));
 
     if (IsRegistered(nptr))
-        get_core_api()->send_raw("SVS2MODE %s -r", nptr->uid);
+        get_core_api()->send_raw("SVS2MODE %s -r", nick_uid(nptr));
 }

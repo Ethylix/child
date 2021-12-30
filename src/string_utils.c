@@ -92,7 +92,7 @@ char *strtosql (char *dst, char *src, int len)
     return dst;
 }
 
-int __match_regex (char *reg, char *str, int param)
+int __match_regex (const char *reg, const char *str, int param)
 {
     int status;
     regex_t re;

@@ -48,15 +48,15 @@ START_TEST(test_sasl_auth_success)
 
     nptr = get_core_api()->find_nick("042AAAAAA");
     ck_assert_ptr_ne(nptr, NULL);
-    ck_assert_str_eq(nptr->svid, "test_user");
+    ck_assert_str_eq(nick_svid(nptr), "test_user");
     ck_assert(IsRegistered(nptr));
     ck_assert_int_eq(uptr->authed, 1);
     ck_assert_ptr_eq(uptr->authed_nick, nptr);
-    ck_assert_ptr_eq(nptr->account, uptr);
+    ck_assert_ptr_eq(nick_account(nptr), uptr);
 
     ck_assert(expect_any_raw("SVS2MODE test_user +r"));
 
-    userquit(nptr->nick);
+    userquit(nick_name(nptr));
     ck_assert_int_eq(uptr->authed, 0);
     ck_assert_ptr_eq(uptr->authed_nick, NULL);
 
@@ -65,11 +65,11 @@ START_TEST(test_sasl_auth_success)
 
     nptr = get_core_api()->find_nick("042AAAAAB");
     ck_assert_ptr_ne(nptr, NULL);
-    ck_assert_str_eq(nptr->svid, "test_user");
+    ck_assert_str_eq(nick_svid(nptr), "test_user");
     ck_assert(!IsRegistered(nptr));
     ck_assert_int_eq(uptr->authed, 1);
     ck_assert_ptr_eq(uptr->authed_nick, nptr);
-    ck_assert_ptr_eq(nptr->account, uptr);
+    ck_assert_ptr_eq(nick_account(nptr), uptr);
 
     consume_mock_raws();
 
@@ -78,42 +78,42 @@ START_TEST(test_sasl_auth_success)
 
     Nick *nptr2 = get_core_api()->find_nick("042AAAAAC");
     ck_assert_ptr_ne(nptr2, NULL);
-    ck_assert_str_eq(nptr2->svid, "test_user");
+    ck_assert_str_eq(nick_svid(nptr2), "test_user");
     ck_assert(!IsRegistered(nptr2));
     ck_assert_int_eq(uptr->authed, 1);
     ck_assert_ptr_eq(uptr->authed_nick, nptr2);
-    ck_assert_ptr_eq(nptr2->account, uptr);
+    ck_assert_ptr_eq(nick_account(nptr2), uptr);
 
     ck_assert_ptr_eq(get_core_api()->find_nick("042AAAAAB"), NULL);
     ck_assert(expect_any_raw(":C KILL test_nick :services.test!C (Ghosted by new account identification)"));
 
-    userquit(nptr2->nick);
+    userquit(nick_name(nptr2));
 
     // Login users with +r and without SVID.
     inject_parse_line(":042 UID test_user 0 1629045439 test_ident test_host 042AAAAAD 0 +iwrp * geek-ABCDEFGH.blah fwAAAQ== :test description");
 
     nptr = get_core_api()->find_nick("042AAAAAD");
     ck_assert_ptr_ne(nptr, NULL);
-    ck_assert_str_eq(nptr->svid, "test_user");
+    ck_assert_str_eq(nick_svid(nptr), "test_user");
     ck_assert(IsRegistered(nptr));
     ck_assert_int_eq(uptr->authed, 1);
     ck_assert_ptr_eq(uptr->authed_nick, nptr);
-    ck_assert_ptr_eq(nptr->account, uptr);
+    ck_assert_ptr_eq(nick_account(nptr), uptr);
 
-    userquit(nptr->nick);
+    userquit(nick_name(nptr));
 
     // Same but without +r, do not login.
     inject_parse_line(":042 UID test_user 0 1629045439 test_ident test_host 042AAAAAE 0 +iwp * geek-ABCDEFGH.blah fwAAAQ== :test description");
 
     nptr = get_core_api()->find_nick("042AAAAAE");
     ck_assert_ptr_ne(nptr, NULL);
-    ck_assert_str_eq(nptr->svid, "0");
+    ck_assert_str_eq(nick_svid(nptr), "0");
     ck_assert(!IsRegistered(nptr));
     ck_assert_int_eq(uptr->authed, 0);
     ck_assert_ptr_eq(uptr->authed_nick, NULL);
-    ck_assert_ptr_eq(nptr->account, NULL);
+    ck_assert_ptr_eq(nick_account(nptr), NULL);
 
-    userquit(nptr->nick);
+    userquit(nick_name(nptr));
 
     DeleteAccount(uptr);
     unloadmodule("sasl");
@@ -329,7 +329,7 @@ START_TEST(test_sasl_finish_user_not_found)
 
     nptr = get_core_api()->find_nick("test_nick");
     ck_assert_ptr_ne(nptr, NULL);
-    ck_assert_str_eq(nptr->svid, "0");
+    ck_assert_str_eq(nick_svid(nptr), "0");
 
     unloadmodule("sasl");
     free_mock_server();

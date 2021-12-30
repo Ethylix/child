@@ -346,7 +346,7 @@ Member *AddUserToWchan (Nick *nptr, Wchan *chan)
     member->nick = nptr;
     member->flags = 0;
 
-    LLIST_INSERT_TAIL(&nptr->wchans, &member->nick_head);
+    LLIST_INSERT_TAIL(&nick_llist_wrapper(nptr)->wchans, &member->nick_head);
     LLIST_INSERT_TAIL(&chan->members, &member->wchan_head);
 
     Chan *chptr = find_channel(chan->chname);
@@ -466,7 +466,7 @@ void SetStatus (Nick *nptr, const char *chan, long int flag, int what, const cha
     }
 
     for (i=0;i<args;i++) {
-        strcat(targ,nptr->nick);
+        strcat(targ, nick_name(nptr));
         strcat(targ," ");
     }
 
@@ -495,7 +495,7 @@ void DeleteUserFromWchans (Nick *nptr)
 {
     Member *member, *tmp_member;
 
-    LLIST_FOREACH_ENTRY_SAFE(&nptr->wchans, member, tmp_member, nick_head) {
+    LLIST_FOREACH_ENTRY_SAFE(&nick_llist_wrapper(nptr)->wchans, member, tmp_member, nick_head) {
         DeleteUserFromWchan(nptr, member->wchan);
     }
 }
@@ -586,7 +586,7 @@ void CheckLimits()
     }
 }
 
-int chansreg (char *nick)
+int chansreg (const char *nick)
 {
     int count = 0;
     Chan *chan;

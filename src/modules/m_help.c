@@ -690,7 +690,7 @@ void help_nick_set_hidemail (Nick *nptr)
 void help_nick_set_cloak (Nick *nptr)
 {
     NoticeToUser(nptr,"Syntax: \2NICK SET CLOAK [\037on\037|\037off\037]\2");
-    NoticeToUser(nptr,"Enable or disable host cloaking. Your cloak will be \2%s%s\2. Note that the cloak never overrides your vhost.",nptr->nick,core_get_config()->usercloak);
+    NoticeToUser(nptr,"Enable or disable host cloaking. Your cloak will be \2%s%s\2. Note that the cloak never overrides your vhost.",nick_name(nptr),core_get_config()->usercloak);
 }
 
 void help_nick_requestpassword (Nick *nptr)

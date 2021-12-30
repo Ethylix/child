@@ -72,11 +72,11 @@ void delete_server(Server *server) {
 }
 
 void detach_server_recursive(Server *server) {
-    Nick *nptr, *tmp_nptr;
+    struct nick_llist_wrapper *nick_wrapper, *tmp_nick_wrapper;
     Server *sptr, *tmp_sptr;
 
-    LLIST_FOREACH_ENTRY_SAFE(&server->nicks, nptr, tmp_nptr, server_head) {
-        userquit(nptr->nick);
+    LLIST_FOREACH_ENTRY_SAFE(&server->nicks, nick_wrapper, tmp_nick_wrapper, server_head) {
+        userquit(nick_name(nick_wrapper->nick));
     }
 
     LLIST_FOREACH_ENTRY_SAFE(&server->leafs, sptr, tmp_sptr, leaf_head) {
